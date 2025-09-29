@@ -39,6 +39,7 @@ export interface LabelProps
   helperText?: string
   errorText?: string
   description?: string
+  children?: React.ReactNode
 }
 
 const Label = React.forwardRef<
