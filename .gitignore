@@ -1,45 +1,57 @@
-# Dependencies
-node_modules/
-.pnp
+# Node.js 관련
+**/node_modules/
+.pnp/
 .pnp.js
 
-# Production
+# PNPM 전용 캐시 폴더 (필요시)
+.pnpm-store/
+
+# Next.js 빌드 출력
+.next/
+out/
+
+# 기타 빌드 산출물 (각 패키지에서 사용되는 dist, build 폴더 등)
 dist/
 build/
 
-# Logs
-logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+# TypeScript 캐시 파일
+*.tsbuildinfo
 
-# OS
+# 환경 변수 파일 (필요에 따라 커스터마이징)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 로그 파일
+*.log
+
+# 테스트 결과 폴더 (예: coverage)
+coverage/
+
+# OS별 불필요 파일
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea
-*.swp
-*.swo
+# 에디터 및 IDE 설정 폴더
+.vscode/
+.idea/
 
-# Testing
-coverage/
+# Storybook 빌드 산출물
+storybook-static/
 
-# Environment
-.env
-.env.local
-.env.*.local
+# 기타 임시 파일
+tmp/
+temp/
 
-# Turbo
-.turbo
+# Docker 관련 (개발용 override 파일 등, 필요에 따라)
+docker-compose.override.yml
+*storybook.log
 
-# Misc
-*.tsbuildinfo
-.cache
-.parcel-cache
+# 모든 .d.ts 파일을 무시하되, vite-env.d.ts와 vite.config.d.ts는 예외 처리
+*.d.ts
+!vite-env.d.ts
+!vite.config.d.ts
+
+apps/v1/vite.config.ts
