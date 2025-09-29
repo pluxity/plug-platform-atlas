@@ -1,0 +1,2 @@
+export { Tabs, TabsList, TabsTrigger, TabsContent, tabsListVariants, tabsTriggerVariants } from "./tabs.component"
+export type { TabsProps, TabsListProps, TabsTriggerProps, TabsContentProps, TabsSize } from "./tabs.types"
