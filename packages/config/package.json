@@ -1,0 +1,16 @@
+{
+  "name": "@plug-atlas/config",
+  "version": "1.0.0",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./tsconfig": "./tsconfig/index.js",
+    "./eslint": "./eslint/index.js"
+  },
+  "scripts": {
+    "clean": "rimraf node_modules .turbo"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1"
+  }
+}

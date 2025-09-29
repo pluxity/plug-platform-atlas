@@ -1,5 +1,5 @@
-/* Design tokens must come BEFORE the Tailwind import in v4 so that
-  classes like bg-background / text-primary-500 are generated. */
+@import "tailwindcss";
+
 @theme {
   --color-background: hsl(0 0% 100%);
   --color-foreground: hsl(0 0% 17%);
@@ -82,8 +82,6 @@
   --color-ring: hsl(223 72% 44%);
   --radius: 0.5rem;
 }
-
-@import "tailwindcss";
 
 .dark {
   --color-background: hsl(0 0% 8%);
