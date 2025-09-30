@@ -7,8 +7,12 @@ const meta = {
   component: InputOTP,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '일회용 비밀번호(OTP) 입력을 위한 특수 입력 컴포넌트입니다. 인증 코드 입력 시 각 자리를 개별적으로 표시합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

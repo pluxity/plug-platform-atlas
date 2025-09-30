@@ -1,15 +1,15 @@
 import * as React from "react"
 import { Calendar as CalendarIcon } from "lucide-react"
-import { DayPicker, type DateRange } from "react-day-picker"
+import { type DateRange } from "react-day-picker"
 import { format } from "date-fns"
 import { ko } from "date-fns/locale"
-import "react-day-picker/style.css"
 
 import type { Locale } from "date-fns"
 
 import { cn } from "../../lib/utils"
 import { Button } from "../../atoms/button"
 import { Popover, PopoverContent, PopoverTrigger } from "../../molecules/popover"
+import { Calendar } from "../calendar"
 
 export interface DatePickerSingleProps {
   mode?: "single"
@@ -74,11 +74,6 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
       }
     }
 
-    const calendarClassNames = {
-      root: "rdp-custom",
-      chevron: "fill-gray-600",
-    }
-
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -96,28 +91,22 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
             {displayValue}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 shadow-lg" align="start">
+        <PopoverContent className="w-auto p-0" align="start">
           {mode === "single" ? (
-            <DayPicker
+            <Calendar
               mode="single"
               selected={props.value as Date | undefined}
               onSelect={handleSelectSingle}
               locale={locale}
               disabled={disabled}
-              showOutsideDays
-              classNames={calendarClassNames}
             />
           ) : (
-            <DayPicker
+            <Calendar
               mode="range"
               selected={props.value as DateRange | undefined}
               onSelect={handleSelectRange}
               locale={locale}
               disabled={disabled}
-              fromDate={(props as DatePickerRangeProps).fromDate}
-              toDate={(props as DatePickerRangeProps).toDate}
-              showOutsideDays
-              classNames={calendarClassNames}
             />
           )}
         </PopoverContent>

@@ -7,8 +7,12 @@ const meta = {
   component: RadioGroup,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '여러 옵션 중 하나를 선택하는 라디오 버튼 그룹 컴포넌트입니다. 배타적 선택이 필요한 폼에 사용됩니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

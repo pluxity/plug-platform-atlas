@@ -14,8 +14,12 @@ const meta: Meta<typeof Pagination> = {
   component: Pagination,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '페이지 네비게이션을 제공하는 페이지네이션 컴포넌트입니다. 테이블, 리스트 등의 데이터를 여러 페이지로 나누어 탐색할 때 사용됩니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

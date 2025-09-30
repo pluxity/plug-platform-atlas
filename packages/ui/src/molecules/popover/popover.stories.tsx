@@ -7,8 +7,12 @@ const meta: Meta<typeof Popover> = {
   component: Popover,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '트리거 요소 근처에 콘텐츠를 팝업으로 표시하는 컴포넌트입니다. 추가 옵션, 폼, 상세 정보 등을 표시할 때 사용됩니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

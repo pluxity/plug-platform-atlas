@@ -7,8 +7,12 @@ const meta: Meta<typeof Label> = {
   component: Label,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '폼 요소와 연결되는 레이블 컴포넌트입니다. 필수 항목 표시, 도움말 텍스트, 에러 메시지를 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',

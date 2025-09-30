@@ -6,8 +6,12 @@ const meta: Meta<typeof Button> = {
   component: Button,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '사용자 액션을 트리거하는 기본 버튼 컴포넌트입니다. 다양한 변형, 크기, 로딩 상태를 지원하며 아이콘과 함께 사용할 수 있습니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

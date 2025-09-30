@@ -6,8 +6,12 @@ const meta: Meta<typeof Skeleton> = {
   component: Skeleton,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '콘텐츠 로딩 중 표시되는 플레이스홀더 컴포넌트입니다. 다양한 형태(원형, 사각형, 텍스트)를 지원하여 로딩 상태를 표현합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

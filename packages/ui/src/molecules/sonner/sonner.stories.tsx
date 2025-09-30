@@ -7,8 +7,12 @@ const meta: Meta<typeof Toaster> = {
   component: Toaster,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: 'Sonner 라이브러리 기반의 토스트 알림 컴포넌트입니다. 우아한 애니메이션과 스택 기능을 제공하여 여러 알림을 관리합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

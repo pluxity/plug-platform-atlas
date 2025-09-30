@@ -6,8 +6,12 @@ const meta: Meta<typeof Badge> = {
   component: Badge,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '상태, 카테고리, 알림 등을 표시하는 작은 라벨 컴포넌트입니다. 다양한 색상과 크기를 지원하며 닫기 버튼을 추가할 수 있습니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

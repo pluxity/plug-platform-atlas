@@ -9,8 +9,12 @@ const meta: Meta<typeof Collapsible> = {
   component: Collapsible,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '콘텐츠를 접고 펼칠 수 있는 컴포넌트입니다. 아코디언과 유사하지만 단일 항목에 사용되며, 더 많은 정보를 숨기거나 표시할 때 사용됩니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

@@ -6,8 +6,12 @@ const meta: Meta<typeof Spinner> = {
   component: Spinner,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '로딩 상태를 나타내는 회전 애니메이션 컴포넌트입니다. 다양한 크기로 제공되며 비동기 작업 중임을 사용자에게 알립니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',

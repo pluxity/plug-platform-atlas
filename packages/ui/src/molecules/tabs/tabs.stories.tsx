@@ -7,8 +7,12 @@ const meta: Meta<typeof Tabs> = {
   component: Tabs,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '여러 콘텐츠 패널을 탭으로 전환하여 표시하는 컴포넌트입니다. 수평/수직 방향, 다양한 스타일(underline, pills, buttons)을 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

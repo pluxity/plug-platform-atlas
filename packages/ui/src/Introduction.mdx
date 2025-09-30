@@ -1,0 +1,218 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Introduction/Getting Started" />
+
+# @plug-atlas/ui Documentation
+
+**실외 지도 기반 관제 시스템 UI 라이브러리**
+
+## 📦 Overview
+
+`@plug-atlas/ui`는 Atomic Design 패턴을 기반으로 구축된 React 컴포넌트 라이브러리입니다.
+
+### 기술 스택
+- **React 19** - 최신 React 기능 활용
+- **Tailwind CSS v4** - 유틸리티 기반 스타일링
+- **Radix UI** - 접근성 우선 프리미티브
+- **TypeScript** - 타입 안정성
+- **class-variance-authority** - 변형 관리
+
+---
+
+## 🎨 Design System
+
+### 색상 팔레트
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+  <div>
+    <div style={{ height: '80px', background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
+    <strong>Primary (Blue)</strong>
+    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>브랜드 색상으로 주요 액션 및 포커스 상태에 사용</p>
+  </div>
+
+  <div>
+    <div style={{ height: '80px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
+    <strong>Success (Green)</strong>
+    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>성공 상태, 확인 메시지, 긍정적 피드백</p>
+  </div>
+
+  <div>
+    <div style={{ height: '80px', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
+    <strong>Warning (Orange)</strong>
+    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>경고 메시지, 주의 필요 상태</p>
+  </div>
+
+  <div>
+    <div style={{ height: '80px', background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
+    <strong>Error (Red)</strong>
+    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>오류 상태, 파괴적 액션, 필수 필드</p>
+  </div>
+
+  <div>
+    <div style={{ height: '80px', background: 'linear-gradient(135deg, #6b7280 0%, #374151 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
+    <strong>Gray</strong>
+    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>중립적 UI 요소, 텍스트, 테두리</p>
+  </div>
+</div>
+
+---
+
+## 📐 Component Categories
+
+### Atoms (원자) - 16개
+기본 빌딩 블록
+- Button, Input, Label, Badge, Select
+- Checkbox, Switch, Toggle, Radio Group
+- Avatar, Progress, Spinner, Skeleton
+- Separator, Aspect Ratio, Input OTP
+
+### Molecules (분자) - 14개
+2-3개의 Atoms 조합
+- Alert, Card, Tooltip, Popover
+- Tabs, Accordion, Toast, Sonner
+- Collapsible, Hover Card, Pagination
+- Toggle Group, Context Menu, Dropdown Menu
+
+### Organisms (유기체) - 9개
+복잡한 UI 패턴
+- Dialog, Alert Dialog, Command
+- Combobox, Navigation Menu, Form
+- Data Table, Date Picker, Calendar, Chart
+
+---
+
+## 🚀 Usage
+
+### Installation
+
+```bash
+pnpm add @plug-atlas/ui
+```
+
+### Import Components
+
+```tsx
+import { Button, Input, Dialog } from '@plug-atlas/ui'
+import '@plug-atlas/ui/globals.css'
+
+function App() {
+  return (
+    <div>
+      <Button variant="default">Click me</Button>
+      <Input placeholder="Enter text..." />
+    </div>
+  )
+}
+```
+
+### Import by Category
+
+```tsx
+// Atoms만 import
+import { Button, Input, Badge } from '@plug-atlas/ui/atoms'
+
+// Molecules만 import
+import { Card, Alert } from '@plug-atlas/ui/molecules'
+
+// Organisms만 import
+import { Dialog, Select } from '@plug-atlas/ui/organisms'
+```
+
+---
+
+## ✨ Conventions
+
+### Prop Naming
+- `variant` → `appearance` (시각적 스타일)
+- `size` → `scale` (크기 변형)
+- 네이티브 HTML prop과의 충돌 방지
+
+### Data Attributes
+모든 컴포넌트에 `data-slot` 속성 적용
+- 스타일링 훅
+- 분석 추적
+- 테스트 선택자
+
+### Accessibility
+- ARIA 속성 자동 적용
+- 키보드 네비게이션 지원
+- 스크린 리더 최적화
+
+---
+
+## 📚 Component Status
+
+| Status | Description |
+|--------|-------------|
+| ✅ **Stable** | 프로덕션 사용 가능, API 안정 |
+| 🚧 **Draft** | 개발 중, API 변경 가능 |
+| ⚠️ **Deprecated** | 사용 중단 예정 |
+
+---
+
+## 🛠 Development
+
+### Run Storybook
+
+```bash
+pnpm storybook
+```
+
+### Build Storybook
+
+```bash
+pnpm build-storybook
+```
+
+### Type Check
+
+```bash
+pnpm type-check
+```
+
+### Clean
+
+```bash
+pnpm clean
+```
+
+---
+
+## 📖 Documentation
+
+이 Storybook은 **Auto Docs**를 사용하여 자동으로 문서를 생성합니다.
+
+### 문서 구성
+- **Description**: 컴포넌트 설명 (stories의 `parameters.docs.description.component`)
+- **Controls**: Props를 실시간으로 조작하며 테스트
+- **Stories**: 다양한 사용 예제 (Canvas에서 Preview + Code)
+- **Props Table**: 자동 생성된 Props 타입 정보
+
+### 새 컴포넌트 문서 작성
+```tsx
+const meta: Meta<typeof Component> = {
+  title: 'Category/ComponentName',
+  component: Component,
+  parameters: {
+    docs: {
+      description: {
+        component: '컴포넌트에 대한 상세 설명...',
+      },
+    },
+  },
+}
+```
+
+---
+
+## 📖 Next Steps
+
+1. **Browse Components** - 왼쪽 사이드바에서 원하는 컴포넌트 탐색
+2. **Read Docs** - 각 컴포넌트의 Docs 탭에서 설명과 사용법 확인
+3. **Interactive Controls** - Controls 패널에서 props를 실시간으로 조작
+4. **Copy Code** - Canvas에서 Code 탭을 열어 코드 복사
+5. **Check Props** - Props 테이블에서 타입과 기본값 확인
+
+---
+
+**Questions?** 문의사항은 팀 채널에서 공유해주세요.

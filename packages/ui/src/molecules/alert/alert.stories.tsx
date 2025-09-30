@@ -6,8 +6,12 @@ const meta: Meta<typeof Alert> = {
   component: Alert,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '사용자에게 중요한 정보를 전달하는 알림 컴포넌트입니다. 성공, 경고, 에러 등의 상태를 시각적으로 표현하며 닫기 버튼을 추가할 수 있습니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

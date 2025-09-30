@@ -13,12 +13,16 @@ import {
 } from './select.component'
 
 const meta: Meta<typeof SelectTrigger> = {
-  title: 'Organisms/Select',
+  title: 'Atoms/Select',
   component: SelectTrigger,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '드롭다운 형태의 선택 컴포넌트입니다. 여러 옵션 중 하나를 선택할 때 사용하며 그룹화, 아이콘, 검색 기능을 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

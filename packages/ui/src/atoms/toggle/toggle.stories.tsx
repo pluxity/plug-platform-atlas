@@ -8,8 +8,12 @@ const meta: Meta<typeof Toggle> = {
   component: Toggle,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '눌림/눌림 해제 상태를 가진 토글 버튼 컴포넌트입니다. 텍스트 포맷팅, 즐겨찾기 등 ON/OFF 상태가 필요한 UI에 사용됩니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

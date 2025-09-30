@@ -6,8 +6,12 @@ const meta: Meta<typeof Avatar> = {
   component: Avatar,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '사용자 프로필 이미지를 표시하는 아바타 컴포넌트입니다. 이미지, 폴백, 온라인 상태 표시를 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',

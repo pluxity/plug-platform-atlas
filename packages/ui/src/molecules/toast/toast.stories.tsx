@@ -7,8 +7,12 @@ const meta: Meta<typeof Toast> = {
   component: Toast,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '일시적인 알림 메시지를 화면에 표시하는 토스트 컴포넌트입니다. 성공, 경고, 에러 등의 피드백을 사용자에게 전달합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

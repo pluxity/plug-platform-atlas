@@ -48,7 +48,7 @@ const accordionItemVariants = cva(
 )
 
 const accordionTriggerVariants = cva(
-  "relative flex flex-1 items-center justify-between font-semibold transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-4 disabled:opacity-50 disabled:cursor-not-allowed text-gray-800 group-hover:text-primary-700 before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-r before:from-transparent before:to-transparent before:opacity-0 before:transition-all before:duration-300 group-hover:before:opacity-100",
+  "relative flex flex-1 items-center justify-between font-semibold transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-gray-800 group-hover:text-primary-700 before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-r before:from-transparent before:to-transparent before:opacity-0 before:transition-all before:duration-300 group-hover:before:opacity-100",
   {
     variants: {
       variant: {

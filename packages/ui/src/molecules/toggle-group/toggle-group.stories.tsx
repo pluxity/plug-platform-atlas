@@ -7,8 +7,12 @@ const meta = {
   component: ToggleGroup,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '여러 토글 버튼을 그룹으로 묶은 컴포넌트입니다. 텍스트 포맷팅 툴바, 필터 옵션 등 여러 ON/OFF 상태를 관리할 때 사용됩니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

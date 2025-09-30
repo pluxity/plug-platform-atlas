@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -18,39 +17,16 @@ const meta: Meta<typeof DialogContent> = {
   component: DialogContent,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '모달 형태의 대화상자 컴포넌트입니다. 사용자의 주의가 필요한 중요한 정보나 폼을 표시할 때 사용하며, 배경을 오버레이로 가립니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
-    size: {
-      control: 'select',
-      options: ['sm', 'default', 'lg', 'xl', '2xl', 'full'],
-      description: 'Size variant of the dialog'
-    },
-    variant: {
-      control: 'select',
-      options: ['default', 'drawer', 'fullscreen'],
-      description: 'Visual variant of the dialog'
-    },
-    state: {
-      control: 'select',
-      options: ['default', 'loading', 'error', 'success', 'warning'],
-      description: 'State of the dialog'
-    },
     showCloseButton: {
       control: 'boolean',
-      description: 'Whether to show the close button'
-    },
-    closeOnOutsideClick: {
-      control: 'boolean',
-      description: 'Whether dialog closes when clicking outside'
-    },
-    closeOnEscape: {
-      control: 'boolean',
-      description: 'Whether dialog closes on Escape key'
-    },
-    loading: {
-      control: 'boolean',
-      description: 'Whether dialog is in loading state'
+      description: 'Show the top-right close button'
     }
   }
 }
@@ -59,15 +35,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  args: {
-    size: 'default',
-    variant: 'default',
-    state: 'default',
-    showCloseButton: true,
-    closeOnOutsideClick: true,
-    closeOnEscape: true,
-    loading: false
-  },
+  args: { showCloseButton: true },
   render: (args) => (
     <Dialog>
       <DialogTrigger asChild>
@@ -103,41 +71,36 @@ export const Default: Story = {
 }
 
 // Size variants
-export const Small: Story = {
+export const Simple: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Small Dialog</Button>
+        <Button variant="outline">Simple Dialog</Button>
       </DialogTrigger>
-      <DialogContent size="sm">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle level={3}>Small Dialog</DialogTitle>
-          <DialogDescription>This is a small dialog example.</DialogDescription>
+          <DialogTitle>Simple Dialog</DialogTitle>
+          <DialogDescription>Minimal content example.</DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground">
-            Perfect for simple confirmations or small forms.
-          </p>
-        </div>
         <DialogFooter>
-          <Button size="sm">OK</Button>
+          <Button>OK</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  ),
+  )
 }
 
-export const Large: Story = {
+export const WithForm: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Large Dialog</Button>
+        <Button variant="outline">Form Dialog</Button>
       </DialogTrigger>
-      <DialogContent size="lg">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Large Dialog</DialogTitle>
+          <DialogTitle>Profile Form</DialogTitle>
           <DialogDescription>
-            This is a large dialog with more space for complex content.
+            Update profile information below.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-6">
@@ -173,288 +136,24 @@ export const Large: Story = {
   ),
 }
 
-export const ExtraLarge: Story = {
-  render: () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Extra Large Dialog</Button>
-      </DialogTrigger>
-      <DialogContent size="xl">
-        <DialogHeader>
-          <DialogTitle>Extra Large Dialog</DialogTitle>
-          <DialogDescription>
-            Perfect for complex forms, data tables, or rich content.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-6 space-y-6">
-          <div className="grid grid-cols-3 gap-4">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i}>
-                <Label htmlFor={`field-${i}`}>Field {i + 1}</Label>
-                <Input id={`field-${i}`} placeholder={`Value ${i + 1}`} />
-              </div>
-            ))}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline">Cancel</Button>
-          <Button>Save All</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ),
-}
+// Removed size variants (API simplified)
 
-export const FullSize: Story = {
-  render: () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Full Size Dialog</Button>
-      </DialogTrigger>
-      <DialogContent size="full">
-        <DialogHeader>
-          <DialogTitle>Full Size Dialog</DialogTitle>
-          <DialogDescription>
-            Takes up most of the viewport space. Great for rich applications.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex-1 py-6">
-          <div className="h-[400px] border border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-            <p className="text-muted-foreground">Your full-size content here</p>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline">Cancel</Button>
-          <Button>Apply</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ),
-}
+// Fullsize / drawer / states removed
 
 // State variants
-export const LoadingState: Story = {
-  render: () => {
-    const [loading, setLoading] = useState(false)
+// Loading / error / success / warning states removed
 
-    const handleSubmit = () => {
-      setLoading(true)
-      setTimeout(() => setLoading(false), 3000)
-    }
+// Removed ErrorState story
 
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline">Loading Dialog</Button>
-        </DialogTrigger>
-        <DialogContent loading={loading}>
-          <DialogHeader>
-            <DialogTitle>Submit Form</DialogTitle>
-            <DialogDescription>
-              Fill out the form below and submit to see the loading state.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div>
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Your name" />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your@email.com" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" disabled={loading}>Cancel</Button>
-            <Button onClick={handleSubmit} loading={loading}>
-              Submit
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    )
-  },
-}
+// Removed SuccessState story
 
-export const ErrorState: Story = {
-  render: () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Error Dialog</Button>
-      </DialogTrigger>
-      <DialogContent state="error">
-        <DialogHeader>
-          <DialogTitle>Error Occurred</DialogTitle>
-          <DialogDescription variant="error">
-            There was an error processing your request. Please try again.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">
-          <div className="bg-error-50 border border-error-200 rounded-lg p-4">
-            <p className="text-sm text-error-700 font-medium">Error Details:</p>
-            <p className="text-sm text-error-600 mt-1">
-              Network timeout while connecting to server. Please check your connection and try again.
-            </p>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline">Cancel</Button>
-          <Button variant="destructive">Retry</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ),
-}
-
-export const SuccessState: Story = {
-  render: () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Success Dialog</Button>
-      </DialogTrigger>
-      <DialogContent state="success">
-        <DialogHeader>
-          <DialogTitle>Success!</DialogTitle>
-          <DialogDescription variant="success">
-            Your changes have been saved successfully.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">
-          <div className="bg-success-50 border border-success-200 rounded-lg p-4">
-            <p className="text-sm text-success-700 font-medium">✓ Profile updated</p>
-            <p className="text-sm text-success-600 mt-1">
-              Your profile information has been updated and will be visible immediately.
-            </p>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline">Close</Button>
-          <Button variant="success">Continue</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ),
-}
-
-export const WarningState: Story = {
-  render: () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Warning Dialog</Button>
-      </DialogTrigger>
-      <DialogContent state="warning">
-        <DialogHeader>
-          <DialogTitle>Warning</DialogTitle>
-          <DialogDescription variant="warning">
-            This action may have unintended consequences. Please review carefully.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">
-          <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
-            <p className="text-sm text-warning-700 font-medium">⚠ Important Notice:</p>
-            <p className="text-sm text-warning-600 mt-1">
-              Deleting this item will also remove all associated data. This action cannot be undone.
-            </p>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline">Cancel</Button>
-          <Button variant="warning">Proceed</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ),
-}
+// Removed WarningState story
 
 // Variant types
-export const Drawer: Story = {
-  render: () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Open Drawer</Button>
-      </DialogTrigger>
-      <DialogContent variant="drawer" size="default">
-        <DialogHeader>
-          <DialogTitle>Drawer Dialog</DialogTitle>
-          <DialogDescription>
-            This dialog slides up from the bottom like a mobile drawer.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4 space-y-4">
-          <div>
-            <Label htmlFor="option1">Option 1</Label>
-            <Input id="option1" placeholder="Enter value" />
-          </div>
-          <div>
-            <Label htmlFor="option2">Option 2</Label>
-            <Input id="option2" placeholder="Enter value" />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline">Cancel</Button>
-          <Button>Apply</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ),
-}
+// Removed Drawer variant story
 
 // Behavior variants
-export const NonDismissible: Story = {
-  render: () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Non-Dismissible Dialog</Button>
-      </DialogTrigger>
-      <DialogContent
-        closeOnOutsideClick={false}
-        closeOnEscape={false}
-        showCloseButton={false}
-      >
-        <DialogHeader>
-          <DialogTitle>Important Action Required</DialogTitle>
-          <DialogDescription>
-            This dialog requires your attention and cannot be dismissed by clicking outside or pressing Escape.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground">
-            You must explicitly choose one of the options below to continue.
-          </p>
-        </div>
-        <DialogFooter>
-          <Button variant="destructive">Decline</Button>
-          <Button>Accept</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ),
-}
+// Removed NonDismissible story (behavior props removed)
 
 // Header alignment variants
-export const CenteredHeader: Story = {
-  render: () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Centered Header</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader align="center">
-          <DialogTitle>Centered Title</DialogTitle>
-          <DialogDescription>
-            This dialog has a centered header layout.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Perfect for confirmations or announcements.
-          </p>
-        </div>
-        <DialogFooter justify="center">
-          <Button variant="outline">Cancel</Button>
-          <Button>Confirm</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ),
-}
+// Removed CenteredHeader story (alignment props removed)
