@@ -8,8 +8,12 @@ const meta: Meta<typeof Tooltip> = {
   component: Tooltip,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '요소에 마우스를 올렸을 때 추가 정보를 표시하는 툴팁 컴포넌트입니다. 짧은 설명이나 힌트를 제공하는 데 사용됩니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     delayDuration: {
       control: 'number',

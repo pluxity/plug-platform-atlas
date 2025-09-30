@@ -20,8 +20,12 @@ const meta: Meta<typeof ContextMenu> = {
   component: ContextMenu,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '우클릭 시 표시되는 컨텍스트 메뉴 컴포넌트입니다. 특정 요소에 관련된 액션 목록을 제공하며 서브메뉴를 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

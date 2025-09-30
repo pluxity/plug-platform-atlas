@@ -43,7 +43,7 @@ export interface LabelProps
 }
 
 const Label = React.forwardRef<
-  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentRef<typeof LabelPrimitive.Root>,
   LabelProps
 >(({ className, size, variant, required, helperText, errorText, description, children, ...props }, ref) => {
   const finalVariant = errorText ? 'error' : variant
@@ -52,7 +52,11 @@ const Label = React.forwardRef<
     <div className="space-y-1">
       <LabelPrimitive.Root
         ref={ref}
-        className={cn(labelVariants({ size, variant: finalVariant }), className)}
+        className={cn(
+          labelVariants({ size, variant: finalVariant }),
+          props.htmlFor && "cursor-pointer",
+          className
+        )}
         {...props}
       >
         {children}
@@ -89,7 +93,7 @@ const Label = React.forwardRef<
 Label.displayName = LabelPrimitive.Root.displayName
 
 const SimpleLabel = React.forwardRef<
-  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
     VariantProps<typeof labelVariants> & {
       required?: boolean
@@ -97,7 +101,11 @@ const SimpleLabel = React.forwardRef<
 >(({ className, size, variant, required, children, ...props }, ref) => (
   <LabelPrimitive.Root
     ref={ref}
-    className={cn(labelVariants({ size, variant }), className)}
+    className={cn(
+      labelVariants({ size, variant }),
+      props.htmlFor && "cursor-pointer",
+      className
+    )}
     {...props}
   >
     {children}

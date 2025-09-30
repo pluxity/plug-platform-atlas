@@ -4,7 +4,7 @@ import { VariantProps, cva } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 ease-out-quad focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background relative overflow-hidden transform-gpu",
+  "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 ease-out-quad focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ring-offset-background relative overflow-hidden transform-gpu",
   {
     variants: {
       variant: {
@@ -142,7 +142,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           buttonVariants({ variant, size, effect }),
           fullWidth && "w-full",
           pulse && !loading && "animate-pulse",
-          loading && "pointer-events-none",
+          loading && "cursor-wait pointer-events-none",
           className
         )}
         ref={ref}

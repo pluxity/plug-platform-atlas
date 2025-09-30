@@ -6,8 +6,12 @@ const meta = {
   component: AspectRatio,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '특정 비율(16:9, 4:3 등)을 유지하는 컨테이너 컴포넌트입니다. 이미지나 비디오의 가로세로 비율을 일관되게 유지할 때 사용됩니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

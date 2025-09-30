@@ -8,8 +8,12 @@ const meta: Meta<typeof Checkbox> = {
   component: Checkbox,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '선택/미선택 상태를 표현하는 체크박스 컴포넌트입니다. 다양한 크기와 상태(성공, 경고, 에러)를 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',

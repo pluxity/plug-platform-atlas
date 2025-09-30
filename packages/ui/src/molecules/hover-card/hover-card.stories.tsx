@@ -9,8 +9,12 @@ const meta: Meta<typeof HoverCard> = {
   component: HoverCard,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '요소에 마우스를 올렸을 때 카드 형태로 추가 정보를 표시하는 컴포넌트입니다. 프로필 미리보기, 상세 정보 등에 사용됩니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

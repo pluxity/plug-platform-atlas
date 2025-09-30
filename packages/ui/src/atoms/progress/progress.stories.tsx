@@ -7,8 +7,12 @@ const meta: Meta<typeof Progress> = {
   component: Progress,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '작업 진행 상태를 시각화하는 프로그레스 바 컴포넌트입니다. 선형과 원형 두 가지 형태를 지원하며 애니메이션 효과가 있습니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     value: {
       control: { type: 'range', min: 0, max: 100, step: 1 },

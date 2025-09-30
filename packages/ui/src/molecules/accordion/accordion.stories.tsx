@@ -11,8 +11,12 @@ const meta: Meta<typeof Accordion> = {
   component: Accordion,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '접고 펼칠 수 있는 아코디언 컴포넌트입니다. FAQ, 내비게이션 메뉴 등 많은 정보를 컴팩트하게 표시할 때 사용하며 단일/다중 선택을 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

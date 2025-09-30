@@ -17,8 +17,12 @@ const meta: Meta<typeof AlertDialog> = {
   component: AlertDialog,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '사용자 확인이 필요한 중요한 작업에 사용하는 알림 대화상자입니다. 삭제, 로그아웃 등 되돌릴 수 없는 작업 전에 확인을 받습니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

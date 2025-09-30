@@ -39,8 +39,12 @@ const meta: Meta<typeof DropdownMenu> = {
   component: DropdownMenu,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '버튼 클릭 시 메뉴를 드롭다운으로 표시하는 컴포넌트입니다. 액션 목록, 네비게이션, 설정 메뉴 등에 사용되며 서브메뉴를 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
 }
 
 export default meta

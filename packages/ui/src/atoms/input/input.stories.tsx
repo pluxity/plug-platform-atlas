@@ -6,8 +6,12 @@ const meta: Meta<typeof Input> = {
   component: Input,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '텍스트 입력을 받는 폼 컴포넌트입니다. 다양한 타입(text, email, password 등)과 상태(error, success, warning)를 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

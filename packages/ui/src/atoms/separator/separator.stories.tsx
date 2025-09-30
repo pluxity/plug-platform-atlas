@@ -6,8 +6,12 @@ const meta: Meta<typeof Separator> = {
   component: Separator,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '콘텐츠를 시각적으로 구분하는 구분선 컴포넌트입니다. 수평/수직 방향, 다양한 스타일(실선, 점선, 그라데이션)을 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     orientation: {
       control: 'select',

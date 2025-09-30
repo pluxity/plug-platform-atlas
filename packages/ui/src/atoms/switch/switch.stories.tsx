@@ -7,8 +7,12 @@ const meta: Meta<typeof Switch> = {
   component: Switch,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '토글 형태의 스위치 컴포넌트입니다. 설정 활성화/비활성화, 옵션 전환 등에 사용되며 로딩 상태를 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',

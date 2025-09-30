@@ -8,7 +8,7 @@ import { VariantProps, cva } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 
 const checkboxVariants = cva(
-  "peer shrink-0 rounded-sm border ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+  "peer shrink-0 rounded-sm border ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       size: {

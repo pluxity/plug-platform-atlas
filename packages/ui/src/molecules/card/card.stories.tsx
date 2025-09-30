@@ -8,8 +8,12 @@ const meta: Meta<typeof Card> = {
   component: Card,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: '관련 정보를 그룹화하여 표시하는 카드 컴포넌트입니다. 헤더, 본문, 푸터를 포함하며 다양한 호버 효과와 스타일을 지원합니다.',
+      },
+    },
   },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',
