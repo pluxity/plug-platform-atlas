@@ -4,14 +4,20 @@
   "version": "1.0.0",
   "description": "Plug Platform Atlas Monorepo",
   "scripts": {
-    "dev": "pnpm --filter @plug-atlas/web dev",
-    "dev:storybook": "pnpm --filter @plug-atlas/ui storybook",
+    "dev": "pnpm --filter @plug-atlas/a-iot dev",
     "build": "pnpm -r build",
-    "build:storybook": "pnpm --filter @plug-atlas/ui build-storybook",
-    "preview": "pnpm --filter @plug-atlas/web preview",
+    "preview": "pnpm --filter @plug-atlas/a-iot preview",
     "lint": "pnpm -r lint",
     "type-check": "pnpm -r type-check",
-    "clean": "pnpm -r clean && rimraf node_modules"
+    "clean": "pnpm -r clean && rimraf node_modules",
+    "storybook": "pnpm --filter @plug-atlas/ui storybook",
+    "build-storybook": "pnpm --filter @plug-atlas/ui build-storybook",
+    "a-iot": "pnpm --filter @plug-atlas/a-iot",
+    "admin": "pnpm --filter @plug-atlas/admin",
+    "ui": "pnpm --filter @plug-atlas/ui",
+    "api-hooks": "pnpm --filter @plug-atlas/api-hooks",
+    "web-core": "pnpm --filter @plug-atlas/web-core",
+    "types": "pnpm --filter @plug-atlas/types"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
@@ -19,8 +25,8 @@
     "typescript": "^5.7.3"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
   },
   "packageManager": "pnpm@10.9.0"
 }
