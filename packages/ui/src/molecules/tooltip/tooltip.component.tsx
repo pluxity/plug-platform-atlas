@@ -255,7 +255,7 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
     }, [])
 
     if (asChild && React.isValidElement(children)) {
-      return React.cloneElement(children as any, {
+      return React.cloneElement(children as React.ReactElement<any>, {
         ...props,
         onMouseEnter: handleMouseEnter,
         onMouseLeave: handleMouseLeave,

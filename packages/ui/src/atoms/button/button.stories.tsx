@@ -15,7 +15,7 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'destructive', 'success', 'warning', 'outline', 'secondary', 'ghost', 'link'],
+      options: ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
     },
     size: {
       control: 'select',
@@ -50,20 +50,6 @@ export const Destructive: Story = {
   args: {
     variant: 'destructive',
     children: 'Destructive',
-  },
-}
-
-export const Success: Story = {
-  args: {
-    variant: 'success',
-    children: 'Success',
-  },
-}
-
-export const Warning: Story = {
-  args: {
-    variant: 'warning',
-    children: 'Warning',
   },
 }
 
@@ -157,11 +143,9 @@ export const AllVariants: Story = {
         <Button variant="default">Default</Button>
         <Button variant="secondary">Secondary</Button>
         <Button variant="destructive">Destructive</Button>
-        <Button variant="success">Success</Button>
-        <Button variant="warning">Warning</Button>
+        <Button variant="outline">Outline</Button>
       </div>
       <div className="flex gap-2">
-        <Button variant="outline">Outline</Button>
         <Button variant="ghost">Ghost</Button>
         <Button variant="link">Link</Button>
       </div>

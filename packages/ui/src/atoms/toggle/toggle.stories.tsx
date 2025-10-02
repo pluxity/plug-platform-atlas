@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { Toggle } from './toggle.component'
-import { Bold, Italic, Underline, Eye, EyeOff, Heart, Star, Settings } from 'lucide-react'
+import { Bold, Italic, Underline, Eye, EyeOff } from 'lucide-react'
 import * as React from 'react'
 
 const meta: Meta<typeof Toggle> = {
@@ -17,26 +17,17 @@ const meta: Meta<typeof Toggle> = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'outline', 'primary', 'success', 'warning', 'destructive'],
+      options: ['default', 'outline'],
     },
     size: {
       control: 'select',
-      options: ['xs', 'sm', 'default', 'lg', 'xl'],
+      options: ['sm', 'default', 'lg'],
     },
     pressed: {
       control: 'boolean',
     },
     disabled: {
       control: 'boolean',
-    },
-    loading: {
-      control: 'boolean',
-    },
-    label: {
-      control: 'text',
-    },
-    description: {
-      control: 'text',
     },
   },
 }
@@ -73,12 +64,6 @@ export const Sizes: Story = {
   render: () => (
     <div className="flex items-center gap-4">
       <div className="text-center space-y-2">
-        <Toggle size="xs" aria-label="Toggle bold">
-          <Bold className="h-3 w-3" />
-        </Toggle>
-        <p className="text-xs text-gray-600">XS</p>
-      </div>
-      <div className="text-center space-y-2">
         <Toggle size="sm" aria-label="Toggle bold">
           <Bold className="h-3 w-3" />
         </Toggle>
@@ -95,12 +80,6 @@ export const Sizes: Story = {
           <Bold className="h-4 w-4" />
         </Toggle>
         <p className="text-xs text-gray-600">LG</p>
-      </div>
-      <div className="text-center space-y-2">
-        <Toggle size="xl" aria-label="Toggle bold">
-          <Bold className="h-5 w-5" />
-        </Toggle>
-        <p className="text-xs text-gray-600">XL</p>
       </div>
     </div>
   ),
@@ -153,117 +132,29 @@ export const Variants: Story = {
         </Toggle>
         <p className="text-xs text-gray-600">Outline</p>
       </div>
-      <div className="text-center space-y-2">
-        <Toggle variant="primary" pressed aria-label="Toggle bold">
-          <Bold className="h-4 w-4" />
-        </Toggle>
-        <p className="text-xs text-gray-600">Primary</p>
-      </div>
-      <div className="text-center space-y-2">
-        <Toggle variant="success" pressed aria-label="Toggle bold">
-          <Bold className="h-4 w-4" />
-        </Toggle>
-        <p className="text-xs text-gray-600">Success</p>
-      </div>
-      <div className="text-center space-y-2">
-        <Toggle variant="warning" pressed aria-label="Toggle bold">
-          <Bold className="h-4 w-4" />
-        </Toggle>
-        <p className="text-xs text-gray-600">Warning</p>
-      </div>
-      <div className="text-center space-y-2">
-        <Toggle variant="destructive" pressed aria-label="Toggle bold">
-          <Bold className="h-4 w-4" />
-        </Toggle>
-        <p className="text-xs text-gray-600">Destructive</p>
-      </div>
     </div>
   ),
 }
 
 export const WithIcons: Story = {
   render: () => (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Toggle leftIcon={<Bold className="h-4 w-4" />}>
-          Bold
-        </Toggle>
-        <Toggle leftIcon={<Italic className="h-4 w-4" />}>
-          Italic
-        </Toggle>
-        <Toggle leftIcon={<Underline className="h-4 w-4" />}>
-          Underline
-        </Toggle>
-      </div>
-      <div className="flex items-center gap-2">
-        <Toggle rightIcon={<Eye className="h-4 w-4" />}>
-          Show
-        </Toggle>
-        <Toggle rightIcon={<Heart className="h-4 w-4" />}>
-          Like
-        </Toggle>
-        <Toggle rightIcon={<Star className="h-4 w-4" />}>
-          Favorite
-        </Toggle>
-      </div>
+    <div className="flex items-center gap-2">
+      <Toggle aria-label="Toggle bold">
+        <Bold className="h-4 w-4 mr-2" />
+        Bold
+      </Toggle>
+      <Toggle aria-label="Toggle italic">
+        <Italic className="h-4 w-4 mr-2" />
+        Italic
+      </Toggle>
+      <Toggle aria-label="Toggle underline">
+        <Underline className="h-4 w-4 mr-2" />
+        Underline
+      </Toggle>
     </div>
   ),
 }
 
-export const Loading: Story = {
-  render: () => (
-    <div className="flex items-center gap-4">
-      <div className="text-center space-y-2">
-        <Toggle loading size="sm">
-          Loading
-        </Toggle>
-        <p className="text-xs text-gray-600">Small</p>
-      </div>
-      <div className="text-center space-y-2">
-        <Toggle loading variant="primary">
-          Loading
-        </Toggle>
-        <p className="text-xs text-gray-600">Default</p>
-      </div>
-      <div className="text-center space-y-2">
-        <Toggle loading size="lg" variant="success">
-          Loading
-        </Toggle>
-        <p className="text-xs text-gray-600">Large</p>
-      </div>
-    </div>
-  ),
-}
-
-export const WithLabels: Story = {
-  render: () => (
-    <div className="space-y-4 max-w-md">
-      <Toggle
-        label="Notifications"
-        description="Receive email notifications"
-        leftIcon={<Settings className="h-4 w-4" />}
-      >
-        Toggle
-      </Toggle>
-      <Toggle
-        label="Dark Mode"
-        description="Switch to dark theme"
-        variant="primary"
-        pressed
-      >
-        Enabled
-      </Toggle>
-      <Toggle
-        label="Auto-save"
-        description="Automatically save your work"
-        variant="success"
-        disabled
-      >
-        Coming Soon
-      </Toggle>
-    </div>
-  ),
-}
 
 export const InteractiveExample: Story = {
   render: () => {
@@ -272,40 +163,32 @@ export const InteractiveExample: Story = {
     const [darkMode, setDarkMode] = React.useState(false)
 
     return (
-      <div className="space-y-6 max-w-md">
-        <div>
-          <h3 className="text-lg font-medium mb-4">Settings</h3>
-          <div className="space-y-4">
-            <Toggle
-              pressed={showPassword}
-              onPressedChange={setShowPassword}
-              variant="outline"
-              leftIcon={showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            >
-              {showPassword ? 'Hide' : 'Show'} Password
-            </Toggle>
+      <div className="space-y-4">
+        <Toggle
+          pressed={showPassword}
+          onPressedChange={setShowPassword}
+          variant="outline"
+          aria-label="Toggle password visibility"
+        >
+          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {showPassword ? ' Hide' : ' Show'} Password
+        </Toggle>
 
-            <Toggle
-              pressed={notifications}
-              onPressedChange={setNotifications}
-              variant={notifications ? "success" : "default"}
-              label="Email Notifications"
-              description="Receive updates via email"
-            >
-              {notifications ? 'Enabled' : 'Disabled'}
-            </Toggle>
+        <Toggle
+          pressed={notifications}
+          onPressedChange={setNotifications}
+          aria-label="Toggle notifications"
+        >
+          {notifications ? 'Enabled' : 'Disabled'}
+        </Toggle>
 
-            <Toggle
-              pressed={darkMode}
-              onPressedChange={setDarkMode}
-              variant={darkMode ? "primary" : "default"}
-              label="Dark Mode"
-              description="Switch to dark theme"
-            >
-              {darkMode ? 'Dark' : 'Light'}
-            </Toggle>
-          </div>
-        </div>
+        <Toggle
+          pressed={darkMode}
+          onPressedChange={setDarkMode}
+          aria-label="Toggle dark mode"
+        >
+          {darkMode ? 'Dark' : 'Light'}
+        </Toggle>
       </div>
     )
   },
@@ -339,21 +222,6 @@ export const AllVariants: Story = {
             <Italic className="h-4 w-4" />
           </Toggle>
           <Toggle variant="outline" disabled aria-label="Toggle underline">
-            <Underline className="h-4 w-4" />
-          </Toggle>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium">Primary</h4>
-        <div className="flex gap-2">
-          <Toggle variant="primary" aria-label="Toggle bold">
-            <Bold className="h-4 w-4" />
-          </Toggle>
-          <Toggle variant="primary" pressed aria-label="Toggle italic">
-            <Italic className="h-4 w-4" />
-          </Toggle>
-          <Toggle variant="primary" disabled aria-label="Toggle underline">
             <Underline className="h-4 w-4" />
           </Toggle>
         </div>

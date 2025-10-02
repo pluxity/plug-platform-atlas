@@ -296,13 +296,13 @@ export const WithBadges: Story = {
   render: () => (
     <Tabs defaultValue="inbox" className="w-[400px]">
       <TabsList>
-        <TabsTrigger value="inbox" badge={<Badge variant="destructive" size="sm">5</Badge>}>
+        <TabsTrigger value="inbox" badge={<Badge variant="destructive">5</Badge>}>
           Inbox
         </TabsTrigger>
-        <TabsTrigger value="sent" badge={<Badge variant="secondary" size="sm">12</Badge>}>
+        <TabsTrigger value="sent" badge={<Badge variant="secondary">12</Badge>}>
           Sent
         </TabsTrigger>
-        <TabsTrigger value="drafts" badge={<Badge variant="outline" size="sm">3</Badge>}>
+        <TabsTrigger value="drafts" badge={<Badge variant="outline">3</Badge>}>
           Drafts
         </TabsTrigger>
       </TabsList>

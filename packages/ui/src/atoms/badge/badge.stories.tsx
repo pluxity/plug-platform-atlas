@@ -8,7 +8,7 @@ const meta: Meta<typeof Badge> = {
     layout: 'centered',
     docs: {
       description: {
-        component: '상태, 카테고리, 알림 등을 표시하는 작은 라벨 컴포넌트입니다. 다양한 색상과 크기를 지원하며 닫기 버튼을 추가할 수 있습니다.',
+        component: '상태, 카테고리, 알림 등을 표시하는 작은 라벨 컴포넌트입니다. 다양한 색상 변형을 지원하며 아이콘과 함께 사용할 수 있습니다.',
       },
     },
   },
@@ -16,13 +16,6 @@ const meta: Meta<typeof Badge> = {
     variant: {
       control: 'select',
       options: ['default', 'secondary', 'success', 'warning', 'destructive', 'outline'],
-    },
-    size: {
-      control: 'select',
-      options: ['sm', 'default', 'lg'],
-    },
-    dismissible: {
-      control: 'boolean',
     },
     children: {
       control: 'text',
@@ -74,42 +67,29 @@ export const Warning: Story = {
   },
 }
 
-export const WithDismiss: Story = {
-  args: {
-    dismissible: true,
-    children: 'Dismissible',
-    onDismiss: () => alert('Badge dismissed'),
-  },
-}
-
 export const WithIcon: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
-      <Badge leftIcon={
-        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+      <Badge variant="success">
+        <svg className="size-3" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
         </svg>
-      }>
         Verified
       </Badge>
 
-      <Badge variant="warning" rightIcon={
-        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+      <Badge variant="warning">
+        <svg className="size-3" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
         </svg>
-      }>
         Warning
       </Badge>
-    </div>
-  ),
-}
 
-export const Sizes: Story = {
-  render: () => (
-    <div className="flex items-center gap-2">
-      <Badge size="sm">Small</Badge>
-      <Badge size="default">Default</Badge>
-      <Badge size="lg">Large</Badge>
+      <Badge variant="destructive">
+        <svg className="size-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
+        Error
+      </Badge>
     </div>
   ),
 }

@@ -8,15 +8,11 @@ const meta: Meta<typeof Input> = {
     layout: 'centered',
     docs: {
       description: {
-        component: '텍스트 입력을 받는 폼 컴포넌트입니다. 다양한 타입(text, email, password 등)과 상태(error, success, warning)를 지원합니다.',
+        component: '텍스트 입력을 받는 기본 폼 컴포넌트입니다. 다양한 HTML input 타입(text, email, password 등)을 지원하며, aria-invalid 속성으로 유효성 검사 상태를 표시할 수 있습니다.',
       },
     },
   },
   argTypes: {
-    variant: {
-      control: 'select',
-      options: ['default', 'error', 'success', 'warning'],
-    },
     type: {
       control: 'select',
       options: ['text', 'email', 'password', 'number', 'tel', 'url', 'search', 'date', 'time'],
@@ -25,12 +21,6 @@ const meta: Meta<typeof Input> = {
       control: 'boolean',
     },
     placeholder: {
-      control: 'text',
-    },
-    helperText: {
-      control: 'text',
-    },
-    errorText: {
       control: 'text',
     },
   },
@@ -86,66 +76,47 @@ export const WithValue: Story = {
   },
 }
 
-export const WithHelperText: Story = {
+export const Invalid: Story = {
   args: {
     placeholder: 'Enter your email',
-    helperText: 'We will never share your email',
-  },
-}
-
-export const WithError: Story = {
-  args: {
-    placeholder: 'Enter your email',
-    errorText: 'Please enter a valid email address',
+    'aria-invalid': true,
     defaultValue: 'invalid-email',
   },
 }
 
-export const Success: Story = {
-  args: {
-    variant: 'success',
-    placeholder: 'Enter your email',
-    helperText: 'Email is available',
-    defaultValue: 'user@example.com',
-  },
-}
-
-export const Warning: Story = {
-  args: {
-    variant: 'warning',
-    placeholder: 'Enter password',
-    helperText: 'Password should be at least 8 characters',
-    type: 'password',
-  },
-}
-
-export const AllStates: Story = {
+export const WithIcon: Story = {
   render: () => (
-    <div className="flex flex-col gap-6 w-80">
-      <div>
-        <label className="block text-sm font-medium mb-2">Default</label>
-        <Input placeholder="Enter text..." helperText="This is a helper text" />
-      </div>
+    <div className="relative w-80">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        />
+      </svg>
+      <Input className="pl-10" placeholder="Search..." />
+    </div>
+  ),
+}
 
-      <div>
-        <label className="block text-sm font-medium mb-2">Success</label>
-        <Input variant="success" placeholder="Valid input" helperText="Great! This looks good" defaultValue="valid@example.com" />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-2">Warning</label>
-        <Input variant="warning" placeholder="Warning input" helperText="Please double-check this" />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-2">Error</label>
-        <Input placeholder="Error input" errorText="This field is required" />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-2">Disabled</label>
-        <Input disabled placeholder="Disabled input" helperText="This field is disabled" />
-      </div>
+export const DifferentTypes: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4 w-80">
+      <Input type="text" placeholder="Text input" />
+      <Input type="email" placeholder="Email input" />
+      <Input type="password" placeholder="Password input" />
+      <Input type="number" placeholder="Number input" />
+      <Input type="search" placeholder="Search input" />
+      <Input type="tel" placeholder="Phone input" />
+      <Input type="url" placeholder="URL input" />
+      <Input type="date" />
     </div>
   ),
 }
