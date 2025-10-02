@@ -323,7 +323,7 @@ export const ComplexContent: Story = {
               <div>Name: John Doe</div>
               <div>Role: Developer</div>
               <div className="flex items-center gap-1 mt-1">
-                Status: <Badge variant="success" size="sm">Active</Badge>
+                Status: <Badge variant="success">Active</Badge>
               </div>
             </div>
           </div>
@@ -363,7 +363,7 @@ export const OnButtons: Story = {
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="success">Save</Button>
+          <Button variant="default">Save</Button>
         </TooltipTrigger>
         <TooltipContent variant="success">
           Save your changes

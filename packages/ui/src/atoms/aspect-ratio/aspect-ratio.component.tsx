@@ -1,29 +1,11 @@
-import * as React from "react"
-import { cn } from "../../lib/utils"
+"use client"
 
-export interface AspectRatioProps extends React.HTMLAttributes<HTMLDivElement> {
-  ratio?: number
+import * as AspectRatioPrimitive from "@radix-ui/react-aspect-ratio"
+
+function AspectRatio({
+  ...props
+}: React.ComponentProps<typeof AspectRatioPrimitive.Root>) {
+  return <AspectRatioPrimitive.Root data-slot="aspect-ratio" {...props} />
 }
-
-const AspectRatio = React.forwardRef<HTMLDivElement, AspectRatioProps>(
-  ({ ratio = 16 / 9, className, children, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn("relative w-full", className)}
-        style={{
-          paddingBottom: `${(1 / ratio) * 100}%`
-        }}
-        {...props}
-      >
-        <div className="absolute inset-0">
-          {children}
-        </div>
-      </div>
-    )
-  }
-)
-
-AspectRatio.displayName = "AspectRatio"
 
 export { AspectRatio }

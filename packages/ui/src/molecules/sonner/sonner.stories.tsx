@@ -129,7 +129,7 @@ export const ColorVariants: Story = {
           onClick={() => toast.success("작업이 성공했습니다!", {
             description: "파일이 성공적으로 업로드되었습니다"
           })}
-          variant="success"
+          variant="default"
         >
           Success Toast
         </Button>
@@ -138,7 +138,7 @@ export const ColorVariants: Story = {
           onClick={() => toast.warning("주의가 필요합니다", {
             description: "이 작업은 되돌릴 수 없습니다"
           })}
-          variant="warning"
+          variant="secondary"
         >
           Warning Toast
         </Button>

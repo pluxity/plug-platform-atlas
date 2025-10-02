@@ -17,20 +17,6 @@ const meta: Meta<typeof Alert> = {
       control: 'select',
       options: ['default', 'success', 'warning', 'destructive'],
     },
-    size: {
-      control: 'select',
-      options: ['sm', 'default', 'lg'],
-    },
-    borderStyle: {
-      control: 'select',
-      options: ['solid', 'dashed', 'none'],
-    },
-    closable: {
-      control: 'boolean',
-    },
-    animated: {
-      control: 'boolean',
-    },
   },
 }
 
@@ -145,21 +131,24 @@ export const WithIcons: Story = {
 
     return (
       <div className="space-y-4 w-[500px]">
-        <Alert icon={<InfoIcon />}>
+        <Alert className="w-[400px]">
+          <InfoIcon />
           <AlertTitle>Information</AlertTitle>
           <AlertDescription>
             Here's some useful information with an icon.
           </AlertDescription>
         </Alert>
 
-        <Alert variant="success" icon={<CheckIcon />}>
+        <Alert variant="success" className="w-[400px]">
+          <CheckIcon />
           <AlertTitle>Success</AlertTitle>
           <AlertDescription>
             Your operation completed successfully.
           </AlertDescription>
         </Alert>
 
-        <Alert variant="warning" icon={<ExclamationIcon />}>
+        <Alert variant="warning" className="w-[400px]">
+          <ExclamationIcon />
           <AlertTitle>Warning</AlertTitle>
           <AlertDescription>
             Please review your input before proceeding.
@@ -168,78 +157,4 @@ export const WithIcons: Story = {
       </div>
     )
   },
-}
-
-export const DifferentSizes: Story = {
-  render: () => (
-    <div className="space-y-4 w-[500px]">
-      <Alert size="sm">
-        <AlertTitle>Small Alert</AlertTitle>
-        <AlertDescription>
-          This is a small alert with compact padding.
-        </AlertDescription>
-      </Alert>
-
-      <Alert size="default" variant="success">
-        <AlertTitle>Default Alert</AlertTitle>
-        <AlertDescription>
-          This is a default sized alert with standard padding.
-        </AlertDescription>
-      </Alert>
-
-      <Alert size="lg" variant="warning">
-        <AlertTitle>Large Alert</AlertTitle>
-        <AlertDescription>
-          This is a large alert with generous padding and larger text.
-        </AlertDescription>
-      </Alert>
-    </div>
-  ),
-}
-
-export const BorderStyles: Story = {
-  render: () => (
-    <div className="space-y-4 w-[500px]">
-      <Alert borderStyle="solid">
-        <AlertTitle>Solid Border</AlertTitle>
-        <AlertDescription>
-          Alert with a solid border (default).
-        </AlertDescription>
-      </Alert>
-
-      <Alert borderStyle="dashed" variant="warning">
-        <AlertTitle>Dashed Border</AlertTitle>
-        <AlertDescription>
-          Alert with a dashed border for emphasis.
-        </AlertDescription>
-      </Alert>
-
-      <Alert borderStyle="none" variant="success">
-        <AlertTitle>No Border</AlertTitle>
-        <AlertDescription>
-          Alert with no border, relying on shadow for definition.
-        </AlertDescription>
-      </Alert>
-    </div>
-  ),
-}
-
-export const Dismissible: Story = {
-  render: () => (
-    <div className="space-y-4 w-[500px]">
-      <Alert closable onDismiss={() => alert('Alert dismissed!')}>
-        <AlertTitle>Dismissible Alert</AlertTitle>
-        <AlertDescription>
-          This alert can be dismissed by clicking the close button.
-        </AlertDescription>
-      </Alert>
-
-      <Alert variant="warning" closable animated={false} onDismiss={() => alert('Alert dismissed!')}>
-        <AlertTitle>Non-animated Dismissal</AlertTitle>
-        <AlertDescription>
-          This alert dismisses immediately without animation.
-        </AlertDescription>
-      </Alert>
-    </div>
-  ),
 }

@@ -81,13 +81,13 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
             ref={ref}
             variant="outline"
             disabled={disabled}
-            leftIcon={<CalendarIcon className="h-4 w-4" />}
             className={cn(
               "w-[280px] justify-start text-left font-normal",
               !props.value && "text-muted-foreground",
               className
             )}
           >
+            <CalendarIcon className="h-4 w-4" />
             {displayValue}
           </Button>
         </PopoverTrigger>

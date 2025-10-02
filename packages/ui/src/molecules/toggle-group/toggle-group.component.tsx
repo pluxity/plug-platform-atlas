@@ -38,8 +38,7 @@ const ToggleGroup = React.forwardRef<
   >
     {React.Children.map(children, (child) =>
       React.isValidElement(child)
-        ? React.cloneElement(child, {
-            // @ts-ignore
+        ? React.cloneElement(child as React.ReactElement<any>, {
             variant,
             size,
           })
