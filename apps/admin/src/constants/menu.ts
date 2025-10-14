@@ -2,9 +2,11 @@ import {
   Building2,
   Camera,
   ClipboardList,
+  FolderTree,
   Home,
   KeyRound,
   MapPin,
+  PlugZap,
   Radio,
   Settings,
   Shield,
@@ -46,6 +48,11 @@ export const MENU_ITEMS: MenuItem[] = [
     title: '장치 관리',
     icon: Radio,
     children: [
+      {
+        title: 'IoT 센서 분류 관리',
+        icon: FolderTree,
+        path: '/devices/sensor-categories',
+      },
       {
         title: 'IoT 센서 관리',
         icon: Radio,
@@ -95,9 +102,9 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: Settings,
     children: [
       {
-        title: '플랫폼 연동 관리',
-        icon: Settings,
-        path: '/system/platform',
+        title: 'Mobius 연동 관리',
+        icon: PlugZap,
+        path: '/system/mobius',
       },
     ],
   },
