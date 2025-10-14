@@ -1,16 +1,20 @@
 import React from 'react'
 import AdminHeader from './AdminHeader'
-import { Toaster } from '@plug-atlas/ui'
+import AppSidebar from './AppSidebar'
+import { SidebarProvider, SidebarInset, SidebarTrigger, Toaster } from '@plug-atlas/ui'
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="flex flex-col h-screen">
-      <AdminHeader />
-      <main className="flex-1 overflow-hidden bg-white">
-        {children}
-      </main>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <AdminHeader />
+        <main className="flex-1 overflow-auto bg-white p-4">
+          {children}
+        </main>
+      </SidebarInset>
       <Toaster />
-    </div>
+    </SidebarProvider>
   )
 }
 
