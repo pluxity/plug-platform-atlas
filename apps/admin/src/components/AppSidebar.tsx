@@ -1,4 +1,4 @@
-import { Building2, ChevronRight, Home, Users, Shield, KeyRound } from 'lucide-react'
+import { Building2, ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   Sidebar,
@@ -13,9 +13,9 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarTrigger,
 } from '@plug-atlas/ui'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@plug-atlas/ui'
+import { MENU_ITEMS } from '../constants/menu'
 
 export default function AppSidebar() {
   const location = useLocation()
@@ -37,63 +37,56 @@ export default function AppSidebar() {
           <SidebarGroupLabel>메인 메뉴</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/')}>
-                  <Link to="/">
-                    <Home />
-                    <span>대시보드</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {MENU_ITEMS.map((item) => {
+                const Icon = item.icon
 
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/facilities')}>
-                  <Link to="/facilities">
-                    <Building2 />
-                    <span>시설물 관리</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                if (item.children && item.children.length > 0) {
+                  return (
+                    <Collapsible key={item.title} defaultOpen className="group/collapsible">
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton>
+                            <Icon />
+                            <span>{item.title}</span>
+                            <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.children.map((child) => {
+                              const ChildIcon = child.icon
+                              return (
+                                <SidebarMenuSubItem key={child.title}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={child.path ? isActive(child.path) : false}
+                                  >
+                                    <Link to={child.path || '#'}>
+                                      <ChildIcon className="size-4" />
+                                      <span>{child.title}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              )
+                            })}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  )
+                }
 
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton>
-                      <Users />
-                      <span>사용자</span>
-                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={item.path ? isActive(item.path) : false}>
+                      <Link to={item.path || '#'}>
+                        <Icon />
+                        <span>{item.title}</span>
+                      </Link>
                     </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive('/users')}>
-                          <Link to="/users">
-                            <Users className="size-4" />
-                            <span>사용자</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive('/users/roles')}>
-                          <Link to="/users/roles">
-                            <Shield className="size-4" />
-                            <span>역할</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive('/users/permissions')}>
-                          <Link to="/users/permissions">
-                            <KeyRound className="size-4" />
-                            <span>권한 관리</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
