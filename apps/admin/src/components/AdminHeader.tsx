@@ -1,24 +1,23 @@
 import React from 'react'
+import { SidebarTrigger } from '@plug-atlas/ui'
+import { Separator } from '@plug-atlas/ui'
 
 const AdminHeader: React.FC = () => {
   return (
-    <header className="bg-white border-b z-10 shadow-xs">
-      <div className="px-2 pl-6 py-2">
-        <div className="flex items-center justify-between">
+    <header className="bg-white border-b z-10 shadow-xs sticky top-0">
+      <div className="flex items-center gap-2 px-4 py-2">
+        <SidebarTrigger />
+        <Separator orientation="vertical" className="h-6" />
+        <div className="flex items-center justify-between flex-1">
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-gray-900">
               <button
                 type="button"
                 onClick={() => window.location.href = '/'}
                 className="flex items-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 aria-label="홈으로 이동"
               >
-                <img
-                  src="/logo.svg"
-                  alt="Plug Platform"
-                  className="h-8 w-auto select-none"
-                  draggable={false}
-                />
+                Plug Platform Admin
               </button>
             </h1>
           </div>

@@ -24,6 +24,9 @@ build/
 .env.test.local
 .env.production.local
 
+# MCP 설정 파일 (민감한 정보 포함)
+.mcp.json
+
 # 로그 파일
 *.log
 
