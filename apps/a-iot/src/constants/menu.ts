@@ -70,11 +70,10 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
   },
 ]
 
-// 실시간 알람 메뉴 (단일 메뉴, 뱃지 표시)
+// 실시간 알람 메뉴 (단일 메뉴, 뱃지 표시, Sheet로 표시)
 export const REALTIME_ALARM_MENU: MenuItem = {
   title: '실시간 알람',
   icon: BellRing,
-  path: '/alarms/realtime',
 }
 
 // 관리자만 접근 가능한 관리 메뉴
