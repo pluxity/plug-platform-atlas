@@ -13,7 +13,6 @@
     "storybook": "pnpm --filter @plug-atlas/ui storybook",
     "build-storybook": "pnpm --filter @plug-atlas/ui build-storybook",
     "a-iot": "pnpm --filter @plug-atlas/a-iot",
-    "admin": "pnpm --filter @plug-atlas/admin",
     "ui": "pnpm --filter @plug-atlas/ui",
     "api-hooks": "pnpm --filter @plug-atlas/api-hooks",
     "web-core": "pnpm --filter @plug-atlas/web-core",
