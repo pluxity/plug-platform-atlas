@@ -2,6 +2,7 @@
 name: Documentation
 about: 문서 작성 및 개선
 title: '[DOCS] '
+type: Documentation
 labels: documentation
 assignees: ''
 ---

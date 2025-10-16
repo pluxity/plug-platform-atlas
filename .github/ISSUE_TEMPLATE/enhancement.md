@@ -2,6 +2,7 @@
 name: Enhancement
 about: 기존 기능 개선 제안
 title: '[ENHANCEMENT] '
+type: Enhancement
 labels: enhancement
 assignees: ''
 ---
