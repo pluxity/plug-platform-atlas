@@ -12,8 +12,7 @@
 ```
 plug-platform-atlas/
 ├── apps/
-│   ├── a-iot/              # IoT 앱 (Cesium 3D 지도)
-│   └── admin/              # 관리자 앱
+│   └── a-iot/              # 통합 IoT/관리자 앱 (Cesium 3D 지도 + 관리 기능)
 ├── packages/
 │   ├── ui/                 # 공유 UI 라이브러리 (43개 컴포넌트)
 │   ├── api-hooks/          # API 클라이언트 & React Query hooks
@@ -64,11 +63,8 @@ apps/a-iot/src/components/
 ## 주요 명령어
 
 ```bash
-# IoT 앱 실행
+# 앱 실행
 pnpm dev                    # 또는 pnpm a-iot dev
-
-# Admin 앱 실행
-pnpm admin dev
 
 # Storybook 실행
 pnpm storybook              # 또는 pnpm ui storybook
@@ -243,6 +239,10 @@ gh project item-edit \
 
 ## 최근 작업
 
+### 2025-10-16
+- **앱 통합**: admin 앱을 a-iot로 통합 (단일 앱으로 관리)
+- 모노레포 구조 단순화 (apps/a-iot 단일 앱으로 변경)
+
 ### 2025-10-01
 - Cesium 3D 지도 통합 (SeongnamTileset 분리, LOD 최적화)
 - Menubar, Sheet, Sidebar 컴포넌트 추가
@@ -255,4 +255,4 @@ gh project item-edit \
 
 ---
 
-**마지막 업데이트**: 2025-10-01
+**마지막 업데이트**: 2025-10-16

@@ -1,6 +1,0 @@
-/* Point Tailwind v4 at the shared UI package first */
-@source "../../../packages/ui/src";
-
-/* Then load Tailwind and shared globals */
-@import "tailwindcss";
-@import "@plug-atlas/ui/globals.css";
