@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AdminLayout from './components/AdminLayout'
 import Dashboard from './pages/Dashboard'
+import MapDashboard from './pages/dashboard/MapDashboard'
 import Parks from './pages/sites/Parks'
 import VirtualPatrol from './pages/sites/VirtualPatrol'
 import SensorCategories from './pages/devices/SensorCategories'
@@ -18,6 +19,7 @@ function App() {
       <AdminLayout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard/map" element={<MapDashboard />} />
           <Route path="/sites/parks" element={<Parks />} />
           <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
           <Route path="/devices/sensor-categories" element={<SensorCategories />} />
