@@ -2,6 +2,7 @@
 name: Bug Report
 about: 버그 리포트 및 수정 요청
 title: '[BUG] '
+type: Bug
 labels: bug
 assignees: ''
 ---

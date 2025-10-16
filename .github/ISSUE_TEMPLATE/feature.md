@@ -2,6 +2,7 @@
 name: Feature Request
 about: 새로운 기능 구현 요청
 title: '[FEATURE] '
+type: Feature
 labels: feature
 assignees: ''
 ---
