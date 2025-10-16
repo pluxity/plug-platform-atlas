@@ -231,9 +231,51 @@ gh project item-edit \
 - `in-progress`: 진행 중
 - `needs-review`: 리뷰 필요
 
+### 이슈 작성 템플릿 구조
+
+모든 Feature 이슈는 다음 섹션을 포함해야 합니다:
+
+```markdown
+## 개요
+기능에 대한 간단한 설명
+
+## 주요 기능
+1. 기능 1
+2. 기능 2
+...
+
+## 요구사항
+
+### UI/UX
+- [ ] 체크리스트
+...
+
+### 기술 요구사항
+- [ ] 체크리스트
+...
+
+## 기술 스택
+- **Frontend**: React 19, TypeScript
+- **UI**: Radix UI, Tailwind CSS v4
+- **Form**: React Hook Form (권장)
+- **Validation**: Zod or Yup
+- **API**: [API 이름] (Swagger 참고)
+- **State**: React Query
+
+## 참고 자료
+- **API 문서**: http://dev.pluxity.com/api/api-docs
+- **Swagger UI**: http://dev.pluxity.com/api/swagger-ui/index.html
+- **UI 컴포넌트**: packages/ui (관련 컴포넌트 나열)
+
+## 참고사항
+- 추가 컨텍스트 및 주의사항
+```
+
 ### 이슈 작성 주의사항
 
-⚠️ **중요**: 이슈 본문에 "Generated with Claude Code" 같은 자동 생성 메시지를 포함하지 마세요.
+⚠️ **중요**:
+- 이슈 본문에 "Generated with Claude Code" 같은 자동 생성 메시지를 포함하지 마세요.
+- **모든 이슈는 반드시 "참고 자료" 섹션에 API 문서와 Swagger UI 링크를 포함해야 합니다.**
 
 ---
 
@@ -241,7 +283,12 @@ gh project item-edit \
 
 ### 2025-10-16
 - **앱 통합**: admin 앱을 a-iot로 통합 (단일 앱으로 관리)
-- 모노레포 구조 단순화 (apps/a-iot 단일 앱으로 변경)
+- **사이드바 메뉴 구조 개편**:
+  - 메인 메뉴: 대시보드(카드형/지도형), 이벤트, IoT 센서, 안내방송
+  - 관리 기능: 시설 관리, 사용자 관리, 시스템 관리
+  - 실시간 알람: onClick 핸들러로 구현 (페이지 이동 없음)
+- **Cesium 3D 지도**: GoogleMap Imagery + World Terrain 통합
+- **GitHub 이슈 템플릿**: API 문서 참조 섹션 필수화 (CLAUDE.md 업데이트)
 
 ### 2025-10-01
 - Cesium 3D 지도 통합 (SeongnamTileset 분리, LOD 최적화)
