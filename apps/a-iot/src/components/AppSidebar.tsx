@@ -26,20 +26,27 @@ import {
 } from '@plug-atlas/ui'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@plug-atlas/ui'
 import { MAIN_MENU_ITEMS, REALTIME_ALARM_MENU, ADMIN_MENU_ITEMS } from '../constants/menu'
-
-// 더미 사용자 데이터 (나중에 실제 인증 시스템으로 대체)
-const currentUser = {
-  name: '관리자',
-  email: 'admin@example.com',
-  role: 'admin',
-  avatar: '',
-}
+import { useAuthStore } from '../stores'
 
 // 실시간 알람 개수 (나중에 실제 API로 대체)
 const realtimeAlarmCount = 5
 
 export default function AppSidebar() {
   const location = useLocation()
+
+  // Zustand stores
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
+
+  // 더미 사용자 데이터 (인증되지 않은 경우 기본값)
+  const currentUser = user
+    ? { ...user, avatar: '' }
+    : {
+        name: '관리자',
+        email: 'admin@example.com',
+        role: 'admin' as const,
+        avatar: '',
+      }
 
   const isActive = (path: string) => location.pathname === path
 
@@ -242,7 +249,7 @@ export default function AppSidebar() {
                   <span>설정</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem className="text-red-600" onClick={logout}>
                   <LogOut className="mr-2 size-4" />
                   <span>로그아웃</span>
                 </DropdownMenuItem>
