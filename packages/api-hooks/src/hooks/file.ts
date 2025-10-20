@@ -15,9 +15,9 @@ export function useFile(
   const client = useApiClient()
 
   return useSWR(
-    fileId ? `/files/${fileId}` : null,
+    fileId ? `files/${fileId}` : null,
     async () => {
-      const response = await client.get<DataResponse<FileResponse>>(`/files/${fileId}`)
+      const response = await client.get<DataResponse<FileResponse>>(`files/${fileId}`)
       return response.data
     },
     options
@@ -31,9 +31,9 @@ export function useFilePreSignedUrl(options?: SWRConfiguration<string, Error>) {
   const client = useApiClient()
 
   return useSWR(
-    '/files/pre-signed-url',
+    'files/pre-signed-url',
     async () => {
-      const response = await client.get<DataResponse<string>>('/files/pre-signed-url')
+      const response = await client.get<DataResponse<string>>('files/pre-signed-url')
       return response.data
     },
     options
@@ -47,9 +47,9 @@ export function useUploadFile(options?: SWRMutationConfiguration<number, Error, 
   const client = useApiClient()
 
   return useSWRMutation(
-    '/files/upload',
+    'files/upload',
     async (_key: string, { arg }: { arg: FormData }) => {
-      const result = await client.post<number>('/files/upload', arg)
+      const result = await client.post<number>('files/upload', arg)
       return result as number
     },
     options

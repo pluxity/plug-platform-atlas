@@ -9,9 +9,9 @@ export function useSignIn(options?: SWRMutationConfiguration<void, Error, string
   const client = useApiClient()
 
   return useSWRMutation(
-    '/auth/sign-in',
+    'auth/sign-in',
     async (_key: string, { arg }: { arg: SignInRequest }) => {
-      await client.post('/auth/sign-in', arg)
+      await client.post('auth/sign-in', arg)
     },
     options
   )
@@ -24,9 +24,9 @@ export function useSignOut(options?: SWRMutationConfiguration<void, Error, strin
   const client = useApiClient()
 
   return useSWRMutation(
-    '/auth/sign-out',
+    'auth/sign-out',
     async () => {
-      await client.post('/auth/sign-out')
+      await client.post('auth/sign-out')
     },
     options
   )
@@ -39,9 +39,9 @@ export function useSignUp(options?: SWRMutationConfiguration<number, Error, stri
   const client = useApiClient()
 
   return useSWRMutation(
-    '/auth/sign-up',
+    'auth/sign-up',
     async (_key: string, { arg }: { arg: SignUpRequest }) => {
-      const result = await client.post<number>('/auth/sign-up', arg)
+      const result = await client.post<number>('auth/sign-up', arg)
       return result as number
     },
     options
@@ -55,9 +55,9 @@ export function useRefreshToken(options?: SWRMutationConfiguration<void, Error, 
   const client = useApiClient()
 
   return useSWRMutation(
-    '/auth/refresh-token',
+    'auth/refresh-token',
     async () => {
-      await client.post('/auth/refresh-token')
+      await client.post('auth/refresh-token')
     },
     options
   )
