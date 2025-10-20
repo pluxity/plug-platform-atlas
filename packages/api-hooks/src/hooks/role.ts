@@ -16,9 +16,9 @@ export function useRoles(options?: SWRConfiguration<RoleResponse[], Error>) {
   const client = useApiClient()
 
   return useSWR(
-    '/roles',
+    'roles',
     async () => {
-      const response = await client.get<DataResponse<RoleResponse[]>>('/roles')
+      const response = await client.get<DataResponse<RoleResponse[]>>('roles')
       return response.data
     },
     options
@@ -35,9 +35,9 @@ export function useRole(
   const client = useApiClient()
 
   return useSWR(
-    roleId ? `/roles/${roleId}` : null,
+    roleId ? `roles/${roleId}` : null,
     async () => {
-      const response = await client.get<DataResponse<RoleResponse>>(`/roles/${roleId}`)
+      const response = await client.get<DataResponse<RoleResponse>>(`roles/${roleId}`)
       return response.data
     },
     options
@@ -51,9 +51,9 @@ export function useCreateRole(options?: SWRMutationConfiguration<number, Error, 
   const client = useApiClient()
 
   return useSWRMutation(
-    '/roles',
+    'roles',
     async (_key: string, { arg }: { arg: RoleCreateRequest }) => {
-      const result = await client.post<number>('/roles', arg)
+      const result = await client.post<number>('roles', arg)
       return result as number
     },
     options
@@ -67,9 +67,9 @@ export function useUpdateRole(options?: SWRMutationConfiguration<void, Error, st
   const client = useApiClient()
 
   return useSWRMutation(
-    '/roles',
+    'roles',
     async (_key: string, { arg }: { arg: { id: number; data: RoleUpdateRequest } }) => {
-      await client.patch(`/roles/${arg.id}`, arg.data)
+      await client.patch(`roles/${arg.id}`, arg.data)
     },
     options
   )
@@ -82,9 +82,9 @@ export function useDeleteRole(options?: SWRMutationConfiguration<void, Error, st
   const client = useApiClient()
 
   return useSWRMutation(
-    '/roles',
+    'roles',
     async (_key: string, { arg }: { arg: number }) => {
-      await client.delete(`/roles/${arg}`)
+      await client.delete(`roles/${arg}`)
     },
     options
   )

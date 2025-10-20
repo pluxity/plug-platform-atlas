@@ -17,9 +17,9 @@ export function useMe(options?: SWRConfiguration<UserResponse, Error>) {
   const client = useApiClient()
 
   return useSWR(
-    '/users/me',
+    'users/me',
     async () => {
-      const response = await client.get<DataResponse<UserResponse>>('/users/me')
+      const response = await client.get<DataResponse<UserResponse>>('users/me')
       return response.data
     },
     options
@@ -33,9 +33,9 @@ export function useUpdateMe(options?: SWRMutationConfiguration<void, Error, stri
   const client = useApiClient()
 
   return useSWRMutation(
-    '/users/me',
+    'users/me',
     async (_key: string, { arg }: { arg: UserUpdateRequest }) => {
-      await client.patch('/users/me', arg)
+      await client.patch('users/me', arg)
     },
     options
   )
@@ -48,9 +48,9 @@ export function useUpdatePassword(options?: SWRMutationConfiguration<void, Error
   const client = useApiClient()
 
   return useSWRMutation(
-    '/users/me/password',
+    'users/me/password',
     async (_key: string, { arg }: { arg: UserPasswordUpdateRequest }) => {
-      await client.patch('/users/me/password', arg)
+      await client.patch('users/me/password', arg)
     },
     options
   )

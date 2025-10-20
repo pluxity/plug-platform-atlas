@@ -18,9 +18,9 @@ export function useAdminUsers(options?: SWRConfiguration<UserResponse[], Error>)
   const client = useApiClient()
 
   return useSWR(
-    '/admin/users',
+    'admin/users',
     async () => {
-      const response = await client.get<DataResponse<UserResponse[]>>('/admin/users')
+      const response = await client.get<DataResponse<UserResponse[]>>('admin/users')
       return response.data
     },
     options
@@ -34,9 +34,9 @@ export function useAdminUsersWithLoggedIn(options?: SWRConfiguration<UserLoggedI
   const client = useApiClient()
 
   return useSWR(
-    '/admin/users/with-is-logged-in',
+    'admin/users/with-is-logged-in',
     async () => {
-      const response = await client.get<DataResponse<UserLoggedInResponse[]>>('/admin/users/with-is-logged-in')
+      const response = await client.get<DataResponse<UserLoggedInResponse[]>>('admin/users/with-is-logged-in')
       return response.data
     },
     options
@@ -53,9 +53,9 @@ export function useAdminUser(
   const client = useApiClient()
 
   return useSWR(
-    userId ? `/admin/users/${userId}` : null,
+    userId ? `admin/users/${userId}` : null,
     async () => {
-      const response = await client.get<DataResponse<UserResponse>>(`/admin/users/${userId}`)
+      const response = await client.get<DataResponse<UserResponse>>(`admin/users/${userId}`)
       return response.data
     },
     options
@@ -69,9 +69,9 @@ export function useCreateAdminUser(options?: SWRMutationConfiguration<number, Er
   const client = useApiClient()
 
   return useSWRMutation(
-    '/admin/users',
+    'admin/users',
     async (_key: string, { arg }: { arg: UserCreateRequest }) => {
-      const result = await client.post<number>('/admin/users', arg)
+      const result = await client.post<number>('admin/users', arg)
       return result as number
     },
     options
@@ -85,9 +85,9 @@ export function useUpdateAdminUser(options?: SWRMutationConfiguration<void, Erro
   const client = useApiClient()
 
   return useSWRMutation(
-    '/admin/users',
+    'admin/users',
     async (_key: string, { arg }: { arg: { id: number; data: UserUpdateRequest } }) => {
-      await client.patch(`/admin/users/${arg.id}`, arg.data)
+      await client.patch(`admin/users/${arg.id}`, arg.data)
     },
     options
   )
@@ -100,9 +100,9 @@ export function useDeleteAdminUser(options?: SWRMutationConfiguration<void, Erro
   const client = useApiClient()
 
   return useSWRMutation(
-    '/admin/users',
+    'admin/users',
     async (_key: string, { arg }: { arg: number }) => {
-      await client.delete(`/admin/users/${arg}`)
+      await client.delete(`admin/users/${arg}`)
     },
     options
   )
@@ -115,9 +115,9 @@ export function useUpdateAdminUserRoles(options?: SWRMutationConfiguration<void,
   const client = useApiClient()
 
   return useSWRMutation(
-    '/admin/users/roles',
+    'admin/users/roles',
     async (_key: string, { arg }: { arg: { id: number; data: UserRoleUpdateRequest } }) => {
-      await client.patch(`/admin/users/${arg.id}/roles`, arg.data)
+      await client.patch(`admin/users/${arg.id}/roles`, arg.data)
     },
     options
   )
@@ -130,9 +130,9 @@ export function useDeleteAdminUserRole(options?: SWRMutationConfiguration<void, 
   const client = useApiClient()
 
   return useSWRMutation(
-    '/admin/users/roles',
+    'admin/users/roles',
     async (_key: string, { arg }: { arg: { userId: number; roleId: number } }) => {
-      await client.delete(`/admin/users/${arg.userId}/roles/${arg.roleId}`)
+      await client.delete(`admin/users/${arg.userId}/roles/${arg.roleId}`)
     },
     options
   )
@@ -145,9 +145,9 @@ export function useUpdateAdminUserPassword(options?: SWRMutationConfiguration<vo
   const client = useApiClient()
 
   return useSWRMutation(
-    '/admin/users/password',
+    'admin/users/password',
     async (_key: string, { arg }: { arg: { id: number; password: string } }) => {
-      await client.patch(`/admin/users/${arg.id}/password`, { password: arg.password })
+      await client.patch(`admin/users/${arg.id}/password`, { password: arg.password })
     },
     options
   )
@@ -160,9 +160,9 @@ export function useInitAdminUserPassword(options?: SWRMutationConfiguration<void
   const client = useApiClient()
 
   return useSWRMutation(
-    '/admin/users/password-init',
+    'admin/users/password-init',
     async (_key: string, { arg }: { arg: number }) => {
-      await client.patch(`/admin/users/${arg}/password-init`)
+      await client.patch(`admin/users/${arg}/password-init`)
     },
     options
   )
