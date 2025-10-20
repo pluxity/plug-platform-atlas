@@ -1,43 +1,32 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-export interface User {
-  id: string
-  name: string
-  email: string
-  role: 'admin' | 'user'
-  // 필요한 다른 사용자 정보 추가
-}
+import type { UserResponse } from '@plug-atlas/types'
 
 export interface AuthState {
-  // 사용자 정보
-  user: User | null
+  user: UserResponse | null
   isAuthenticated: boolean
   token: string | null
 
-  // Actions
-  setUser: (user: User) => void
+  setUser: (user: UserResponse) => void
   setToken: (token: string) => void
-  login: (user: User, token: string) => void
+  login: (user: UserResponse, token: string) => void
   logout: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      // Initial state
       user: null,
       isAuthenticated: false,
       token: null,
 
-      // Actions
       setUser: (user) => set({ user, isAuthenticated: true }),
       setToken: (token) => set({ token }),
       login: (user, token) => set({ user, token, isAuthenticated: true }),
       logout: () => set({ user: null, token: null, isAuthenticated: false }),
     }),
     {
-      name: 'auth-storage', // localStorage key
+      name: 'auth-storage',
       partialize: (state) => ({
         user: state.user,
         token: state.token,

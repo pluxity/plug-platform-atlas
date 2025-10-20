@@ -18,5 +18,12 @@ export default defineConfig({
   server: {
     port: 4000,
     host: true,
+    proxy: {
+      '/api': {
+        target: 'http://dev.pluxity.com',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 })

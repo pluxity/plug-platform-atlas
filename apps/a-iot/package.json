@@ -12,6 +12,7 @@
     "clean": "rimraf dist node_modules .turbo"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@plug-atlas/api-hooks": "workspace:*",
     "@plug-atlas/types": "workspace:*",
     "@plug-atlas/ui": "workspace:*",
@@ -23,6 +24,7 @@
     "lucide-react": "^0.469.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.65.0",
     "react-router-dom": "^7.9.4",
     "swr": "^2.3.6",
     "tailwind-merge": "^3.3.1",
