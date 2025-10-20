@@ -1,5 +1,7 @@
+import {useState} from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Label } from '@plug-atlas/ui';
-import {SiteCreateRequest} from "../../../../services/hooks/park/parkType.ts";
+import {SiteCreateRequest} from "../../../../../services/hooks/park/parkType.ts";
+import CesiumPolygonDrawer from "./CesiumPolygonDrawer.tsx";
 
 interface ParkFormProps {
     isOpen: boolean;
@@ -24,9 +26,16 @@ export default function ParkForm({
                                      isLoading = false,
                                      submitButtonText
                                  }: ParkFormProps) {
+    const [showMapDrawer, setShowMapDrawer] = useState(false);
+
+    const handlePolygonComplete = (wktString: string) => {
+        onFormFieldChange('location', wktString);
+        setShowMapDrawer(false);
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:min-w-[700px]">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
@@ -42,13 +51,35 @@ export default function ParkForm({
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="location">위치 정보</Label>
-                        <Input
-                            id="location"
-                            value={formData.location}
-                            onChange={(e) => onFormFieldChange('location', e.target.value)}
-                            placeholder="POLYGON(..)"
-                        />
+                        <div className="space-y-2">
+                            <div className="flex gap-2">
+                                <Input
+                                    id="location"
+                                    value={formData.location}
+                                    onChange={(e) => onFormFieldChange('location', e.target.value)}
+                                    placeholder="POLYGON((127.135755 37.38325, 127.1599...))"
+                                    className="flex-1"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowMapDrawer(!showMapDrawer)}
+                                >
+                                    {showMapDrawer ? '지도 숨기기' : '지도에서 선택'}
+                                </Button>
+                            </div>
+
+                            {showMapDrawer && (
+                                <div className="border rounded-md p-4">
+                                    <CesiumPolygonDrawer
+                                        onPolygonComplete={handlePolygonComplete}
+                                        initialWkt={formData.location}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </div>
+
                     <div className="grid gap-2">
                         <Label htmlFor="description">설명</Label>
                         <textarea

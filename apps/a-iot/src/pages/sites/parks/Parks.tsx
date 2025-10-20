@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { DataTable, Dialog, DialogTrigger, Button } from '@plug-atlas/ui';
 import { Plus } from 'lucide-react';
-import ParkForm from './components/ParkForm';
-import DeleteConfirmation from './components/DeleteConfirmation';
+import ParkForm from './components/form/ParkForm.tsx';
+import DeleteConfirmation from './components/data/DeleteConfirmation.tsx';
 import { useParkActions } from "../../../services/hooks/park/useParkActions";
-import { createParkColumns } from "./components/ParkColumns";
+import { createParkColumns } from "./components/data/ParkColumns.tsx";
 import { useSites } from "../../../services/hooks/park/park";
 import ErrorDisplay from "../../../components/error/ErrorDisplay";
 import {Site} from "../../../services/hooks/park/parkType.ts";
@@ -78,18 +78,11 @@ export default function Parks() {
         return <ErrorDisplay onRetry={() => mutate()} />;
     }
 
-    const columns = createParkColumns(openEditModal, openDeleteDialog, isUpdating, isDeleting) as any;
+    const columns = createParkColumns();
 
     return (
         <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">공원 관리</h1>
-                    <p className="text-muted-foreground">
-                        공원 정보를 관리하고 모니터링하세요.
-                    </p>
-                </div>
-
                 <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={resetForm}>
@@ -104,6 +97,8 @@ export default function Parks() {
                 <DataTable
                     columns={columns}
                     data={parks}
+                    onRowEdit={(park: Site) => openEditModal(park)}
+                    onRowDelete={(park: Site) => openDeleteDialog(park)}
                 />
             </div>
 

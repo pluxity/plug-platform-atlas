@@ -17,9 +17,9 @@ export function usePermissions(options?: SWRConfiguration<PermissionGroupRespons
   const client = useApiClient()
 
   return useSWR(
-    '/permissions',
+    'permissions',
     async () => {
-      const response = await client.get<DataResponse<PermissionGroupResponse[]>>('/permissions')
+      const response = await client.get<DataResponse<PermissionGroupResponse[]>>('permissions')
       return response.data
     },
     options
@@ -36,9 +36,9 @@ export function usePermission(
   const client = useApiClient()
 
   return useSWR(
-    permissionId ? `/permissions/${permissionId}` : null,
+    permissionId ? `permissions/${permissionId}` : null,
     async () => {
-      const response = await client.get<DataResponse<PermissionGroupResponse>>(`/permissions/${permissionId}`)
+      const response = await client.get<DataResponse<PermissionGroupResponse>>(`permissions/${permissionId}`)
       return response.data
     },
     options
@@ -52,9 +52,9 @@ export function useResourceTypes(options?: SWRConfiguration<ResourceTypeResponse
   const client = useApiClient()
 
   return useSWR(
-    '/permissions/resource-types',
+    'permissions/resource-types',
     async () => {
-      const response = await client.get<DataResponse<ResourceTypeResponse[]>>('/permissions/resource-types')
+      const response = await client.get<DataResponse<ResourceTypeResponse[]>>('permissions/resource-types')
       return response.data
     },
     options
@@ -68,9 +68,9 @@ export function useCreatePermission(options?: SWRMutationConfiguration<number, E
   const client = useApiClient()
 
   return useSWRMutation(
-    '/permissions',
+    'permissions',
     async (_key: string, { arg }: { arg: PermissionGroupCreateRequest }) => {
-      const result = await client.post<number>('/permissions', arg)
+      const result = await client.post<number>('permissions', arg)
       return result as number
     },
     options
@@ -84,9 +84,9 @@ export function useUpdatePermission(options?: SWRMutationConfiguration<void, Err
   const client = useApiClient()
 
   return useSWRMutation(
-    '/permissions',
+    'permissions',
     async (_key: string, { arg }: { arg: { id: number; data: PermissionGroupUpdateRequest } }) => {
-      await client.patch(`/permissions/${arg.id}`, arg.data)
+      await client.patch(`permissions/${arg.id}`, arg.data)
     },
     options
   )
@@ -99,9 +99,9 @@ export function useDeletePermission(options?: SWRMutationConfiguration<void, Err
   const client = useApiClient()
 
   return useSWRMutation(
-    '/permissions',
+    'permissions',
     async (_key: string, { arg }: { arg: number }) => {
-      await client.delete(`/permissions/${arg}`)
+      await client.delete(`permissions/${arg}`)
     },
     options
   )
