@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { ApiProvider } from '@plug-atlas/api-hooks'
 import AdminLayout from './components/AdminLayout'
 import Dashboard from './pages/Dashboard'
 import MapDashboard from './pages/dashboard/MapDashboard'
@@ -16,19 +15,7 @@ import Mobius from './pages/system/Mobius'
 
 function App() {
   return (
-      <ApiProvider
-          config={{
-            baseUrl: 'http://dev.pluxity.com/api',
-            timeout: 10000,
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            onUnauthorized: () => {
-              console.log('Unauthorized access detected');
-            }
-          }}
-      >
-        <BrowserRouter>
+      <BrowserRouter>
           <AdminLayout>
             <Routes>
               <Route path="/" element={<Dashboard />} />
@@ -45,8 +32,7 @@ function App() {
               <Route path="/system/mobius" element={<Mobius />} />
             </Routes>
           </AdminLayout>
-        </BrowserRouter>
-      </ApiProvider>
+      </BrowserRouter>
   )
 }
 
