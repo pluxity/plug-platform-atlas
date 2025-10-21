@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Site, SiteCreateRequest } from './parkType.ts';
+import type { Site, SiteCreateRequest } from '../../types/site/site.ts';
 
 export function useParkForm() {
     const [formData, setFormData] = useState<SiteCreateRequest>({

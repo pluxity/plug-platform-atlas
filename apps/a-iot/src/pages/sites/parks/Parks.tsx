@@ -3,12 +3,12 @@ import { DataTable, Dialog, DialogTrigger, Button } from '@plug-atlas/ui';
 import { Plus } from 'lucide-react';
 import ParkForm from './components/form/ParkForm.tsx';
 import DeleteConfirmation from './components/data/DeleteConfirmation.tsx';
-import { useParkActions } from "../../../services/hooks/park/useParkActions";
+import { useParkActions } from "../../../services/hooks/site/useParkActions";
 import { createParkColumns } from "./components/data/ParkColumns.tsx";
-import { useSites } from "../../../services/hooks/park/park";
+import { useSites } from "../../../services/hooks/site/useSite.ts";
 import ErrorDisplay from "../../../components/error/ErrorDisplay";
-import {Site} from "../../../services/hooks/park/parkType.ts";
-import {useParkForm} from "../../../services/hooks/park/useParkfForm.ts";
+import {Site} from "../../../services/types/site/site.ts";
+import {useParkForm} from "../../../services/hooks/site/useParkForm.ts";
 
 export default function Parks() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

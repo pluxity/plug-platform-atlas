@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
-import { useCreateSite, useUpdateSite, useDeleteSite } from './park';
-import {SiteCreateRequest} from "./parkType";
+import { useCreateSite, useUpdateSite, useDeleteSite } from './useSite.ts';
+import {SiteCreateRequest} from "../../types/site/site.ts";
 
 export function useParkActions() {
     const createSiteMutation = useCreateSite();
@@ -14,7 +14,7 @@ export function useParkActions() {
             return true;
         } catch (error) {
             toast.error('공원 생성에 실패했습니다.');
-            console.error('Error creating park:', error);
+            console.error('Error creating site:', error);
             return false;
         }
     };
@@ -29,7 +29,7 @@ export function useParkActions() {
             return true;
         } catch (error) {
             toast.error('공원 수정에 실패했습니다.');
-            console.error('Error updating park:', error);
+            console.error('Error updating site:', error);
             return false;
         }
     };
@@ -41,7 +41,7 @@ export function useParkActions() {
             return true;
         } catch (error) {
             toast.error('공원 삭제에 실패했습니다.');
-            console.error('Error deleting park:', error);
+            console.error('Error deleting site:', error);
             return false;
         }
     };

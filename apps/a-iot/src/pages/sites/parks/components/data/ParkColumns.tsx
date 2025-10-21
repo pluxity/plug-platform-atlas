@@ -1,4 +1,4 @@
-import { Site } from '../../../../../services/hooks/park/parkType.ts';
+import { Site } from '../../../../../services/types/site/site.ts';
 
 export function createParkColumns(
 ) {

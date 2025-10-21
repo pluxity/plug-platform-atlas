@@ -1,6 +1,6 @@
 import {useState} from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Label } from '@plug-atlas/ui';
-import {SiteCreateRequest} from "../../../../../services/hooks/park/parkType.ts";
+import {SiteCreateRequest} from "../../../../../services/types/site/site.ts";
 import CesiumPolygonDrawer from "./CesiumPolygonDrawer.tsx";
 
 interface ParkFormProps {
