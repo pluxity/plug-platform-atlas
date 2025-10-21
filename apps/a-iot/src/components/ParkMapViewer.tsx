@@ -13,7 +13,7 @@ import {
 import { useEffect, useRef } from 'react'
 
 Ion.defaultAccessToken =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5NGQ0YTBmZC1kMjVmLTQ2OGUtOTFiYy03YWYyNDJhOWZjYzMiLCJpZCI6MjgzMTA2LCJpYXQiOjE3NTMwNjEzMDF9.xhu9JUBNx01Zanmt1lz_MR8a5V0_vTaIpiN8gxhHuU0'
+  import.meta.env.VITE_CESIUM_ION_ACCESS_TOKEN;
 
 interface Park {
   id: number
