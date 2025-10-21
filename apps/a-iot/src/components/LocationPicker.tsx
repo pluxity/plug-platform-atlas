@@ -131,7 +131,7 @@ export default function LocationPicker({
       }
       setViewer(null)
     }
-  }, [createViewer, setView, setupCesiumResources, lon, lat])
+  }, [createViewer, setView, setupCesiumResources])
 
   useEffect(() => {
     if (!viewer) return
