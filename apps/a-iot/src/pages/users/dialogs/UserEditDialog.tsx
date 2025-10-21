@@ -3,13 +3,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle } from '@plug-atlas/ui';
 import { useUpdateAdminUser, useRoles } from '@plug-atlas/api-hooks';
-import { UserUpdateRequest, UserUpdateRequestSchema } from '@plug-atlas/types';
-import { User } from '../types/users.types';
-
+import { UserUpdateRequest, UserUpdateRequestSchema, UserResponse } from '@plug-atlas/types';
 
 interface UserEditModalProps {
   isOpen: boolean
-  user: User | null
+  user: UserResponse | null
   onClose: () => void
   onSuccess: () => void
 }
@@ -29,7 +27,7 @@ export default function UserEditModal({ isOpen, user, onClose, onSuccess }: User
                 name: user.name || '',
                 phoneNumber: user.phoneNumber || '',
                 department: user.department || '',
-                roleIds: user.roleIds || []
+                roleIds: user.roles?.map(r => r.id) || []
             });
         }
     }, [user, editUserForm]);

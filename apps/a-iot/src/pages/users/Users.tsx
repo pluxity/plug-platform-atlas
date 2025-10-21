@@ -1,54 +1,49 @@
 import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Input, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from '@plug-atlas/ui';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import UserCreateForm from './dialogs/UsersCreateDialog';
 import UserEditModal from './dialogs/UserEditDialog';
-import { useAdminUsers, useRoles, useDeleteAdminUser, useInitAdminUserPassword } from '@plug-atlas/api-hooks'; 
-import { User } from './types/users.types';
+import { useAdminUsers, useDeleteAdminUser, useInitAdminUserPassword } from '@plug-atlas/api-hooks'; 
+import { UserResponse } from '@plug-atlas/types';
 
 export default function Users() {
   const { data , mutate } = useAdminUsers();
-  const { data: roleData } = useRoles(); 
   const { trigger: deleteAdminUser } = useDeleteAdminUser(); 
   const { trigger: initAdminUserPassword } = useInitAdminUserPassword();
-  
-  const userData: User[] = useMemo(() => (data || []).map((data) => ({
-    id: data.id,
-    username: data.username,
-    name: data.name,
-    roleIds: data.roles?.map(r => r.id) || [], 
-    department: data.department || '-',
-    phoneNumber: data.phoneNumber || '-',
-  })), [data]);
 
-  const userColumns: Column<User>[] = [
+  const userColumns: Column<UserResponse>[] = [
     { key: 'username', header: '아이디' },
     { key: 'name', header: '이름' },
     { 
-      key: 'roleIds', 
+      key: 'roles', 
       header: '역할', 
-      cell: (_, user) => { 
-        if (!roleData) return null;
-        
-        const roles = user.roleIds
-          .map(id => roleData.find(role => role.id === id))
-          .filter((role): role is NonNullable<typeof role> => role != null)
-          .sort((a, b) => a.name.localeCompare(b.name));
+      cell: (value) => { 
+        const roles = (value as UserResponse['roles']) || [];
         
         return (
           <div className="flex gap-1 flex-wrap">
-            {roles.map((role) => (
-              <Badge key={role?.id} variant="secondary">
-                {role?.name}
-              </Badge>
-            ))}
+            {roles
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((role) => (
+                <Badge key={role.id} variant="secondary">
+                  {role.name}
+                </Badge>
+              ))}
           </div>
         );
       },
     },
-    { key: 'department', header: '부서' },
-    { key: 'phoneNumber', header: '전화번호' },
+    { 
+      key: 'department', 
+      header: '부서',
+      cell: (value) => value ? String(value) : '-'
+    },
+    { 
+      key: 'phoneNumber', 
+      header: '전화번호',
+      cell: (value) => value ? String(value) : '-'
+    },
     {
-      key: 'initPassword',
+      key: 'id',
       header: '초기화',
       cell: (_, user) => (
         <button
@@ -79,15 +74,15 @@ export default function Users() {
   ]
 
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filteredData, setFilteredData] = useState<User[]>(userData);
+  const [filteredData, setFilteredData] = useState<UserResponse[]>(data || []);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState<boolean>(false);
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState<boolean>(false);
-  const [userPassword, setUserPassword] = useState<User | null>(null);
-  const [userDelete, setUserDelete] = useState<User | null>(null);
+  const [userPassword, setUserPassword] = useState<UserResponse | null>(null);
+  const [userDelete, setUserDelete] = useState<UserResponse | null>(null);
 
   const itemsPerPage = 5;
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -98,21 +93,21 @@ export default function Users() {
   }, []);
 
   useEffect(() => {
-    setFilteredData(userData);
+    setFilteredData(data || []);
     setCurrentPage(1);
   }, [data]);
 
   const handleSearch = () => {
     if (!searchTerm.trim()) {
-      setFilteredData(userData);
+      setFilteredData(data || []);
       setCurrentPage(1);
       return;
     }
 
-    const filtered = userData.filter((user) => {
+    const filtered = (data || []).filter((user) => {
       return user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.roleIds.some(roleId => roleData?.find(role => role.id === roleId)?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        user.roles?.some(role => role.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
         user.department?.toLowerCase().includes(searchTerm.toLowerCase()) || 
         user.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase());
     });
@@ -131,12 +126,12 @@ export default function Users() {
     setIsCreateModalOpen(true);
   }
 
-  const handleEditUser = (user: User) => {
+  const handleEditUser = (user: UserResponse) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
   }
 
-  const handleResetPassword = (user: User) => {
+  const handleResetPassword = (user: UserResponse) => {
     setUserPassword(user);
     setIsResetPasswordDialogOpen(true);
   }
@@ -155,7 +150,7 @@ export default function Users() {
     }
   }
 
-  const handleDeleteUser = (user: User) => {
+  const handleDeleteUser = (user: UserResponse) => {
     setUserDelete(user);
     setIsDeleteUserDialogOpen(true);
   }
