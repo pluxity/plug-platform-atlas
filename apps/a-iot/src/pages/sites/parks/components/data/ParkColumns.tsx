@@ -6,7 +6,7 @@ export function createParkColumns(
         {
             key: 'id' as keyof Site,
             header: 'ID',
-            cell: (value: any) => <div className="font-medium">{value}</div>,
+            cell: (value: Site[keyof Site]) => <div className="font-medium">{value}</div>,
         },
         {
             key: 'name' as keyof Site,
