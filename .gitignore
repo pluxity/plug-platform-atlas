@@ -20,8 +20,10 @@ build/
 # 환경 변수 파일 (필요에 따라 커스터마이징)
 .env
 .env.local
+.env.development
 .env.development.local
 .env.test.local
+.env.production
 .env.production.local
 
 # MCP 설정 파일 (민감한 정보 포함)
