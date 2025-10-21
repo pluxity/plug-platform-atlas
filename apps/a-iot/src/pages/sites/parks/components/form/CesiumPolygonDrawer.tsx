@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@plug-atlas/ui';
 import * as Cesium from "cesium";
@@ -23,6 +22,9 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
     const viewerRef = useRef<Cesium.Viewer | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [activePoints, setActivePoints] = useState<Cesium.Entity[]>([]);
+    const [showHelp, setShowHelp] = useState(true);
+    const [canComplete, setCanComplete] = useState(false);
+    
     const drawingStateRef = useRef<DrawingState>({
         isDrawing: false,
         activePoints: [],
@@ -34,9 +36,43 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
     });
 
     useEffect(() => {
+        const handleKeyPress = (event: KeyboardEvent) => {
+            if (!isDrawing) return;
+            
+            switch (event.key) {
+                case 'Escape':
+                    event.preventDefault();
+                    cancelDrawing();
+                    break;
+                case 'Enter':
+                    event.preventDefault();
+                    if (canComplete) {
+                        completeDrawing();
+                    }
+                    break;
+                case 'Backspace':
+                    event.preventDefault();
+                    removeLastPoint();
+                    break;
+                case 'h':
+                case 'H':
+                    if (event.ctrlKey || event.metaKey) {
+                        event.preventDefault();
+                        setShowHelp(prev => !prev);
+                    }
+                    break;
+            }
+        };
+
+        if (isDrawing) {
+            document.addEventListener('keydown', handleKeyPress);
+            return () => document.removeEventListener('keydown', handleKeyPress);
+        }
+    }, [isDrawing, canComplete]);
+
+    useEffect(() => {
         if (!cesiumContainerRef.current) return;
 
-        // 세슘 뷰어 초기화
         const viewer = new Cesium.Viewer(cesiumContainerRef.current, {
             homeButton: false,
             sceneModePicker: false,
@@ -52,22 +88,18 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
             terrainShadows: Cesium.ShadowMode.DISABLED,
         });
 
-        // 한국 중심으로 카메라 위치 설정
         viewer.camera.setView({
-            destination: Cesium.Cartesian3.fromDegrees(127.5, 37.5, 500000),
+            destination: Cesium.Cartesian3.fromDegrees(127.5, 37.5, 5000),
         });
 
-        // 깊이 테스트 비활성화
         viewer.scene.globe.depthTestAgainstTerrain = false;
 
-        // 마우스 커서 개선
         viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(() => {
             viewer.canvas.style.cursor = drawingStateRef.current.isDrawing ? 'crosshair' : 'default';
         }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
         viewerRef.current = viewer;
 
-        // 초기 WKT가 있으면 표시
         if (initialWkt && initialWkt.trim()) {
             displayWktPolygon(viewer, initialWkt);
         }
@@ -101,7 +133,6 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
                         },
                     });
 
-                    // 폴리곤 중심으로 카메라 이동
                     const center = Cesium.BoundingSphere.fromPoints(cartesianCoords).center;
                     const cartographic = Cesium.Cartographic.fromCartesian(center);
                     viewer.camera.flyTo({
@@ -126,8 +157,13 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
         return match[1].split(',')
             .map((coord: string) => {
                 const parts = coord.trim().split(/\s+/).map(Number);
-                if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-                    return [parts[0], parts[1]] as [number, number];
+                const lon = parts[0];
+                const lat = parts[1];
+                
+                if (parts.length >= 2 && 
+                    typeof lon === 'number' && !isNaN(lon) && 
+                    typeof lat === 'number' && !isNaN(lat)) {
+                    return [lon, lat] as [number, number];
                 }
                 return null;
             })
@@ -159,6 +195,11 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
         });
     };
 
+    const updateCanComplete = (pointCount: number) => {
+        const newCanComplete = pointCount >= 3;
+        setCanComplete(newCanComplete);
+    };
+
     const startDrawing = () => {
         if (!viewerRef.current) return;
 
@@ -167,11 +208,11 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
 
         setIsDrawing(true);
         setActivePoints([]);
+        setCanComplete(false);
         drawingStateRef.current.isDrawing = true;
         drawingStateRef.current.activePoints = [];
         drawingStateRef.current.activeShapePoints = [];
 
-        // 기존 그려진 폴리곤 제거 (초기 폴리곤 제외)
         const entitiesToRemove: Cesium.Entity[] = [];
         viewer.entities.values.forEach((entity: Cesium.Entity) => {
             if (entity.name !== 'Initial Polygon') {
@@ -180,14 +221,11 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
         });
         entitiesToRemove.forEach(entity => viewer.entities.remove(entity));
 
-        // 커서 변경
         viewer.canvas.style.cursor = 'crosshair';
 
-        // 이벤트 핸들러 설정
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
         drawingStateRef.current.handler = handler;
 
-        // 동적 점 생성 (마우스를 따라다니는 점)
         drawingStateRef.current.dynamicPoint = viewer.entities.add({
             position: new Cesium.ConstantPositionProperty(Cesium.Cartesian3.ZERO),
             point: {
@@ -200,19 +238,16 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
             },
         });
 
-        // 마우스 이동: 동적 점 위치 업데이트
         handler.setInputAction((movement: Cesium.ScreenSpaceEventHandler.MotionEvent) => {
             if (!drawingStateRef.current.isDrawing) return;
 
             const pickedPosition = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
             if (!pickedPosition) return;
 
-            // 동적 점 위치 업데이트
             if (drawingStateRef.current.dynamicPoint) {
                 drawingStateRef.current.dynamicPoint.position = new Cesium.ConstantPositionProperty(pickedPosition);
             }
 
-            // 임시 폴리곤 업데이트 (2개 이상의 점이 있을 때)
             if (drawingStateRef.current.activeShapePoints.length >= 2) {
                 const tempPoints = [...drawingStateRef.current.activeShapePoints, pickedPosition];
 
@@ -224,12 +259,10 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
             }
         }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-        // 왼쪽 클릭: 점 추가
         handler.setInputAction((click: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
             const pickedPosition = viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid);
             if (!pickedPosition) return;
 
-            // 첫 번째 점일 때 임시 폴리곤 생성
             if (drawingStateRef.current.activeShapePoints.length === 0) {
                 drawingStateRef.current.activeShape = viewer.entities.add({
                     polygon: {
@@ -244,13 +277,12 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
                 });
             }
 
-            // 점 추가
             const pointEntity = createPoint(viewer, pickedPosition, true);
             drawingStateRef.current.activePoints.push(pointEntity);
             drawingStateRef.current.activeShapePoints.push(pickedPosition);
             setActivePoints([...drawingStateRef.current.activePoints]);
+            updateCanComplete(drawingStateRef.current.activePoints.length);
 
-            // 폴리곤 업데이트
             if (drawingStateRef.current.activeShape && drawingStateRef.current.activeShape.polygon) {
                 drawingStateRef.current.activeShape.polygon.hierarchy = new Cesium.ConstantProperty(
                     new Cesium.PolygonHierarchy(drawingStateRef.current.activeShapePoints)
@@ -259,15 +291,15 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
 
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-        // 더블클릭: 그리기 완료
         handler.setInputAction(() => {
             completeDrawing();
         }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
-        // 우클릭: 마지막 점 제거
         handler.setInputAction(() => {
             removeLastPoint();
         }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+        viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(() => {}, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
     };
 
     const removeLastPoint = () => {
@@ -276,7 +308,6 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
         const viewer = viewerRef.current;
         if (!viewer) return;
 
-        // 마지막 점 제거
         const lastPoint = drawingStateRef.current.activePoints.pop();
         if (lastPoint) {
             viewer.entities.remove(lastPoint);
@@ -284,8 +315,8 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
 
         drawingStateRef.current.activeShapePoints.pop();
         setActivePoints([...drawingStateRef.current.activePoints]);
+        updateCanComplete(drawingStateRef.current.activePoints.length);
 
-        // 폴리곤 업데이트
         if (drawingStateRef.current.activeShape && drawingStateRef.current.activeShape.polygon) {
             if (drawingStateRef.current.activeShapePoints.length >= 3) {
                 drawingStateRef.current.activeShape.polygon.hierarchy = new Cesium.ConstantProperty(
@@ -306,7 +337,6 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
 
         const viewer = viewerRef.current;
 
-        // 좌표를 경위도로 변환
         const coordinates = drawingStateRef.current.activeShapePoints.map((cartesian: Cesium.Cartesian3) => {
             const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
             return [
@@ -315,22 +345,18 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
             ];
         });
 
-        // 첫 번째 점을 마지막에 추가하여 폴리곤 닫기 (null 체크 추가)
         const firstCoordinate = coordinates[0];
         if (firstCoordinate) {
             coordinates.push(firstCoordinate);
         }
 
-        // WKT 형식으로 변환 (소수점 6자리로 반올림)
         const wktString = `POLYGON ((${coordinates
             .filter((coord): coord is [number, number] => coord !== undefined && coord.length === 2)
             .map((coord) => `${coord[0].toFixed(6)} ${coord[1].toFixed(6)}`)
             .join(', ')}))`;
 
-        // 임시 요소들 제거
         cleanupDrawingElements();
 
-        // 최종 폴리곤 추가
         viewer.entities.add({
             name: 'Drawn Polygon',
             polygon: {
@@ -342,9 +368,9 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
             },
         });
 
-        // 상태 초기화
         setIsDrawing(false);
         setActivePoints([]);
+        setCanComplete(false);
         drawingStateRef.current.isDrawing = false;
         viewer.canvas.style.cursor = 'default';
 
@@ -356,19 +382,16 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
 
         const viewer = viewerRef.current;
 
-        // 임시 폴리곤 제거
         if (drawingStateRef.current.activeShape) {
             viewer.entities.remove(drawingStateRef.current.activeShape);
             drawingStateRef.current.activeShape = null;
         }
 
-        // 동적 점 제거
         if (drawingStateRef.current.dynamicPoint) {
             viewer.entities.remove(drawingStateRef.current.dynamicPoint);
             drawingStateRef.current.dynamicPoint = null;
         }
 
-        // 모든 그리기 점들 제거
         drawingStateRef.current.activePoints.forEach((point: Cesium.Entity) => {
             viewer.entities.remove(point);
         });
@@ -379,16 +402,13 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
 
         const viewer = viewerRef.current;
 
-        // 이벤트 핸들러 제거
         if (drawingStateRef.current.handler) {
             drawingStateRef.current.handler.destroy();
             drawingStateRef.current.handler = null;
         }
 
-        // 그리기 요소들 정리
         cleanupDrawingElements();
 
-        // 상태 초기화
         drawingStateRef.current.isDrawing = false;
         drawingStateRef.current.activePoints = [];
         drawingStateRef.current.activeShapePoints = [];
@@ -402,8 +422,8 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
         cleanupDrawing();
         setIsDrawing(false);
         setActivePoints([]);
+        setCanComplete(false);
 
-        // 모든 엔티티 제거
         viewerRef.current.entities.removeAll();
         onPolygonComplete('');
     };
@@ -412,15 +432,17 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
         cleanupDrawing();
         setIsDrawing(false);
         setActivePoints([]);
+        setCanComplete(false);
     };
 
     return (
         <div className="space-y-4">
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap items-center">
                 <Button
                     onClick={startDrawing}
                     disabled={isDrawing}
                     variant={isDrawing ? 'secondary' : 'default'}
+                    className={isDrawing ? 'animate-pulse' : ''}
                 >
                     {isDrawing ? '그리는 중...' : '폴리곤 그리기 시작'}
                 </Button>
@@ -429,10 +451,11 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
                     <>
                         <Button
                             onClick={completeDrawing}
-                            disabled={activePoints.length < 3}
-                            variant="outline"
+                            disabled={!canComplete}
+                            variant={canComplete ? 'default' : 'outline'}
+                            className={canComplete ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
                         >
-                            그리기 완료
+                            그리기 완료 {canComplete && '(Enter)'}
                         </Button>
                         <Button
                             onClick={removeLastPoint}
@@ -440,14 +463,21 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
                             variant="outline"
                             size="sm"
                         >
-                            마지막 점 제거
+                            실행 취소 (Backspace)
                         </Button>
                         <Button
                             onClick={cancelDrawing}
                             variant="destructive"
                             size="sm"
                         >
-                            취소
+                            취소 (Esc)
+                        </Button>
+                        <Button
+                            onClick={() => setShowHelp(!showHelp)}
+                            variant="ghost"
+                            size="sm"
+                        >
+                            도움말 {showHelp ? '숨기기' : '보기'}
                         </Button>
                     </>
                 )}
@@ -462,20 +492,43 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
                 )}
             </div>
 
-            {isDrawing && (
-                <div className="text-sm text-muted-foreground space-y-1 p-3 bg-blue-50 rounded-md border border-blue-200">
-                    <div className="font-medium text-blue-800 mb-2">그리기 도움말:</div>
-                    <p>• <strong>왼쪽 클릭:</strong> 점 추가</p>
-                    <p>• <strong>우클릭:</strong> 마지막 점 제거</p>
-                    <p>• <strong>더블클릭:</strong> 그리기 완료</p>
-                    <p>• <strong>현재 점 개수:</strong> {activePoints.length}개 {activePoints.length >= 3 && '(완료 가능)'}</p>
+            {isDrawing && showHelp && (
+                <div className="text-sm space-y-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
+                    <div className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                        그리기 도움말
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <p>• <strong>왼쪽 클릭:</strong> 점 추가</p>
+                        <p>• <strong>우클릭:</strong> 마지막 점 제거</p>
+                        <p>• <strong>더블클릭:</strong> 그리기 완료</p>
+                        <p>• <strong>Enter:</strong> 그리기 완료</p>
+                        <p>• <strong>Backspace:</strong> 실행 취소</p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-blue-200">
+                        <div className="flex items-center justify-between">
+                            <span className="font-medium text-blue-800">
+                                현재 점 개수: <span className="text-lg">{activePoints.length}</span>개
+                            </span>
+                            {canComplete && (
+                                <span className="text-green-600 font-medium animate-pulse">
+                                    ✓ 완료 가능
+                                </span>
+                            )}
+                            {!canComplete && activePoints.length > 0 && (
+                                <span className="text-orange-600 font-medium">
+                                    {3 - activePoints.length}개 더 필요
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 
             <div
                 ref={cesiumContainerRef}
-                className="w-full h-[400px] border rounded-md overflow-hidden"
+                className="w-full h-[400px] border rounded-md overflow-hidden shadow-sm"
                 style={{ position: 'relative' }}
+                tabIndex={0}
             />
         </div>
     );

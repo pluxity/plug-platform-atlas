@@ -35,7 +35,7 @@ export default function ParkForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:min-w-[700px]">
+            <DialogContent className="min-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
@@ -57,7 +57,7 @@ export default function ParkForm({
                                     id="location"
                                     value={formData.location}
                                     onChange={(e) => onFormFieldChange('location', e.target.value)}
-                                    placeholder="POLYGON((127.135755 37.38325, 127.1599...))"
+                                    placeholder="지도에서 영역을 그려주세요"
                                     className="flex-1"
                                 />
                                 <Button
