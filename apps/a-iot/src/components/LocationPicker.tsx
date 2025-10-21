@@ -1,16 +1,19 @@
 import {
-  Cartesian3,
   Viewer as CesiumViewer,
   Math as CesiumMath,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
   defined,
-  HeightReference,
-  Entity,
-  NearFarScalar,
+  Cartesian3,
 } from 'cesium'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { DEFAULT_VIEWER_OPTIONS, setupCesiumResources } from '../lib/cesiumSetup'
+import {
+  useViewerStore,
+  useCameraStore,
+  useMarkerStore,
+  DEFAULT_CAMERA_POSITION,
+} from '../stores/cesium'
+import { Button } from '@plug-atlas/ui'
 import MapControls from './MapControls'
 
 interface LocationPickerProps {
@@ -34,11 +37,9 @@ export default function LocationPicker({
   markerWidth = 32,
   markerHeight = 32,
 }: LocationPickerProps) {
-  const cesiumContainerRef = useRef<HTMLDivElement>(null)
-  const viewerRef = useRef<CesiumViewer | null>(null)
-  const markerEntityRef = useRef<Entity | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const handlerRef = useRef<ScreenSpaceEventHandler | null>(null)
-
+  const [viewer, setViewer] = useState<CesiumViewer | null>(null)
   const [contextMenu, setContextMenu] = useState<{
     show: boolean
     x: number
@@ -47,48 +48,38 @@ export default function LocationPicker({
     lat: number
   } | null>(null)
 
-  const [viewer, setViewer] = useState<CesiumViewer | null>(null)
+  const { createViewer, setupCesiumResources } = useViewerStore()
+  const { setView } = useCameraStore()
+  const { addMarker, removeMarker } = useMarkerStore()
 
   useEffect(() => {
-    if (!cesiumContainerRef.current || viewerRef.current) return
+    if (!containerRef.current || viewer) return
 
-    const initializeViewer = async () => {
+    let currentViewer: CesiumViewer | null = null
+
+    const initViewer = async () => {
       try {
-        const newViewer = new CesiumViewer(cesiumContainerRef.current!, DEFAULT_VIEWER_OPTIONS)
-        viewerRef.current = newViewer
-        setViewer(newViewer)
-
-        newViewer.scene.canvas.addEventListener('contextmenu', (e) => {
-          e.preventDefault()
-          return false
-        })
+        currentViewer = createViewer(containerRef.current!)
+        setViewer(currentViewer)
 
         if (lon && lon !== 0 && lat && lat !== 0) {
-          newViewer.camera.setView({
-            destination: Cartesian3.fromDegrees(lon, lat, 1500),
-            orientation: {
-              heading: CesiumMath.toRadians(0),
-              pitch: CesiumMath.toRadians(-45),
-              roll: 0,
-            },
+          setView(currentViewer, {
+            lon,
+            lat,
+            height: 1500,
+            pitch: -45,
+            heading: 0,
           })
         } else {
-          const pangyo = { lon: 127.1114, lat: 37.3948 }
-          const cameraLon = pangyo.lon
-          const cameraLat = pangyo.lat - 0.05
-          const cameraHeight = 3000
-
-          newViewer.camera.setView({
-            destination: Cartesian3.fromDegrees(cameraLon, cameraLat, cameraHeight),
-            orientation: {
-              heading: CesiumMath.toRadians(0),
-              pitch: CesiumMath.toRadians(-35),
-              roll: 0,
-            },
+          setView(currentViewer, {
+            ...DEFAULT_CAMERA_POSITION,
+            lat: DEFAULT_CAMERA_POSITION.lat - 0.05,
           })
         }
 
-        const handler = new ScreenSpaceEventHandler(newViewer.scene.canvas)
+        await setupCesiumResources(currentViewer)
+
+        const handler = new ScreenSpaceEventHandler(currentViewer.scene.canvas)
         handlerRef.current = handler
 
         handler.setInputAction(() => {
@@ -96,17 +87,21 @@ export default function LocationPicker({
         }, ScreenSpaceEventType.LEFT_CLICK)
 
         handler.setInputAction((click: ScreenSpaceEventHandler.PositionedEvent) => {
-          let cartesian: Cartesian3 | undefined = newViewer.scene.pickPosition(click.position)
+          let cartesian: Cartesian3 | undefined = currentViewer!.scene.pickPosition(
+            click.position
+          )
 
           if (!defined(cartesian)) {
-            cartesian = newViewer.camera.pickEllipsoid(
-              click.position,
-              newViewer.scene.globe.ellipsoid
-            ) ?? undefined
+            cartesian =
+              currentViewer!.camera.pickEllipsoid(
+                click.position,
+                currentViewer!.scene.globe.ellipsoid
+              ) ?? undefined
           }
 
           if (cartesian && defined(cartesian)) {
-            const cartographic = newViewer.scene.globe.ellipsoid.cartesianToCartographic(cartesian)
+            const cartographic =
+              currentViewer!.scene.globe.ellipsoid.cartesianToCartographic(cartesian)
             const longitude = CesiumMath.toDegrees(cartographic.longitude)
             const latitude = CesiumMath.toDegrees(cartographic.latitude)
 
@@ -119,61 +114,46 @@ export default function LocationPicker({
             })
           }
         }, ScreenSpaceEventType.RIGHT_CLICK)
-
-        setupCesiumResources(newViewer)
       } catch (error) {
+
       }
     }
 
-    initializeViewer()
+    initViewer()
 
     return () => {
       if (handlerRef.current) {
         handlerRef.current.destroy()
+        handlerRef.current = null
       }
-      if (viewerRef.current) {
-        viewerRef.current.destroy()
-        viewerRef.current = null
+      if (currentViewer && !currentViewer.isDestroyed()) {
+        currentViewer.destroy()
       }
       setViewer(null)
     }
-  }, [])
-
-  const updateMarker = useCallback((viewer: CesiumViewer, longitude: number, latitude: number, height: number) => {
-    const position = Cartesian3.fromDegrees(longitude, latitude, height)
-
-    if (markerEntityRef.current) {
-      markerEntityRef.current.position = position as any
-    } else {
-      const entity = viewer.entities.add({
-        id: 'location-marker',
-        position: position,
-        billboard: {
-          image: markerImage,
-          width: markerWidth,
-          height: markerHeight,
-          heightReference: HeightReference.RELATIVE_TO_GROUND,
-          scaleByDistance: new NearFarScalar(100, 1.5, 5000, 0.3),
-        },
-      })
-      markerEntityRef.current = entity
-    }
-  }, [markerImage, markerWidth, markerHeight])
+  }, [createViewer, setView, setupCesiumResources, lon, lat])
 
   useEffect(() => {
     if (!viewer) return
 
     if (lon && lat && lon !== 0 && lat !== 0) {
-      updateMarker(viewer, lon, lat, cctvHeight)
-    } else if (markerEntityRef.current) {
-      viewer.entities.remove(markerEntityRef.current)
-      markerEntityRef.current = null
+      removeMarker(viewer, 'location-marker')
+      addMarker(viewer, {
+        id: 'location-marker',
+        lon,
+        lat,
+        height: cctvHeight,
+        image: markerImage,
+        width: markerWidth,
+        heightValue: markerHeight,
+      })
+    } else {
+      removeMarker(viewer, 'location-marker')
     }
-  }, [viewer, lon, lat, cctvHeight, updateMarker])
+  }, [viewer, lon, lat, cctvHeight, markerImage, markerWidth, markerHeight, addMarker, removeMarker])
 
   const handleSetMarker = useCallback(() => {
     if (!contextMenu) return
-
     onLocationChange(contextMenu.lon, contextMenu.lat)
     setContextMenu(null)
   }, [contextMenu, onLocationChange])
@@ -183,11 +163,11 @@ export default function LocationPicker({
       style={{ width: '100%', height: containerHeight ? `${containerHeight}px` : '100%' }}
       className="overflow-hidden relative"
     >
-      <div ref={cesiumContainerRef} style={{ width: '100%', height: '100%' }} />
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
 
       <MapControls
         viewer={viewer}
-        homePosition={{ lon: 127.1114, lat: 37.3948, height: 3000 }}
+        homePosition={DEFAULT_CAMERA_POSITION}
         className="absolute top-4 right-4 z-10"
       />
 
@@ -201,12 +181,14 @@ export default function LocationPicker({
           }}
           className="bg-background border border-border rounded-md shadow-lg overflow-hidden"
         >
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleSetMarker}
-            className="w-full px-4 py-2 text-sm text-left hover:bg-accent hover:text-accent-foreground transition-colors whitespace-nowrap"
+            className="w-full justify-start rounded-none h-auto px-4 py-2 font-normal"
           >
             여기에 위치 지정
-          </button>
+          </Button>
         </div>
       )}
     </div>

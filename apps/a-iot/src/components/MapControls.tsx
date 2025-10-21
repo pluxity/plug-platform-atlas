@@ -1,14 +1,16 @@
-import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath } from 'cesium'
+import { Viewer as CesiumViewer } from 'cesium'
 import { Plus, Minus, Home } from 'lucide-react'
 import { Button } from '@plug-atlas/ui'
+import { useCameraStore, type CameraPosition } from '../stores/cesium'
 
 interface MapControlsProps {
   viewer: CesiumViewer | null
-  homePosition?: { lon: number; lat: number; height: number }
+  homePosition?: CameraPosition
   className?: string
 }
 
 export default function MapControls({ viewer, homePosition, className = '' }: MapControlsProps) {
+  const { flyToPosition } = useCameraStore()
 
   const zoomIn = () => {
     if (!viewer || viewer.isDestroyed()) return
@@ -27,20 +29,7 @@ export default function MapControls({ viewer, homePosition, className = '' }: Ma
   const goHome = () => {
     if (!viewer || viewer.isDestroyed()) return
     if (!homePosition) return
-
-    viewer.camera.flyTo({
-      destination: Cartesian3.fromDegrees(
-        homePosition.lon,
-        homePosition.lat,
-        homePosition.height
-      ),
-      orientation: {
-        heading: CesiumMath.toRadians(0),
-        pitch: CesiumMath.toRadians(-45),
-        roll: 0,
-      },
-      duration: 1.0,
-    })
+    flyToPosition(viewer, homePosition)
   }
 
   return (

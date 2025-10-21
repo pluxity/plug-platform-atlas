@@ -50,7 +50,6 @@ export default function CCTV() {
   const currentLat = watch('lat')
   const currentHeight = watch('height')
 
-  // CCTV 등록/수정 다이얼로그 열기
   const handleOpenDialog = (cctv?: CctvResponse) => {
     if (cctv) {
       setEditingCctv(cctv)
@@ -71,11 +70,10 @@ export default function CCTV() {
         height: 3,
       })
     }
-    setShowMap(false) // 기본적으로 지도 숨김
+    setShowMap(false)
     setIsDialogOpen(true)
   }
 
-  // CCTV 등록/수정 제출
   const onSubmit = async (data: CctvCreateRequest) => {
     try {
       if (editingCctv) {
@@ -93,13 +91,11 @@ export default function CCTV() {
     }
   }
 
-  // CCTV 삭제 다이얼로그 열기
   const handleOpenDeleteDialog = (cctv: CctvResponse) => {
     setDeletingCctv(cctv)
     setIsDeleteDialogOpen(true)
   }
 
-  // CCTV 삭제 확인
   const handleDeleteConfirm = async () => {
     if (!deletingCctv) return
 
@@ -114,13 +110,11 @@ export default function CCTV() {
     }
   }
 
-  // 지도에서 위치 선택 시
   const handleLocationChange = (lon: number, lat: number) => {
     setValue('lon', parseFloat(lon.toFixed(6)))
     setValue('lat', parseFloat(lat.toFixed(6)))
   }
 
-  // 테이블 컬럼 정의
   const columns: Column<CctvResponse>[] = [
     {
       key: 'id',
@@ -158,7 +152,6 @@ export default function CCTV() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">CCTV 관리</h1>
@@ -172,7 +165,6 @@ export default function CCTV() {
         </Button>
       </div>
 
-      {/* CCTV 목록 테이블 */}
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
           <div className="text-muted-foreground">로딩 중...</div>
@@ -201,7 +193,6 @@ export default function CCTV() {
         </div>
       )}
 
-      {/* CCTV 등록/수정 Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -212,7 +203,6 @@ export default function CCTV() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* CCTV 이름 */}
             <div className="space-y-2">
               <Label htmlFor="name">CCTV 이름 *</Label>
               <Input
@@ -225,7 +215,6 @@ export default function CCTV() {
               )}
             </div>
 
-            {/* CCTV URL */}
             <div className="space-y-2">
               <Label htmlFor="url">CCTV URL *</Label>
               <Input
@@ -238,7 +227,6 @@ export default function CCTV() {
               )}
             </div>
 
-            {/* 위치 정보 */}
             <div className="space-y-2">
               <Label>위치 정보</Label>
               <div className="grid grid-cols-3 gap-4">
@@ -290,7 +278,6 @@ export default function CCTV() {
               </div>
             </div>
 
-            {/* 지도 표시 토글 */}
             <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
               <div className="flex items-center gap-2">
                 <Map className="w-4 h-4 text-muted-foreground" />
@@ -305,7 +292,6 @@ export default function CCTV() {
               />
             </div>
 
-            {/* Cesium 지도 */}
             {showMap && (
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
@@ -341,7 +327,6 @@ export default function CCTV() {
         </DialogContent>
       </Dialog>
 
-      {/* CCTV 삭제 확인 Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="bg-background border-border">
           <AlertDialogHeader>
