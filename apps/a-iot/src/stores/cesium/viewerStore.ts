@@ -60,7 +60,7 @@ export const useViewerStore = create<ViewerStore>(() => ({
         }
       }
     } catch (error) {
-
+      console.error('Failed to load Cesium imagery:', error)
     }
 
     try {
@@ -72,7 +72,7 @@ export const useViewerStore = create<ViewerStore>(() => ({
         }
       }
     } catch (error) {
-
+      console.error('Failed to load Cesium terrain:', error)
     }
   },
 }))

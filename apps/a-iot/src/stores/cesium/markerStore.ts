@@ -9,6 +9,8 @@ import {
   Color,
   LabelStyle,
   VerticalOrigin,
+  ConstantPositionProperty,
+  ConstantProperty,
 } from 'cesium'
 import type { MarkerOptions } from './types'
 
@@ -77,15 +79,17 @@ export const useMarkerStore = create<MarkerStore>(() => ({
         options.lat,
         options.height ?? 0
       )
-      entity.position = position as any
+      entity.position = new ConstantPositionProperty(position)
     }
 
     if (options.label !== undefined && entity.label) {
-      entity.label.text = options.label as any
+      entity.label.text = new ConstantProperty(options.label)
     }
 
     if (options.labelColor !== undefined && entity.label) {
-      entity.label.fillColor = Color.fromCssColorString(options.labelColor) as any
+      entity.label.fillColor = new ConstantProperty(
+        Color.fromCssColorString(options.labelColor)
+      )
     }
   },
 

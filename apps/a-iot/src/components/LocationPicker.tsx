@@ -115,7 +115,7 @@ export default function LocationPicker({
           }
         }, ScreenSpaceEventType.RIGHT_CLICK)
       } catch (error) {
-
+        console.error('Cesium viewer initialization failed:', error)
       }
     }
 
