@@ -6,8 +6,7 @@ import {
   CesiumTerrainProvider,
 } from 'cesium'
 
-Ion.defaultAccessToken =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5NGQ0YTBmZC1kMjVmLTQ2OGUtOTFiYy03YWYyNDJhOWZjYzMiLCJpZCI6MjgzMTA2LCJpYXQiOjE3NTMwNjEzMDF9.xhu9JUBNx01Zanmt1lz_MR8a5V0_vTaIpiN8gxhHuU0'
+Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_ACCESS_TOKEN
 
 export const DEFAULT_VIEWER_OPTIONS = {
   timeline: false,
@@ -22,18 +21,17 @@ export const DEFAULT_VIEWER_OPTIONS = {
   fullscreenButton: false,
 }
 
-export const GOOGLE_MAP_IMAGERY_ASSET_ID = 3830182
-export const TERRAIN_ASSET_ID = 3825983
+export const IMAGERY_ASSET_ID = Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID)
+export const TERRAIN_ASSET_ID = Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID)
 
 export async function setupCesiumResources(viewer: CesiumViewer): Promise<void> {
   try {
-    const imageryProvider = await IonImageryProvider.fromAssetId(GOOGLE_MAP_IMAGERY_ASSET_ID)
+    const imageryProvider = await IonImageryProvider.fromAssetId(IMAGERY_ASSET_ID)
     if (!viewer.isDestroyed()) {
       viewer.imageryLayers.removeAll()
       viewer.imageryLayers.addImageryProvider(imageryProvider)
     }
   } catch (error) {
-    // Fallback to default imagery
   }
 
   try {
@@ -43,6 +41,5 @@ export async function setupCesiumResources(viewer: CesiumViewer): Promise<void> 
       viewer.terrainProvider = terrainProvider
     }
   } catch (error) {
-    // Fallback to default terrain
   }
 }

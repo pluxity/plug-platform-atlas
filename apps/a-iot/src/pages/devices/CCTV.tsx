@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useCctvList, useCreateCctv, useUpdateCctv, useDeleteCctv } from '../../services/cctv'
 import type { CctvResponse, CctvCreateRequest } from '../../types/cctv'
 import { DataTable, type Column } from '@plug-atlas/ui'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@plug-atlas/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@plug-atlas/ui'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@plug-atlas/ui'
 import { Button } from '@plug-atlas/ui'
 import { Input } from '@plug-atlas/ui'
@@ -206,6 +206,9 @@ export default function CCTV() {
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingCctv ? 'CCTV 수정' : 'CCTV 등록'}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {editingCctv ? 'CCTV 정보를 수정합니다.' : 'CCTV를 등록합니다.'}
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
