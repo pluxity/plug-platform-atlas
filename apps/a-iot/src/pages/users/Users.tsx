@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Input, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from '@plug-atlas/ui';
 import { useState, useEffect } from 'react';
-import UserCreateForm from './Forms/UsersCreateForm';
-import UserEditModal from './Forms/UserEditForm';
+import UserCreateForm from './dialogs/UsersCreateDialog';
+import UserEditModal from './dialogs/UserEditDialog';
 import { useAdminUsers, useRoles, useDeleteAdminUser, useInitAdminUserPassword } from '@plug-atlas/api-hooks'; 
 import { User } from './types/users.types';
 
