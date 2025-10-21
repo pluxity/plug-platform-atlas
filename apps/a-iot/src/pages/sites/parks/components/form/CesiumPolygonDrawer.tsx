@@ -331,7 +331,7 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
 
     const completeDrawing = () => {
         if (!viewerRef.current || drawingStateRef.current.activeShapePoints.length < 3) {
-            alert('폴리곤을 그리려면 최소 3개의 점이 필요합니다.');
+            toast.warning('폴리곤을 그리려면 최소 3개의 점이 필요합니다.');
             return;
         }
 
