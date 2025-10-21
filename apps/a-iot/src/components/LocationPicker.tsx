@@ -5,9 +5,9 @@ import {
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
   defined,
-  CameraEventType,
   HeightReference,
   Entity,
+  NearFarScalar,
 } from 'cesium'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { DEFAULT_VIEWER_OPTIONS, setupCesiumResources } from '../lib/cesiumSetup'
@@ -19,6 +19,9 @@ interface LocationPickerProps {
   onLocationChange: (lon: number, lat: number) => void
   cctvHeight?: number
   containerHeight?: number
+  markerImage?: string
+  markerWidth?: number
+  markerHeight?: number
 }
 
 export default function LocationPicker({
@@ -27,6 +30,9 @@ export default function LocationPicker({
   onLocationChange,
   cctvHeight = 3,
   containerHeight,
+  markerImage = '/images/icons/map/marker.png',
+  markerWidth = 32,
+  markerHeight = 32,
 }: LocationPickerProps) {
   const cesiumContainerRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<CesiumViewer | null>(null)
@@ -56,11 +62,6 @@ export default function LocationPicker({
           e.preventDefault()
           return false
         })
-
-        const controller = newViewer.scene.screenSpaceCameraController
-        controller.rotateEventTypes = [CameraEventType.LEFT_DRAG]
-        controller.tiltEventTypes = [CameraEventType.MIDDLE_DRAG, CameraEventType.PINCH]
-        controller.lookEventTypes = [CameraEventType.LEFT_DRAG]
 
         if (lon && lon !== 0 && lat && lat !== 0) {
           newViewer.camera.setView({
@@ -119,46 +120,6 @@ export default function LocationPicker({
           }
         }, ScreenSpaceEventType.RIGHT_CLICK)
 
-        let isDragging = false
-        let dragEntity: Entity | null = null
-
-        handler.setInputAction((movement: ScreenSpaceEventHandler.PositionedEvent) => {
-          const pickedObject = newViewer.scene.pick(movement.position)
-          if (defined(pickedObject) && pickedObject.id === markerEntityRef.current) {
-            isDragging = true
-            dragEntity = pickedObject.id as Entity
-            newViewer.scene.screenSpaceCameraController.enableRotate = false
-          }
-        }, ScreenSpaceEventType.LEFT_DOWN)
-
-        handler.setInputAction((movement: ScreenSpaceEventHandler.MotionEvent) => {
-          if (isDragging && dragEntity) {
-            let cartesian: Cartesian3 | undefined = newViewer.scene.pickPosition(movement.endPosition)
-
-            if (!defined(cartesian)) {
-              cartesian = newViewer.camera.pickEllipsoid(
-                movement.endPosition,
-                newViewer.scene.globe.ellipsoid
-              ) ?? undefined
-            }
-
-            if (cartesian && defined(cartesian)) {
-              const cartographic = newViewer.scene.globe.ellipsoid.cartesianToCartographic(cartesian)
-              const longitude = CesiumMath.toDegrees(cartographic.longitude)
-              const latitude = CesiumMath.toDegrees(cartographic.latitude)
-
-              dragEntity.position = Cartesian3.fromDegrees(longitude, latitude, 10) as any
-              onLocationChange(longitude, latitude)
-            }
-          }
-        }, ScreenSpaceEventType.MOUSE_MOVE)
-
-        handler.setInputAction(() => {
-          isDragging = false
-          dragEntity = null
-          newViewer.scene.screenSpaceCameraController.enableRotate = true
-        }, ScreenSpaceEventType.LEFT_UP)
-
         setupCesiumResources(newViewer)
       } catch (error) {
       }
@@ -188,19 +149,18 @@ export default function LocationPicker({
         id: 'location-marker',
         position: position,
         billboard: {
-          image: createCctvMarkerCanvas(),
-          width: 50,
-          height: 50,
+          image: markerImage,
+          width: markerWidth,
+          height: markerHeight,
           heightReference: HeightReference.RELATIVE_TO_GROUND,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          scaleByDistance: new NearFarScalar(100, 1.5, 5000, 0.3),
         },
       })
       markerEntityRef.current = entity
     }
-  }, [])
+  }, [markerImage, markerWidth, markerHeight])
 
   useEffect(() => {
-    const viewer = viewerRef.current
     if (!viewer) return
 
     if (lon && lat && lon !== 0 && lat !== 0) {
@@ -209,15 +169,14 @@ export default function LocationPicker({
       viewer.entities.remove(markerEntityRef.current)
       markerEntityRef.current = null
     }
-  }, [lon, lat, cctvHeight, updateMarker])
+  }, [viewer, lon, lat, cctvHeight, updateMarker])
 
   const handleSetMarker = useCallback(() => {
-    if (!contextMenu || !viewerRef.current) return
+    if (!contextMenu) return
 
-    updateMarker(viewerRef.current, contextMenu.lon, contextMenu.lat, cctvHeight)
     onLocationChange(contextMenu.lon, contextMenu.lat)
     setContextMenu(null)
-  }, [contextMenu, cctvHeight, updateMarker, onLocationChange])
+  }, [contextMenu, onLocationChange])
 
   return (
     <div
@@ -246,38 +205,10 @@ export default function LocationPicker({
             onClick={handleSetMarker}
             className="w-full px-4 py-2 text-sm text-left hover:bg-accent hover:text-accent-foreground transition-colors whitespace-nowrap"
           >
-            여기에 CCTV 위치 지정
+            여기에 위치 지정
           </button>
         </div>
       )}
     </div>
   )
-}
-
-function createCctvMarkerCanvas(): HTMLCanvasElement {
-  const canvas = document.createElement('canvas')
-  canvas.width = 40
-  canvas.height = 40
-  const ctx = canvas.getContext('2d')
-
-  if (ctx) {
-    ctx.beginPath()
-    ctx.arc(20, 20, 18, 0, Math.PI * 2)
-    ctx.fillStyle = '#3b82f6'
-    ctx.fill()
-    ctx.strokeStyle = '#ffffff'
-    ctx.lineWidth = 3
-    ctx.stroke()
-
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(12, 14, 16, 10)
-    ctx.fillRect(8, 16, 4, 6)
-
-    ctx.beginPath()
-    ctx.arc(20, 19, 3, 0, Math.PI * 2)
-    ctx.fillStyle = '#3b82f6'
-    ctx.fill()
-  }
-
-  return canvas
 }
