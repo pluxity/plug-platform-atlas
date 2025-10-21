@@ -1,6 +1,6 @@
-import { Site } from '../../../../../services/types/site/site.ts';
+import { Site } from '../../../../../services/types/site/site';
 
-export function createParkColumns(
+export function createSiteColumns(
 ) {
     return [
         {

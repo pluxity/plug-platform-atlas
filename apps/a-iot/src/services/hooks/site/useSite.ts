@@ -18,7 +18,7 @@ export const useSites = (options?: SWRConfiguration<Site[], Error>) => {
     );
 };
 
-export const useCreateSite = () => {
+export const useCreateSite = (p0: { onSuccess: () => void; onError: (error: any) => void; }) => {
     const client = useApiClient();
 
     return useSWRMutation(
@@ -30,7 +30,7 @@ export const useCreateSite = () => {
     );
 };
 
-export const useUpdateSite = () => {
+export const useUpdateSite = (p0: { onSuccess: () => void; onError: (error: any) => void; }) => {
     const client = useApiClient();
 
     return useSWRMutation(

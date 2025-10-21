@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Label 
 import {SiteCreateRequest} from "../../../../../services/types/site/site.ts";
 import CesiumPolygonDrawer from "./CesiumPolygonDrawer.tsx";
 
-interface ParkFormProps {
+interface SiteFormProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     title: string;
@@ -15,7 +15,7 @@ interface ParkFormProps {
     submitButtonText: string;
 }
 
-export default function ParkForm({
+export default function SiteForm({
                                      isOpen,
                                      onOpenChange,
                                      title,
@@ -25,7 +25,7 @@ export default function ParkForm({
                                      onCancel,
                                      isLoading = false,
                                      submitButtonText
-                                 }: ParkFormProps) {
+                                 }: SiteFormProps) {
     const [showMapDrawer, setShowMapDrawer] = useState(false);
 
     const handlePolygonComplete = (wktString: string) => {

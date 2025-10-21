@@ -1,19 +1,19 @@
 import {
   Cartesian3,
-  Viewer as CesiumViewer,
-  Ion,
   CesiumTerrainProvider,
-  IonResource,
+  defined,
+  Ion,
   IonImageryProvider,
+  IonResource,
   Math as CesiumMath,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
-  defined,
+  Viewer as CesiumViewer,
 } from 'cesium'
-import { useEffect, useRef } from 'react'
+import {useEffect, useRef} from 'react'
 
 Ion.defaultAccessToken =
-  import.meta.env.VITE_CESIUM_ION_ACCESS_TOKEN;
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5NGQ0YTBmZC1kMjVmLTQ2OGUtOTFiYy03YWYyNDJhOWZjYzMiLCJpZCI6MjgzMTA2LCJpYXQiOjE3NTMwNjEzMDF9.xhu9JUBNx01Zanmt1lz_MR8a5V0_vTaIpiN8gxhHuU0'
 
 interface Park {
   id: number
@@ -70,8 +70,7 @@ export default function ParkMapViewer({ parks, selectedPark, onSelectPark }: Par
         try {
           console.log('Terrain 로드 중...')
           const terrainResource = await IonResource.fromAssetId(3825983)
-          const terrainProvider = await CesiumTerrainProvider.fromUrl(terrainResource)
-          viewer.terrainProvider = terrainProvider
+          viewer.terrainProvider = await CesiumTerrainProvider.fromUrl(terrainResource)
           console.log('Terrain 로드 완료')
         } catch (error) {
           console.error('Terrain 로드 실패:', error)

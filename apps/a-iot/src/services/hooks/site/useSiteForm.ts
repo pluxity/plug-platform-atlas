@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Site, SiteCreateRequest } from '../../types/site/site.ts';
 
-export function useParkForm() {
+export function useSiteForm() {
     const [formData, setFormData] = useState<SiteCreateRequest>({
         name: '',
         location: '',
@@ -16,11 +16,11 @@ export function useParkForm() {
         });
     };
 
-    const setFormFromPark = (park: Site) => {
+    const setFormFromSite = (site: Site) => {
         setFormData({
-            name: park.name,
-            location: park.location,
-            description: park.description
+            name: site.name,
+            location: site.location,
+            description: site.description
         });
     };
 
@@ -31,7 +31,7 @@ export function useParkForm() {
     return {
         formData,
         resetForm,
-        setFormFromPark,
+        setFormFromSite,
         updateFormField
     };
 }

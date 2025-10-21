@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@plug-atlas/ui';
 import * as Cesium from "cesium";
+import {toast} from "sonner";
 
 interface CesiumPolygonDrawerProps {
     onPolygonComplete: (wktString: string) => void;
@@ -12,7 +13,6 @@ interface DrawingState {
     activePoints: Cesium.Entity[];
     activeShapePoints: Cesium.Cartesian3[];
     activeShape: Cesium.Entity | null;
-    floatingPoint: Cesium.Entity | null;
     dynamicPoint: Cesium.Entity | null;
     handler: Cesium.ScreenSpaceEventHandler | null;
 }
@@ -30,7 +30,6 @@ export default function CesiumPolygonDrawer({ onPolygonComplete, initialWkt }: C
         activePoints: [],
         activeShapePoints: [],
         activeShape: null,
-        floatingPoint: null,
         dynamicPoint: null,
         handler: null,
     });

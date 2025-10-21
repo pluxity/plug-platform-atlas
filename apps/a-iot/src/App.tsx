@@ -5,7 +5,7 @@ import LoginPage from './pages/LoginPage'
 import ForbiddenPage from './pages/ForbiddenPage'
 import Dashboard from './pages/Dashboard'
 import MapDashboard from './pages/dashboard/MapDashboard'
-import Parks from './pages/sites/parks/Parks'
+import SitePage from './pages/sites/parks/SitePage.tsx'
 import VirtualPatrol from './pages/sites/VirtualPatrol'
 import SensorCategories from './pages/devices/SensorCategories'
 import Sensors from './pages/devices/Sensors'
@@ -31,7 +31,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/dashboard/map" element={<MapDashboard />} />
-                  <Route path="/sites/parks" element={<Parks />} />
+                  <Route path="/sites/parks" element={<SitePage />} />
                   <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
                   <Route path="/devices/sensor-categories" element={<SensorCategories />} />
                   <Route path="/devices/sensors" element={<Sensors />} />
