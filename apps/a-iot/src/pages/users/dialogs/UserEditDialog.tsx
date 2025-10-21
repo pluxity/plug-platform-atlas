@@ -5,14 +5,14 @@ import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 import { useUpdateAdminUser, useRoles } from '@plug-atlas/api-hooks';
 import { UserUpdateRequest, UserUpdateRequestSchema, UserResponse } from '@plug-atlas/types';
 
-interface UserEditModalProps {
+interface UserEditDialogProps {
   isOpen: boolean
   user: UserResponse | null
   onClose: () => void
   onSuccess: () => void
 }
 
-export default function UserEditModal({ isOpen, user, onClose, onSuccess }: UserEditModalProps) {
+export default function UserEditDialog({ isOpen, user, onClose, onSuccess }: UserEditDialogProps) {
     const { trigger: updateUser, isMutating: isUpdateUser } = useUpdateAdminUser();
     const { data: roles } = useRoles();
 

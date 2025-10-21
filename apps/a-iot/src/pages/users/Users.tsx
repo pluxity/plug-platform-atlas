@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Input, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from '@plug-atlas/ui';
 import { useState, useEffect } from 'react';
-import UserCreateForm from './dialogs/UsersCreateDialog';
-import UserEditModal from './dialogs/UserEditDialog';
+import UserCreateDialog from './dialogs/UsersCreateDialog';
+import UserEditDialog from './dialogs/UserEditDialog';
 import { useAdminUsers, useDeleteAdminUser, useInitAdminUserPassword } from '@plug-atlas/api-hooks'; 
 import { UserResponse } from '@plug-atlas/types';
 
@@ -76,8 +76,8 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filteredData, setFilteredData] = useState<UserResponse[]>(data || []);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState<boolean>(false);
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState<boolean>(false);
@@ -123,12 +123,12 @@ export default function Users() {
   };
 
   const handleCreateUser = () => {
-    setIsCreateModalOpen(true);
+    setIsCreateDialogOpen(true);
   }
 
   const handleEditUser = (user: UserResponse) => {
     setSelectedUser(user);
-    setIsEditModalOpen(true);
+    setIsEditDialogOpen(true);
   }
 
   const handleResetPassword = (user: UserResponse) => {
@@ -170,22 +170,22 @@ export default function Users() {
   }
 
   const handleCloseCreateModal = () => {
-    setIsCreateModalOpen(false);
+    setIsCreateDialogOpen(false);
   }
 
   const handleSuccessCreateUser = () => {
     mutate(); 
-    setIsCreateModalOpen(false);
+    setIsCreateDialogOpen(false);
   }
 
   const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
+    setIsEditDialogOpen(false);
     setSelectedUser(null);
   }
 
   const handleSuccessEditUser = () => {
     mutate();
-    setIsEditModalOpen(false);
+    setIsEditDialogOpen(false);
     setSelectedUser(null);
   }
 
@@ -253,15 +253,15 @@ export default function Users() {
       </Card>
 
       {/* 사용자 생성 모달 */}
-      <UserCreateForm 
-        isOpen={isCreateModalOpen} 
+      <UserCreateDialog 
+        isOpen={isCreateDialogOpen} 
         onClose={handleCloseCreateModal} 
         onSuccess={handleSuccessCreateUser} 
       />
 
       {/* 사용자 수정 모달 */}
-      <UserEditModal 
-        isOpen={isEditModalOpen}
+      <UserEditDialog 
+        isOpen={isEditDialogOpen}
         user={selectedUser} 
         onClose={handleCloseEditModal} 
         onSuccess={handleSuccessEditUser} 

@@ -5,13 +5,13 @@ import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 import { useCreateAdminUser, useRoles } from '@plug-atlas/api-hooks';
 import { UserCreateRequest, UserCreateRequestSchema } from '@plug-atlas/types';
 
-interface UsersCreateFormProps{
+interface UsersCreateDialogProps{
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export default function UserCreateForm({ isOpen, onClose, onSuccess }: UsersCreateFormProps) {
+export default function UserCreateDialog({ isOpen, onClose, onSuccess }: UsersCreateDialogProps) {
     const { trigger: createUser, isMutating: isCreateUser } = useCreateAdminUser();
     const { data: roles } = useRoles();
 
