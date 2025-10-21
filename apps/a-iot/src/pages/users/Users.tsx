@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Input, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from '@plug-atlas/ui';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import UserCreateForm from './dialogs/UsersCreateDialog';
 import UserEditModal from './dialogs/UserEditDialog';
 import { useAdminUsers, useRoles, useDeleteAdminUser, useInitAdminUserPassword } from '@plug-atlas/api-hooks'; 
@@ -11,14 +11,14 @@ export default function Users() {
   const { trigger: deleteAdminUser } = useDeleteAdminUser(); 
   const { trigger: initAdminUserPassword } = useInitAdminUserPassword();
   
-  const userData: User[] = (data || []).map((data) => ({
+  const userData: User[] = useMemo(() => (data || []).map((data) => ({
     id: data.id,
     username: data.username,
     name: data.name,
     roleIds: data.roles?.map(r => r.id) || [], 
     department: data.department || '-',
     phoneNumber: data.phoneNumber || '-',
-  }));
+  })), [data]);
 
   const userColumns: Column<User>[] = [
     { key: 'username', header: '아이디' },
@@ -31,7 +31,8 @@ export default function Users() {
         
         const roles = user.roleIds
           .map(id => roleData.find(role => role.id === id))
-          .filter(Boolean).sort();
+          .filter((role): role is NonNullable<typeof role> => role != null)
+          .sort((a, b) => a.name.localeCompare(b.name));
         
         return (
           <div className="flex gap-1 flex-wrap">

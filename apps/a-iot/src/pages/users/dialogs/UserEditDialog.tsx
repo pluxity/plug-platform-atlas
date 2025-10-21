@@ -20,12 +20,6 @@ export default function UserEditModal({ isOpen, user, onClose, onSuccess }: User
 
     const editUserForm = useForm<UserUpdateRequest>({
         resolver: zodResolver(UserUpdateRequestSchema),
-        defaultValues: {
-            name: user?.name || '',
-            phoneNumber: user?.phoneNumber || '',
-            department: user?.department || '',
-            roleIds: user?.roleIds || []
-        },
         mode: 'onChange'
     });
 
@@ -161,9 +155,7 @@ export default function UserEditModal({ isOpen, user, onClose, onSuccess }: User
                                                         onCheckedChange={(checked) => {
                                                             const currentValue = field.value || [];
                                                             if (checked) {
-                                                                if (!currentValue.includes(role.id)) {
-                                                                    field.onChange([...currentValue, role.id]);
-                                                                }
+                                                                field.onChange([...currentValue, role.id]);
                                                             } else {
                                                                 field.onChange(currentValue.filter(id => id !== role.id));
                                                             }

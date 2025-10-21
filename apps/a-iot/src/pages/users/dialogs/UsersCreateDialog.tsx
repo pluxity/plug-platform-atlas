@@ -35,14 +35,7 @@ export default function UserCreateForm({ isOpen, onClose, onSuccess }: UsersCrea
 
     const submitCreateUserForm = useCallback(async (data: UserCreateRequest) => {
         try{
-            await createUser({
-                username: data.username,
-                password: data.password,
-                name: data.name,
-                phoneNumber: data.phoneNumber,
-                department: data.department,
-                roleIds: data.roleIds
-            });
+            await createUser(data);
             toast.success('사용자 생성 성공');
             onSuccess();
             resetCreateUserForm();
@@ -158,20 +151,18 @@ export default function UserCreateForm({ isOpen, onClose, onSuccess }: UsersCrea
                                             return (
                                                 <div key={role.id} className="flex items-center gap-2">
                                                     <Checkbox 
-                                                        id={role.id.toString()} 
+                                                        id={`create-${role.id.toString()}`}
                                                         checked={isChecked}
                                                         onCheckedChange={(checked) => {
                                                             const currentValue = field.value || [];
                                                             if (checked) {
-                                                                if (!currentValue.includes(role.id)) {
-                                                                    field.onChange([...currentValue, role.id]);
-                                                                }
+                                                                field.onChange([...currentValue, role.id]);
                                                             } else {
                                                                 field.onChange(currentValue.filter(id => id !== role.id));
                                                             }
                                                         }}
                                                     />
-                                                    <Label htmlFor={role.id.toString()}>{role.name}</Label>
+                                                    <Label htmlFor={`create-${role.id.toString()}`}>{role.name}</Label>
                                                 </div>
                                             );
                                         })}
