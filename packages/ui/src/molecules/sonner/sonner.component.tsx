@@ -6,17 +6,17 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
-      theme="system"
+      theme="light"
       className="toaster group"
       toastOptions={{
+        unstyled: true,
         classNames: {
-          toast:
-            "group toast group-[.toaster]:bg-white group-[.toaster]:text-gray-900 group-[.toaster]:border group-[.toaster]:border-gray-200 group-[.toaster]:shadow-lg group-[.toaster]:rounded-xl group-[.toaster]:backdrop-blur-sm",
-          description: "group-[.toast]:text-gray-600",
-          actionButton:
-            "group-[.toast]:bg-primary-600 group-[.toast]:text-white group-[.toast]:hover:bg-primary-700 group-[.toast]:rounded-lg group-[.toast]:px-3 group-[.toast]:py-2 group-[.toast]:text-sm group-[.toast]:font-medium",
-          cancelButton:
-            "group-[.toast]:bg-gray-100 group-[.toast]:text-gray-600 group-[.toast]:hover:bg-gray-200 group-[.toast]:rounded-lg group-[.toast]:px-3 group-[.toast]:py-2 group-[.toast]:text-sm group-[.toast]:font-medium",
+          toast: "group w-full rounded-xl border shadow-lg p-4 flex items-start gap-3",
+          title: "text-sm font-semibold",
+          description: "text-sm opacity-90 mt-1",
+          actionButton: "bg-primary-600 text-white hover:bg-primary-700 rounded-lg px-3 py-2 text-sm font-medium ml-auto",
+          cancelButton: "bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-lg px-3 py-2 text-sm font-medium",
+          closeButton: "absolute top-2 right-2 rounded-md p-1 opacity-70 hover:opacity-100 transition-opacity",
         },
       }}
       {...props}
@@ -24,127 +24,153 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
-// 색상별 토스트 헬퍼 함수들
-const createColoredToast = (variant: 'default' | 'success' | 'warning' | 'error' | 'info') => {
-  const variantConfig = {
-    default: {
-      className: "bg-gradient-to-br from-white to-gray-50/50 border-gray-200 text-gray-900 shadow-lg",
-      iconColor: "text-gray-600"
-    },
-    success: {
-      className: "bg-gradient-to-br from-success-50 to-success-100/50 border-success-200 text-success-900 shadow-lg shadow-success-100/50",
-      iconColor: "text-success-600"
-    },
-    warning: {
-      className: "bg-gradient-to-br from-warning-50 to-warning-100/50 border-warning-200 text-warning-900 shadow-lg shadow-warning-100/50",
-      iconColor: "text-warning-600"
-    },
-    error: {
-      className: "bg-gradient-to-br from-error-50 to-error-100/50 border-error-200 text-error-900 shadow-lg shadow-error-100/50",
-      iconColor: "text-error-600"
-    },
-    info: {
-      className: "bg-gradient-to-br from-primary-50 to-primary-100/50 border-primary-200 text-primary-900 shadow-lg shadow-primary-100/50",
-      iconColor: "text-primary-600"
-    }
+// Toast 옵션 타입
+interface ToastOptions {
+  description?: string
+  action?: {
+    label: string
+    onClick: () => void
   }
-
-  return (message: string, options?: { description?: string; action?: { label: string; onClick: () => void } }) => {
-    const config = variantConfig[variant]
-    const icon = getIcon(variant, config.iconColor)
-
-    return toast(message, {
-      description: options?.description,
-      action: options?.action ? {
-        label: options.action.label,
-        onClick: options.action.onClick
-      } : undefined,
-      className: cn(
-        "rounded-xl border backdrop-blur-sm transition-all duration-300 ease-out-quad",
-        config.className
-      ),
-      icon
-    })
-  }
+  duration?: number
 }
 
-// 아이콘 헬퍼 함수
-const getIcon = (variant: string, colorClass: string) => {
-  const iconClass = cn("w-5 h-5 flex-shrink-0", colorClass)
+// Variant별 아이콘
+const SuccessIcon = () => (
+  <div className="rounded-full p-1 bg-success-100 flex-shrink-0">
+    <svg className="w-5 h-5 text-success-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+)
 
-  switch (variant) {
-    case 'success':
-      return (
-        <div className={cn("rounded-full p-1 bg-success-100", colorClass)}>
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      )
-    case 'warning':
-      return (
-        <div className={cn("rounded-full p-1 bg-warning-100", colorClass)}>
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-        </div>
-      )
-    case 'error':
-      return (
-        <div className={cn("rounded-full p-1 bg-error-100", colorClass)}>
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      )
-    case 'info':
-      return (
-        <div className={cn("rounded-full p-1 bg-primary-100", colorClass)}>
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      )
-    default:
-      return (
-        <div className={cn("rounded-full p-1 bg-gray-100", colorClass)}>
-          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      )
-  }
+const WarningIcon = () => (
+  <div className="rounded-full p-1 bg-warning-100 flex-shrink-0">
+    <svg className="w-5 h-5 text-warning-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+    </svg>
+  </div>
+)
+
+const ErrorIcon = () => (
+  <div className="rounded-full p-1 bg-error-100 flex-shrink-0">
+    <svg className="w-5 h-5 text-error-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+)
+
+const InfoIcon = () => (
+  <div className="rounded-full p-1 bg-primary-100 flex-shrink-0">
+    <svg className="w-5 h-5 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+)
+
+const DefaultIcon = () => (
+  <div className="rounded-full p-1 bg-gray-100 flex-shrink-0">
+    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+)
+
+// Success Toast
+const toastSuccess = (message: string, options?: ToastOptions) => {
+  return toast(message, {
+    description: options?.description,
+    duration: options?.duration,
+    action: options?.action,
+    unstyled: true,
+    classNames: {
+      toast: "bg-success-50 border-success-200 text-success-900",
+      title: "text-success-900",
+      description: "text-success-800",
+    },
+    icon: <SuccessIcon />,
+  })
 }
 
-// 색상별 토스트 함수들
-const toastSuccess = createColoredToast('success')
-const toastWarning = createColoredToast('warning')
-const toastError = createColoredToast('error')
-const toastInfo = createColoredToast('info')
-const toastDefault = createColoredToast('default')
+// Warning Toast
+const toastWarning = (message: string, options?: ToastOptions) => {
+  return toast(message, {
+    description: options?.description,
+    duration: options?.duration,
+    action: options?.action,
+    unstyled: true,
+    classNames: {
+      toast: "bg-warning-50 border-warning-200 text-warning-900",
+      title: "text-warning-900",
+      description: "text-warning-800",
+    },
+    icon: <WarningIcon />,
+  })
+}
 
-// 통합된 toast 객체
+// Error Toast
+const toastError = (message: string, options?: ToastOptions) => {
+  return toast(message, {
+    description: options?.description,
+    duration: options?.duration,
+    action: options?.action,
+    unstyled: true,
+    classNames: {
+      toast: "bg-error-50 border-error-200 text-error-900",
+      title: "text-error-900",
+      description: "text-error-800",
+    },
+    icon: <ErrorIcon />,
+  })
+}
+
+// Info Toast
+const toastInfo = (message: string, options?: ToastOptions) => {
+  return toast(message, {
+    description: options?.description,
+    duration: options?.duration,
+    action: options?.action,
+    unstyled: true,
+    classNames: {
+      toast: "bg-primary-50 border-primary-200 text-primary-900",
+      title: "text-primary-900",
+      description: "text-primary-800",
+    },
+    icon: <InfoIcon />,
+  })
+}
+
+// Default Toast
+const toastDefault = (message: string, options?: ToastOptions) => {
+  return toast(message, {
+    description: options?.description,
+    duration: options?.duration,
+    action: options?.action,
+    unstyled: true,
+    classNames: {
+      toast: "bg-white border-gray-200 text-gray-900",
+      title: "text-gray-900",
+      description: "text-gray-600",
+    },
+    icon: <DefaultIcon />,
+  })
+}
+
+// 통합된 toast 객체 타입
 type BaseToastFn = typeof toast
 type ColoredToast = BaseToastFn & {
-  success: ReturnType<typeof createColoredToast>
-  warning: ReturnType<typeof createColoredToast>
-  error: ReturnType<typeof createColoredToast>
-  info: ReturnType<typeof createColoredToast>
-  default: ReturnType<typeof createColoredToast>
+  success: typeof toastSuccess
+  warning: typeof toastWarning
+  error: typeof toastError
+  info: typeof toastInfo
+  default: typeof toastDefault
 }
 
-const baseToastFn = ((message: any, opts?: any) => (toast as any)(message, opts)) as ColoredToast
-;(baseToastFn as any).success = toastSuccess
-;(baseToastFn as any).warning = toastWarning
-;(baseToastFn as any).error = toastError
-;(baseToastFn as any).info = toastInfo
-;(baseToastFn as any).default = toastDefault
-// Copy through additional methods from original toast (promise, dismiss, etc.)
-Object.keys(toast).forEach(k => {
-  if (!(k in baseToastFn)) {
-    // @ts-ignore
-    baseToastFn[k] = (toast as any)[k]
-  }
-})
+// toast 객체 확장
+const extendedToast = toast as ColoredToast
+extendedToast.success = toastSuccess
+extendedToast.warning = toastWarning
+extendedToast.error = toastError
+extendedToast.info = toastInfo
+extendedToast.default = toastDefault
 
-export { Toaster, baseToastFn as toast }
+export { Toaster, extendedToast as toast }
