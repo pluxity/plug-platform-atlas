@@ -41,7 +41,7 @@ export default function CCTV() {
       name: '',
       lon: 0,
       lat: 0,
-      originUrl: '',
+      url: '',
       height: 3,
     },
   })
@@ -57,7 +57,7 @@ export default function CCTV() {
         name: cctv.name,
         lon: cctv.lon,
         lat: cctv.lat,
-        originUrl: cctv.url || cctv.originUrl || '', // API에서 url로 올 수 있으므로 둘 다 확인
+        url: cctv.url || '',
         height: cctv.height,
       })
     } else {
@@ -66,7 +66,7 @@ export default function CCTV() {
         name: '',
         lon: 0,
         lat: 0,
-        originUrl: '',
+        url: '',
         height: 3,
       })
     }
@@ -142,14 +142,11 @@ export default function CCTV() {
     {
       key: 'url',
       header: 'Origin URL',
-      cell: (value, row) => {
-        const url = value || row.originUrl
-        return (
-          <span className="text-sm text-muted-foreground truncate max-w-xs block">
-            {url ? String(url) : '-'}
-          </span>
-        )
-      },
+      cell: (value) => (
+        <span className="text-sm text-muted-foreground truncate max-w-xs block">
+          {value ? String(value) : '-'}
+        </span>
+      ),
     },
     {
       key: 'viewUrl',
@@ -257,14 +254,14 @@ export default function CCTV() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="originUrl">Origin URL *</Label>
+              <Label htmlFor="url">Origin URL *</Label>
               <Input
-                id="originUrl"
+                id="url"
                 placeholder="rtsp://example.com/stream 또는 http://example.com/stream"
-                {...register('originUrl')}
+                {...register('url')}
               />
-              {errors.originUrl && (
-                <p className="text-sm text-destructive">{errors.originUrl.message}</p>
+              {errors.url && (
+                <p className="text-sm text-destructive">{errors.url.message}</p>
               )}
               <p className="text-xs text-muted-foreground">
                 CCTV의 원본 스트림 주소를 입력하세요.
