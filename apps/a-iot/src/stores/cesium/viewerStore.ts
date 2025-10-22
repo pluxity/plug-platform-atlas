@@ -5,6 +5,7 @@ import {
   IonImageryProvider,
   IonResource,
   CesiumTerrainProvider,
+  createWorldImagery,
 } from 'cesium'
 
 interface ViewerState {}
@@ -52,17 +53,34 @@ export const useViewerStore = create<ViewerStore>(() => ({
     const imageryAssetId = Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID)
     const terrainAssetId = Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID)
 
+    // Imagery 로딩 시도
+    let imageryLoaded = false
     try {
       if (imageryAssetId) {
         const imageryProvider = await IonImageryProvider.fromAssetId(imageryAssetId)
         if (!viewer.isDestroyed()) {
           viewer.imageryLayers.addImageryProvider(imageryProvider)
+          imageryLoaded = true
         }
       }
     } catch (error) {
-      console.error('Failed to load Cesium imagery:', error)
+      console.warn('Failed to load Cesium Ion imagery, using default imagery:', error)
     }
 
+    // Imagery 로딩 실패 시 기본 Cesium World Imagery 사용
+    if (!imageryLoaded && viewer.imageryLayers.length === 0) {
+      try {
+        console.log('Using default Cesium World Imagery')
+        const defaultImagery = await createWorldImagery()
+        if (!viewer.isDestroyed()) {
+          viewer.imageryLayers.addImageryProvider(defaultImagery)
+        }
+      } catch (error) {
+        console.error('Failed to load default imagery:', error)
+      }
+    }
+
+    // Terrain 로딩 시도
     try {
       if (terrainAssetId) {
         const terrainResource = await IonResource.fromAssetId(terrainAssetId)
@@ -72,7 +90,7 @@ export const useViewerStore = create<ViewerStore>(() => ({
         }
       }
     } catch (error) {
-      console.error('Failed to load Cesium terrain:', error)
+      console.warn('Failed to load Cesium terrain, using default ellipsoid:', error)
     }
   },
 }))
