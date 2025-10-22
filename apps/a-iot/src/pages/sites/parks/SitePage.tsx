@@ -8,7 +8,7 @@ import { useCreateSite, useUpdateSite, useDeleteSite, useSites } from "../../../
 import { createSiteColumns } from "./components/data/SiteColumns";
 import ErrorDisplay from "../../../components/error/ErrorDisplay";
 import type {Site} from "../../../services/types/site/site";
-import {useSiteForm} from "../../../services/hooks/site/useSiteForm.ts";
+import {useSiteForm} from "./components/form/useSiteForm.ts";
 
 export default function SitePage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -19,32 +19,9 @@ export default function SitePage() {
     const { data: sites = [], error, mutate } = useSites();
     const { formData, resetForm, setFormFromSite, updateFormField } = useSiteForm();
 
-    const createSiteMutation = useCreateSite({
-        onSuccess: () => {
-            toast.success('공원이 성공적으로 생성되었습니다.');
-            setIsCreateModalOpen(false);
-            resetForm();
-            mutate();
-        },
-        onError: (error) => {
-            toast.error('공원 생성에 실패했습니다.');
-            console.error('Error creating site:', error);
-        }
-    });
+    const createSiteMutation = useCreateSite();
 
-    const updateSiteMutation = useUpdateSite({
-        onSuccess: () => {
-            toast.success('공원 정보가 성공적으로 수정되었습니다.');
-            setIsEditModalOpen(false);
-            setSelectedSite(null);
-            resetForm();
-            mutate();
-        },
-        onError: (error) => {
-            toast.error('공원 수정에 실패했습니다.');
-            console.error('Error updating site:', error);
-        }
-    });
+    const updateSiteMutation = useUpdateSite();
 
     const deleteSiteMutation = useDeleteSite({
         onSuccess: () => {
