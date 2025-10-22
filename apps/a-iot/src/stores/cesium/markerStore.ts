@@ -59,6 +59,8 @@ export const useMarkerStore = create<MarkerStore>(() => ({
         : undefined,
     })
 
+    viewer.scene.requestRender()
+
     return entity
   },
 
@@ -66,6 +68,7 @@ export const useMarkerStore = create<MarkerStore>(() => ({
     const entity = viewer.entities.getById(id)
     if (entity) {
       viewer.entities.remove(entity)
+      viewer.scene.requestRender()
     }
   },
 
@@ -91,9 +94,12 @@ export const useMarkerStore = create<MarkerStore>(() => ({
         Color.fromCssColorString(options.labelColor)
       )
     }
+
+    viewer.scene.requestRender()
   },
 
   clearAllMarkers: (viewer: CesiumViewer) => {
     viewer.entities.removeAll()
+    viewer.scene.requestRender()
   },
 }))

@@ -1,5 +1,4 @@
 import {
-  Viewer as CesiumViewer,
   Math as CesiumMath,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
@@ -13,7 +12,7 @@ import {
   useMarkerStore,
   DEFAULT_CAMERA_POSITION,
 } from '../stores/cesium'
-import { Button } from '@plug-atlas/ui'
+import { Button, Spinner } from '@plug-atlas/ui'
 import MapControls from './MapControls'
 
 interface LocationPickerProps {
@@ -39,7 +38,6 @@ export default function LocationPicker({
 }: LocationPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const handlerRef = useRef<ScreenSpaceEventHandler | null>(null)
-  const [viewer, setViewer] = useState<CesiumViewer | null>(null)
   const [contextMenu, setContextMenu] = useState<{
     show: boolean
     x: number
@@ -48,96 +46,77 @@ export default function LocationPicker({
     lat: number
   } | null>(null)
 
-  const { createViewer, setupCesiumResources } = useViewerStore()
-  const { setView } = useCameraStore()
+  const { viewer, isLoading, initializeViewer } = useViewerStore()
+  const { setView, focusOn } = useCameraStore()
   const { addMarker, removeMarker } = useMarkerStore()
 
   useEffect(() => {
     if (!containerRef.current || viewer) return
 
-    let currentViewer: CesiumViewer | null = null
+    initializeViewer(containerRef.current)
+  }, [containerRef, viewer, initializeViewer])
 
-    const initViewer = async () => {
-      try {
-        currentViewer = createViewer(containerRef.current!)
-        setViewer(currentViewer)
+  useEffect(() => {
+    if (!viewer) return
 
-        if (lon && lon !== 0 && lat && lat !== 0) {
-          setView(currentViewer, {
-            lon,
-            lat,
-            height: 1500,
-            pitch: -45,
-            heading: 0,
-          })
-        } else {
-          setView(currentViewer, {
-            ...DEFAULT_CAMERA_POSITION,
-            lat: DEFAULT_CAMERA_POSITION.lat - 0.05,
-          })
-        }
-
-        await setupCesiumResources(currentViewer)
-
-        const handler = new ScreenSpaceEventHandler(currentViewer.scene.canvas)
-        handlerRef.current = handler
-
-        handler.setInputAction(() => {
-          setContextMenu(null)
-        }, ScreenSpaceEventType.LEFT_CLICK)
-
-        handler.setInputAction((click: ScreenSpaceEventHandler.PositionedEvent) => {
-          let cartesian: Cartesian3 | undefined = currentViewer!.scene.pickPosition(
-            click.position
-          )
-
-          if (!defined(cartesian)) {
-            cartesian =
-              currentViewer!.camera.pickEllipsoid(
-                click.position,
-                currentViewer!.scene.globe.ellipsoid
-              ) ?? undefined
-          }
-
-          if (cartesian && defined(cartesian)) {
-            const cartographic =
-              currentViewer!.scene.globe.ellipsoid.cartesianToCartographic(cartesian)
-            const longitude = CesiumMath.toDegrees(cartographic.longitude)
-            const latitude = CesiumMath.toDegrees(cartographic.latitude)
-
-            setContextMenu({
-              show: true,
-              x: click.position.x,
-              y: click.position.y,
-              lon: longitude,
-              lat: latitude,
-            })
-          }
-        }, ScreenSpaceEventType.RIGHT_CLICK)
-      } catch (error) {
-        console.error('Cesium viewer initialization failed:', error)
-      }
+    if (lon && lon !== 0 && lat && lat !== 0) {
+      focusOn(viewer, { lon, lat }, 1500)
+    } else {
+      setView(viewer, {
+        ...DEFAULT_CAMERA_POSITION,
+        lat: DEFAULT_CAMERA_POSITION.lat - 0.05,
+      })
     }
+  }, [viewer, lon, lat, setView, focusOn])
 
-    initViewer()
+  useEffect(() => {
+    if (!viewer) return
+
+    const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
+    handlerRef.current = handler
+
+    handler.setInputAction(() => {
+      setContextMenu(null)
+    }, ScreenSpaceEventType.LEFT_CLICK)
+
+    handler.setInputAction((click: ScreenSpaceEventHandler.PositionedEvent) => {
+      let cartesian: Cartesian3 | undefined = viewer.scene.pickPosition(click.position)
+
+      if (!defined(cartesian)) {
+        cartesian =
+          viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid) ??
+          undefined
+      }
+
+      if (cartesian && defined(cartesian)) {
+        const cartographic = viewer.scene.globe.ellipsoid.cartesianToCartographic(cartesian)
+        const longitude = CesiumMath.toDegrees(cartographic.longitude)
+        const latitude = CesiumMath.toDegrees(cartographic.latitude)
+
+        setContextMenu({
+          show: true,
+          x: click.position.x,
+          y: click.position.y,
+          lon: longitude,
+          lat: latitude,
+        })
+      }
+    }, ScreenSpaceEventType.RIGHT_CLICK)
 
     return () => {
       if (handlerRef.current) {
         handlerRef.current.destroy()
         handlerRef.current = null
       }
-      if (currentViewer && !currentViewer.isDestroyed()) {
-        currentViewer.destroy()
-      }
-      setViewer(null)
     }
-  }, [createViewer, setView, setupCesiumResources])
+  }, [viewer])
 
   useEffect(() => {
     if (!viewer) return
 
+    removeMarker(viewer, 'location-marker')
+
     if (lon && lat && lon !== 0 && lat !== 0) {
-      removeMarker(viewer, 'location-marker')
       addMarker(viewer, {
         id: 'location-marker',
         lon,
@@ -147,13 +126,12 @@ export default function LocationPicker({
         width: markerWidth,
         heightValue: markerHeight,
       })
-    } else {
-      removeMarker(viewer, 'location-marker')
     }
   }, [viewer, lon, lat, cctvHeight, markerImage, markerWidth, markerHeight, addMarker, removeMarker])
 
   const handleSetMarker = useCallback(() => {
     if (!contextMenu) return
+
     onLocationChange(contextMenu.lon, contextMenu.lat)
     setContextMenu(null)
   }, [contextMenu, onLocationChange])
@@ -164,6 +142,13 @@ export default function LocationPicker({
       className="overflow-hidden relative"
     >
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+
+      {isLoading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-20 gap-3">
+          <Spinner size="xl" className="text-white" />
+          <div className="text-white text-sm font-medium">지도 로딩 중...</div>
+        </div>
+      )}
 
       <MapControls
         viewer={viewer}
