@@ -59,6 +59,8 @@ export const useMarkerStore = create<MarkerStore>(() => ({
         : undefined,
     })
 
+    // requestRenderMode에서 마커가 즉시 렌더링되지 않는 문제를 해결하기 위해
+    // 여러 번의 렌더링을 요청합니다. 이미지 로딩과 지형 클램핑이 비동기로 처리되기 때문에 필요합니다.
     for (let i = 0; i < 10; i++) {
       setTimeout(() => viewer.scene.requestRender(), i * 50)
     }

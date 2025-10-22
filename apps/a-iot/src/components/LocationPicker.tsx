@@ -67,6 +67,10 @@ export default function LocationPicker({
         lat: DEFAULT_CAMERA_POSITION.lat - 0.05,
       })
     }
+  }, [viewer, lon, lat, setView, focusOn])
+
+  useEffect(() => {
+    if (!viewer) return
 
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
     handlerRef.current = handler
@@ -105,12 +109,7 @@ export default function LocationPicker({
         handlerRef.current = null
       }
     }
-  }, [viewer, setView])
-
-  useEffect(() => {
-    if (!viewer || !lon || lon === 0 || !lat || lat === 0) return
-    focusOn(viewer, { lon, lat }, 1500)
-  }, [viewer, lon, lat, focusOn])
+  }, [viewer])
 
   useEffect(() => {
     if (!viewer) return
