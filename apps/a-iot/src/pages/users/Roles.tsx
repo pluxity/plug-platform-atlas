@@ -122,7 +122,7 @@ export default function Roles() {
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDeleteRole} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">삭제</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDeleteRole} variant="destructive">삭제</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

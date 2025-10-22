@@ -117,7 +117,7 @@ export default function RoleEditDialog({ isOpen, role, onClose, onSuccess }: Rol
                                             return (
                                                 <div key={permissionGroup.id} className="flex items-center gap-2">
                                                     <Checkbox 
-                                                        id={`create-${permissionGroup.id.toString()}`}
+                                                        id={`edit-${permissionGroup.id.toString()}`}
                                                         checked={isChecked}
                                                         onCheckedChange={(checked) => {
                                                             const currentValue = field.value || [];
@@ -128,7 +128,7 @@ export default function RoleEditDialog({ isOpen, role, onClose, onSuccess }: Rol
                                                             }
                                                         }}
                                                     />
-                                                    <Label htmlFor={`create-${permissionGroup.id.toString()}`}>{permissionGroup.name}</Label>
+                                                    <Label htmlFor={`edit-${permissionGroup.id.toString()}`}>{permissionGroup.name}</Label>
                                                 </div>
                                             );
                                         })}
