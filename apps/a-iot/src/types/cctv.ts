@@ -10,6 +10,7 @@ export interface SiteResponse {
 export const cctvResponseSchema = z.object({
   id: z.number(),
   name: z.string(),
+  originUrl: z.string().optional(),
   viewUrl: z.string().optional(),
   lon: z.number(),
   lat: z.number(),
@@ -22,7 +23,7 @@ export type CctvResponse = z.infer<typeof cctvResponseSchema>
 // CCTV Create Request
 export const cctvCreateRequestSchema = z.object({
   name: z.string().min(1, 'CCTV 이름을 입력해주세요').max(50, 'CCTV 이름은 최대 50자까지 입력 가능합니다'),
-  url: z.string().min(1, 'CCTV URL을 입력해주세요').refine(
+  originUrl: z.string().min(1, 'Origin URL을 입력해주세요').refine(
     (url) => {
       try {
         new URL(url)
@@ -49,7 +50,7 @@ export type CctvCreateRequest = z.infer<typeof cctvCreateRequestSchema>
 // CCTV Update Request (name만 필수)
 export const cctvUpdateRequestSchema = z.object({
   name: z.string().min(1, 'CCTV 이름을 입력해주세요').max(50, 'CCTV 이름은 최대 50자까지 입력 가능합니다'),
-  url: z.string().min(1, 'CCTV URL을 입력해주세요').refine(
+  originUrl: z.string().min(1, 'Origin URL을 입력해주세요').refine(
     (url) => {
       try {
         new URL(url)

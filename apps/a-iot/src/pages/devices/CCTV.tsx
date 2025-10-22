@@ -9,7 +9,7 @@ import { Input } from '@plug-atlas/ui'
 import { Label } from '@plug-atlas/ui'
 import { Switch } from '@plug-atlas/ui'
 import { AspectRatio } from '@plug-atlas/ui'
-import { Plus, Map } from 'lucide-react'
+import { Plus, Map, Copy } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { cctvCreateRequestSchema } from '../../types/cctv'
@@ -41,7 +41,7 @@ export default function CCTV() {
       name: '',
       lon: 0,
       lat: 0,
-      url: '',
+      originUrl: '',
       height: 3,
     },
   })
@@ -57,7 +57,7 @@ export default function CCTV() {
         name: cctv.name,
         lon: cctv.lon,
         lat: cctv.lat,
-        url: cctv.viewUrl || '',
+        originUrl: cctv.originUrl || '',
         height: cctv.height,
       })
     } else {
@@ -66,7 +66,7 @@ export default function CCTV() {
         name: '',
         lon: 0,
         lat: 0,
-        url: '',
+        originUrl: '',
         height: 3,
       })
     }
@@ -140,8 +140,17 @@ export default function CCTV() {
       cell: (value) => (typeof value === 'number' ? `${value.toFixed(1)}m` : '-'),
     },
     {
+      key: 'originUrl',
+      header: 'Origin URL',
+      cell: (value) => (
+        <span className="text-sm text-muted-foreground truncate max-w-xs block">
+          {value ? String(value) : '-'}
+        </span>
+      ),
+    },
+    {
       key: 'viewUrl',
-      header: 'CCTV URL',
+      header: 'View URL',
       cell: (value) => (
         <span className="text-sm text-muted-foreground truncate max-w-xs block">
           {value ? String(value) : '-'}
@@ -215,16 +224,48 @@ export default function CCTV() {
               )}
             </div>
 
+            {editingCctv && editingCctv.viewUrl && (
+              <div className="space-y-2">
+                <Label htmlFor="viewUrl">View URL (읽기 전용)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="viewUrl"
+                    value={editingCctv.viewUrl}
+                    disabled
+                    readOnly
+                    className="bg-muted"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(editingCctv.viewUrl || '')
+                      toast.success('View URL이 클립보드에 복사되었습니다.')
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  View URL은 서버에서 자동 생성되며 수정할 수 없습니다.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="url">CCTV URL *</Label>
+              <Label htmlFor="originUrl">Origin URL *</Label>
               <Input
-                id="url"
+                id="originUrl"
                 placeholder="rtsp://example.com/stream 또는 http://example.com/stream"
-                {...register('url')}
+                {...register('originUrl')}
               />
-              {errors.url && (
-                <p className="text-sm text-destructive">{errors.url.message}</p>
+              {errors.originUrl && (
+                <p className="text-sm text-destructive">{errors.originUrl.message}</p>
               )}
+              <p className="text-xs text-muted-foreground">
+                CCTV의 원본 스트림 주소를 입력하세요.
+              </p>
             </div>
 
             <div className="space-y-2">
