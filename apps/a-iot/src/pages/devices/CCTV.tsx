@@ -57,7 +57,7 @@ export default function CCTV() {
         name: cctv.name,
         lon: cctv.lon,
         lat: cctv.lat,
-        originUrl: cctv.originUrl || '',
+        originUrl: cctv.url || cctv.originUrl || '', // API에서 url로 올 수 있으므로 둘 다 확인
         height: cctv.height,
       })
     } else {
@@ -140,13 +140,16 @@ export default function CCTV() {
       cell: (value) => (typeof value === 'number' ? `${value.toFixed(1)}m` : '-'),
     },
     {
-      key: 'originUrl',
+      key: 'url',
       header: 'Origin URL',
-      cell: (value) => (
-        <span className="text-sm text-muted-foreground truncate max-w-xs block">
-          {value ? String(value) : '-'}
-        </span>
-      ),
+      cell: (value, row) => {
+        const url = value || row.originUrl
+        return (
+          <span className="text-sm text-muted-foreground truncate max-w-xs block">
+            {url ? String(url) : '-'}
+          </span>
+        )
+      },
     },
     {
       key: 'viewUrl',
