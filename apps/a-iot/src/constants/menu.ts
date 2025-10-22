@@ -15,6 +15,7 @@ import {
   TreePine,
   Users,
   Volume2,
+  Video,
 } from 'lucide-react'
 
 export interface MenuItem {
@@ -91,6 +92,11 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
         title: 'IoT 센서 관리',
         icon: Radio,
         path: '/devices/sensors',
+      },
+      {
+        title: 'CCTV 관리',
+        icon: Video,
+        path: '/devices/cctv',
       },
     ],
   },

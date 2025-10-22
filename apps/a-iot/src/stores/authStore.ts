@@ -2,18 +2,22 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { UserResponse } from '@plug-atlas/types'
 
-export interface AuthState {
+interface AuthState {
   user: UserResponse | null
   isAuthenticated: boolean
   token: string | null
+}
 
+interface AuthActions {
   setUser: (user: UserResponse) => void
   setToken: (token: string) => void
   login: (user: UserResponse, token: string) => void
   logout: () => void
 }
 
-export const useAuthStore = create<AuthState>()(
+type AuthStore = AuthState & AuthActions
+
+export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
       user: null,

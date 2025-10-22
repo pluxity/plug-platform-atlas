@@ -1,19 +1,16 @@
 import {
   Cartesian3,
-  CesiumTerrainProvider,
-  defined,
+  Viewer as CesiumViewer,
   Ion,
-  IonImageryProvider,
+  CesiumTerrainProvider,
   IonResource,
+  IonImageryProvider,
   Math as CesiumMath,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
-  Viewer as CesiumViewer,
+  defined,
 } from 'cesium'
-import {useEffect, useRef} from 'react'
-
-Ion.defaultAccessToken =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5NGQ0YTBmZC1kMjVmLTQ2OGUtOTFiYy03YWYyNDJhOWZjYzMiLCJpZCI6MjgzMTA2LCJpYXQiOjE3NTMwNjEzMDF9.xhu9JUBNx01Zanmt1lz_MR8a5V0_vTaIpiN8gxhHuU0'
+import { useEffect, useRef } from 'react'
 
 interface Park {
   id: number
@@ -50,6 +47,8 @@ export default function ParkMapViewer({ parks, selectedPark, onSelectPark }: Par
 
     const initializeViewer = async () => {
       try {
+        Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_ACCESS_TOKEN || ''
+
         const viewer = new CesiumViewer(containerRef.current!, {
           timeline: false,
           animation: false,
@@ -61,19 +60,25 @@ export default function ParkMapViewer({ parks, selectedPark, onSelectPark }: Par
           selectionIndicator: false,
           infoBox: false,
         })
+
         viewerRef.current = viewer
 
-        const imageryProvider = await IonImageryProvider.fromAssetId(3830182)
-        viewer.imageryLayers.removeAll()
-        viewer.imageryLayers.addImageryProvider(imageryProvider)
+        const imageryAssetId = Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID)
+        if (imageryAssetId) {
+          const imageryProvider = await IonImageryProvider.fromAssetId(imageryAssetId)
+          viewer.imageryLayers.removeAll()
+          viewer.imageryLayers.addImageryProvider(imageryProvider)
+        }
 
-        try {
-          console.log('Terrain 로드 중...')
-          const terrainResource = await IonResource.fromAssetId(3825983)
-          viewer.terrainProvider = await CesiumTerrainProvider.fromUrl(terrainResource)
-          console.log('Terrain 로드 완료')
-        } catch (error) {
-          console.error('Terrain 로드 실패:', error)
+        const terrainAssetId = Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID)
+        if (terrainAssetId) {
+          try {
+            const terrainResource = await IonResource.fromAssetId(terrainAssetId)
+            const terrainProvider = await CesiumTerrainProvider.fromUrl(terrainResource)
+            viewer.terrainProvider = terrainProvider
+          } catch (error) {
+            console.error('Failed to load Cesium terrain:', error)
+          }
         }
 
         viewer.camera.flyTo({
@@ -100,10 +105,8 @@ export default function ParkMapViewer({ parks, selectedPark, onSelectPark }: Par
             }
           }
         }, ScreenSpaceEventType.LEFT_CLICK)
-
-        console.log('Cesium Viewer 초기화 완료!')
       } catch (error) {
-        console.error('Cesium Viewer 초기화 실패:', error)
+        console.error('Failed to initialize Park map viewer:', error)
       }
     }
 
@@ -143,8 +146,8 @@ export default function ParkMapViewer({ parks, selectedPark, onSelectPark }: Par
           image: createMarkerCanvas(park.status),
           width: 40,
           height: 40,
-          heightReference: 1,
-          verticalOrigin: 1,
+          heightReference: 1, // CLAMP_TO_GROUND
+          verticalOrigin: 1, // BOTTOM
           scale: selectedPark?.id === park.id ? 1.3 : 1.0,
         },
       })
