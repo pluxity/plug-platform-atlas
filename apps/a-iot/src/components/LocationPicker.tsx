@@ -13,7 +13,7 @@ import {
   useMarkerStore,
   DEFAULT_CAMERA_POSITION,
 } from '../stores/cesium'
-import { Button } from '@plug-atlas/ui'
+import { Button, Spinner } from '@plug-atlas/ui'
 import MapControls from './MapControls'
 
 interface LocationPickerProps {
@@ -48,8 +48,9 @@ export default function LocationPicker({
     lat: number
   } | null>(null)
 
-  const { createViewer, setupCesiumResources } = useViewerStore()
-  const { setView } = useCameraStore()
+  const isInitialized = useViewerStore((state) => state.isInitialized)
+  const { initializeViewer } = useViewerStore()
+  const { setView, focusOn } = useCameraStore()
   const { addMarker, removeMarker } = useMarkerStore()
 
   useEffect(() => {
@@ -59,25 +60,17 @@ export default function LocationPicker({
 
     const initViewer = async () => {
       try {
-        currentViewer = createViewer(containerRef.current!)
+        currentViewer = await initializeViewer(containerRef.current!)
         setViewer(currentViewer)
 
         if (lon && lon !== 0 && lat && lat !== 0) {
-          setView(currentViewer, {
-            lon,
-            lat,
-            height: 1500,
-            pitch: -45,
-            heading: 0,
-          })
+          focusOn(currentViewer, { lon, lat }, 1500)
         } else {
           setView(currentViewer, {
             ...DEFAULT_CAMERA_POSITION,
             lat: DEFAULT_CAMERA_POSITION.lat - 0.05,
           })
         }
-
-        await setupCesiumResources(currentViewer)
 
         const handler = new ScreenSpaceEventHandler(currentViewer.scene.canvas)
         handlerRef.current = handler
@@ -126,18 +119,21 @@ export default function LocationPicker({
         handlerRef.current.destroy()
         handlerRef.current = null
       }
-      if (currentViewer && !currentViewer.isDestroyed()) {
-        currentViewer.destroy()
-      }
       setViewer(null)
     }
-  }, [createViewer, setView, setupCesiumResources])
+  }, [initializeViewer, setView])
+
+  useEffect(() => {
+    if (!viewer || !lon || lon === 0 || !lat || lat === 0) return
+    focusOn(viewer, { lon, lat }, 1500)
+  }, [viewer, lon, lat, focusOn])
 
   useEffect(() => {
     if (!viewer) return
 
+    removeMarker(viewer, 'location-marker')
+
     if (lon && lat && lon !== 0 && lat !== 0) {
-      removeMarker(viewer, 'location-marker')
       addMarker(viewer, {
         id: 'location-marker',
         lon,
@@ -147,13 +143,12 @@ export default function LocationPicker({
         width: markerWidth,
         heightValue: markerHeight,
       })
-    } else {
-      removeMarker(viewer, 'location-marker')
     }
   }, [viewer, lon, lat, cctvHeight, markerImage, markerWidth, markerHeight, addMarker, removeMarker])
 
   const handleSetMarker = useCallback(() => {
     if (!contextMenu) return
+
     onLocationChange(contextMenu.lon, contextMenu.lat)
     setContextMenu(null)
   }, [contextMenu, onLocationChange])
@@ -164,6 +159,13 @@ export default function LocationPicker({
       className="overflow-hidden relative"
     >
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+
+      {!isInitialized && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-20 gap-3">
+          <Spinner size="xl" className="text-white" />
+          <div className="text-white text-sm font-medium">지도 로딩 중...</div>
+        </div>
+      )}
 
       <MapControls
         viewer={viewer}
