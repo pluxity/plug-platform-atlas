@@ -1,19 +1,11 @@
 import { z } from 'zod'
 
 /**
- * IPv4 주소 validation regex
- */
-const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/
-
-/**
  * Mobius Config Response
  */
 export const MobiusConfigResponseSchema = z.object({
   id: z.number(),
-  ipAddress: z.string(),
-  port: z.number(),
-  cseBaseName: z.string(),
-  deviceGroup: z.string(),
+  url: z.string(),
 })
 
 export type MobiusConfigResponse = z.infer<typeof MobiusConfigResponseSchema>
@@ -22,6 +14,30 @@ export type MobiusConfigResponse = z.infer<typeof MobiusConfigResponseSchema>
  * Mobius Config Update Request
  */
 export const MobiusConfigUpdateRequestSchema = z.object({
+  url: z.string().min(1, 'Mobius URL을 입력해주세요'),
+})
+
+export type MobiusConfigUpdateRequest = z.infer<typeof MobiusConfigUpdateRequestSchema>
+
+/**
+ * Mobius Config Form Data (UI용)
+ */
+export interface MobiusConfigFormData {
+  ipAddress: string
+  port: number
+  cseBaseName: string
+  deviceGroup: string
+}
+
+/**
+ * IPv4 주소 validation regex
+ */
+const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/
+
+/**
+ * Mobius Config Form Validation Schema
+ */
+export const MobiusConfigFormSchema = z.object({
   ipAddress: z
     .string()
     .min(1, 'IoT 플랫폼 IP 주소를 입력해주세요')
@@ -51,4 +67,31 @@ export const MobiusConfigUpdateRequestSchema = z.object({
     .max(50, '디바이스 관리 그룹명은 최대 50자까지 입력 가능합니다'),
 })
 
-export type MobiusConfigUpdateRequest = z.infer<typeof MobiusConfigUpdateRequestSchema>
+/**
+ * URL 조합: 폼 데이터 → API URL
+ */
+export function buildMobiusUrl(formData: MobiusConfigFormData): string {
+  return `http://${formData.ipAddress}:${formData.port}/${formData.cseBaseName}/${formData.deviceGroup}`
+}
+
+/**
+ * URL 파싱: API URL → 폼 데이터
+ */
+export function parseMobiusUrl(url: string): MobiusConfigFormData | null {
+  try {
+    // http://203.253.128.181:11000/Mobius/sawwave 형태를 파싱
+    const urlPattern = /^https?:\/\/([^:]+):(\d+)\/([^/]+)\/(.+)$/
+    const match = url.match(urlPattern)
+
+    if (!match || !match[1] || !match[2] || !match[3] || !match[4]) return null
+
+    return {
+      ipAddress: match[1],
+      port: parseInt(match[2], 10),
+      cseBaseName: match[3],
+      deviceGroup: match[4],
+    }
+  } catch {
+    return null
+  }
+}

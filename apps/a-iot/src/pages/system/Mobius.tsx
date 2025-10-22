@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 import { useMobiusConfig, useUpdateMobiusConfig } from '@plug-atlas/api-hooks'
-import type { MobiusConfigUpdateRequest } from '@plug-atlas/types'
+import type { MobiusConfigFormData } from '@plug-atlas/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@plug-atlas/ui'
 import { Button, Input, Label, toast } from '@plug-atlas/ui'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { MobiusConfigUpdateRequestSchema } from '@plug-atlas/types'
+import { MobiusConfigFormSchema, buildMobiusUrl, parseMobiusUrl } from '@plug-atlas/types'
 import { Server } from 'lucide-react'
 
 export default function Mobius() {
@@ -17,8 +17,8 @@ export default function Mobius() {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<MobiusConfigUpdateRequest>({
-    resolver: zodResolver(MobiusConfigUpdateRequestSchema),
+  } = useForm<MobiusConfigFormData>({
+    resolver: zodResolver(MobiusConfigFormSchema),
     defaultValues: {
       ipAddress: '',
       port: 11000,
@@ -28,19 +28,18 @@ export default function Mobius() {
   })
 
   useEffect(() => {
-    if (config) {
-      reset({
-        ipAddress: config.ipAddress,
-        port: config.port,
-        cseBaseName: config.cseBaseName,
-        deviceGroup: config.deviceGroup,
-      })
+    if (config && config.url) {
+      const parsed = parseMobiusUrl(config.url)
+      if (parsed) {
+        reset(parsed)
+      }
     }
   }, [config, reset])
 
-  const onSubmit = async (data: MobiusConfigUpdateRequest) => {
+  const onSubmit = async (data: MobiusConfigFormData) => {
     try {
-      await updateConfig(data)
+      const url = buildMobiusUrl(data)
+      await updateConfig({ url })
       toast.success('Mobius 연동 설정이 성공적으로 저장되었습니다.')
       mutate()
     } catch (error: any) {
