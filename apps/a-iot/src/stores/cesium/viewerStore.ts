@@ -5,7 +5,6 @@ import {
   IonImageryProvider,
   IonResource,
   CesiumTerrainProvider,
-  createWorldImagery,
 } from 'cesium'
 
 interface ViewerState {}
@@ -67,11 +66,11 @@ export const useViewerStore = create<ViewerStore>(() => ({
       console.warn('Failed to load Cesium Ion imagery, using default imagery:', error)
     }
 
-    // Imagery 로딩 실패 시 기본 Cesium World Imagery 사용
+    // Imagery 로딩 실패 시 기본 Cesium World Imagery 사용 (Asset ID: 2)
     if (!imageryLoaded && viewer.imageryLayers.length === 0) {
       try {
-        console.log('Using default Cesium World Imagery')
-        const defaultImagery = await createWorldImagery()
+        console.log('Using default Cesium World Imagery (Asset ID: 2)')
+        const defaultImagery = await IonImageryProvider.fromAssetId(2)
         if (!viewer.isDestroyed()) {
           viewer.imageryLayers.addImageryProvider(defaultImagery)
         }
