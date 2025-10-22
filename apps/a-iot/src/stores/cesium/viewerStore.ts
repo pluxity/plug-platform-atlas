@@ -9,7 +9,7 @@ import {
 
 interface ViewerState {
   viewer: CesiumViewer | null
-  isInitialized: boolean
+  isLoading: boolean
 }
 
 interface ViewerActions {
@@ -24,7 +24,7 @@ type ViewerStore = ViewerState & ViewerActions
 
 export const useViewerStore = create<ViewerStore>((set, get) => ({
   viewer: null,
-  isInitialized: false,
+  isLoading: false,
 
   getViewer: () => get().viewer,
 
@@ -38,11 +38,14 @@ export const useViewerStore = create<ViewerStore>((set, get) => ({
       return existing
     }
 
+    set({ isLoading: true })
+
     const viewer = get()._createViewer(container)
-    set({ viewer, isInitialized: false })
+    set({ viewer })
 
     await get()._setupCesiumResources(viewer)
-    set({ isInitialized: true })
+
+    set({ isLoading: false })
 
     return viewer
   },
@@ -52,7 +55,7 @@ export const useViewerStore = create<ViewerStore>((set, get) => ({
     if (viewer && !viewer.isDestroyed()) {
       viewer.destroy()
     }
-    set({ viewer: null, isInitialized: false })
+    set({ viewer: null, isLoading: false })
   },
 
   _createViewer: (container: HTMLElement) => {
@@ -91,13 +94,11 @@ export const useViewerStore = create<ViewerStore>((set, get) => ({
     const terrainAssetId = Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID)
 
     // Imagery 로딩 시도
-    let imageryLoaded = false
     try {
       if (imageryAssetId) {
         const imageryProvider = await IonImageryProvider.fromAssetId(imageryAssetId)
         if (!viewer.isDestroyed()) {
           viewer.imageryLayers.addImageryProvider(imageryProvider)
-          imageryLoaded = true
         }
       }
     } catch (error) {

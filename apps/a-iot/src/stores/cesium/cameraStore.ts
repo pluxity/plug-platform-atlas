@@ -84,43 +84,39 @@ export const useCameraStore = create<CameraStore>(() => ({
   },
 
   focusOn: (viewer: CesiumViewer, target: FocusTarget, distance: number = 1500) => {
+    let coord: { lon: number; lat: number } | null = null
+    let bounds: Rectangle | undefined
+
     if (typeof target === 'string') {
       const parsed = parseWKT(target)
       if (!parsed) {
         console.error('Invalid WKT format:', target)
         return
       }
-
-      if (parsed.bounds) {
-        viewer.camera.flyTo({
-          destination: parsed.bounds,
-          duration: 1.0,
-        })
-      } else {
-        const targetPosition = Cartesian3.fromDegrees(parsed.lon, parsed.lat, 0)
-        const offset = new HeadingPitchRange(
-          CesiumMath.toRadians(0),
-          CesiumMath.toRadians(-45),
-          distance
-        )
-        const boundingSphere = new BoundingSphere(targetPosition, 0)
-        viewer.camera.flyToBoundingSphere(boundingSphere, {
-          offset: offset,
-          duration: 1.0,
-        })
-      }
+      coord = { lon: parsed.lon, lat: parsed.lat }
+      bounds = parsed.bounds
     } else {
-      const targetPosition = Cartesian3.fromDegrees(target.lon, target.lat, 0)
-      const offset = new HeadingPitchRange(
-        CesiumMath.toRadians(0),
-        CesiumMath.toRadians(-45),
-        distance
-      )
-      const boundingSphere = new BoundingSphere(targetPosition, 0)
-      viewer.camera.flyToBoundingSphere(boundingSphere, {
-        offset: offset,
+      coord = target
+    }
+
+    if (bounds) {
+      viewer.camera.flyTo({
+        destination: bounds,
         duration: 1.0,
       })
+      return
     }
+
+    const targetPosition = Cartesian3.fromDegrees(coord.lon, coord.lat, 0)
+    const offset = new HeadingPitchRange(
+      CesiumMath.toRadians(0),
+      CesiumMath.toRadians(-45),
+      distance
+    )
+    const boundingSphere = new BoundingSphere(targetPosition, 0)
+    viewer.camera.flyToBoundingSphere(boundingSphere, {
+      offset: offset,
+      duration: 1.0,
+    })
   },
 }))
