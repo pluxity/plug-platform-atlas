@@ -3,4 +3,4 @@
 
 /* Then load Tailwind and shared globals */
 @import "tailwindcss";
-@import "@plug-atlas/ui/globals.css";
+@import "../../../packages/ui/src/globals.css";

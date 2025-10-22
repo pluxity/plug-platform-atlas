@@ -15,7 +15,7 @@ plug-platform-atlas/
 │   └── a-iot/              # 통합 IoT/관리자 앱 (Cesium 3D 지도 + 관리 기능)
 ├── packages/
 │   ├── ui/                 # 공유 UI 라이브러리 (43개 컴포넌트)
-│   ├── api-hooks/          # API 클라이언트 & React Query hooks
+│   ├── api-hooks/          # API 클라이언트 & SWR hooks
 │   ├── types/              # 공유 타입 정의
 │   └── web-core/           # 공유 web/admin hooks & 도메인 로직
 └── pnpm-workspace.yaml
@@ -260,7 +260,7 @@ gh project item-edit \
 - **Form**: React Hook Form (권장)
 - **Validation**: Zod or Yup
 - **API**: [API 이름] (Swagger 참고)
-- **State**: React Query
+- **State**: SWR
 
 ## 참고 자료
 - **API 문서**: http://dev.pluxity.com/api/api-docs

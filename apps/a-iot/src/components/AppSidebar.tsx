@@ -50,10 +50,7 @@ export default function AppSidebar() {
 
   const isActive = (path: string) => location.pathname === path
 
-  // 실시간 알람 클릭 핸들러 (나중에 Sheet, Dialog, Popover 등으로 구현 가능)
   const handleRealtimeAlarmClick = () => {
-    // TODO: 실시간 알람 UI 구현 (Sheet, Dialog, Popover 등)
-    console.log('실시간 알람 클릭')
   }
 
   const renderMenuItems = (items: typeof MAIN_MENU_ITEMS) => {
