@@ -10,6 +10,7 @@ export interface SiteResponse {
 export const cctvResponseSchema = z.object({
   id: z.number(),
   name: z.string(),
+  url: z.string().optional(), // Origin URL (API 키: url)
   viewUrl: z.string().optional(),
   lon: z.number(),
   lat: z.number(),
