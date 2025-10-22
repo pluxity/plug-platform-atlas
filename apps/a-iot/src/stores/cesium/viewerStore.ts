@@ -7,17 +7,58 @@ import {
   CesiumTerrainProvider,
 } from 'cesium'
 
-interface ViewerState {}
+interface ViewerState {
+  viewer: CesiumViewer | null
+  isLoading: boolean
+}
 
 interface ViewerActions {
-  createViewer: (container: HTMLElement) => CesiumViewer
-  setupCesiumResources: (viewer: CesiumViewer) => Promise<void>
+  initializeViewer: (container: HTMLElement) => Promise<CesiumViewer>
+  getViewer: () => CesiumViewer | null
+  destroyViewer: () => void
+  _createViewer: (container: HTMLElement) => CesiumViewer
+  _setupCesiumResources: (viewer: CesiumViewer) => Promise<void>
 }
 
 type ViewerStore = ViewerState & ViewerActions
 
-export const useViewerStore = create<ViewerStore>(() => ({
-  createViewer: (container: HTMLElement) => {
+export const useViewerStore = create<ViewerStore>((set, get) => ({
+  viewer: null,
+  isLoading: false,
+
+  getViewer: () => get().viewer,
+
+  initializeViewer: async (container: HTMLElement) => {
+    const existing = get().viewer
+
+    if (existing && !existing.isDestroyed()) {
+      if (existing.container !== container) {
+        container.appendChild(existing.container)
+      }
+      return existing
+    }
+
+    set({ isLoading: true })
+
+    const viewer = get()._createViewer(container)
+    set({ viewer })
+
+    await get()._setupCesiumResources(viewer)
+
+    set({ isLoading: false })
+
+    return viewer
+  },
+
+  destroyViewer: () => {
+    const viewer = get().viewer
+    if (viewer && !viewer.isDestroyed()) {
+      viewer.destroy()
+    }
+    set({ viewer: null, isLoading: false })
+  },
+
+  _createViewer: (container: HTMLElement) => {
     Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_ACCESS_TOKEN || ''
 
     const viewer = new CesiumViewer(container, {
@@ -46,12 +87,13 @@ export const useViewerStore = create<ViewerStore>(() => ({
     return viewer
   },
 
-  setupCesiumResources: async (viewer: CesiumViewer) => {
+  _setupCesiumResources: async (viewer: CesiumViewer) => {
     if (viewer.isDestroyed()) return
 
     const imageryAssetId = Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID)
     const terrainAssetId = Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID)
 
+    // Imagery 로딩 시도
     try {
       if (imageryAssetId) {
         const imageryProvider = await IonImageryProvider.fromAssetId(imageryAssetId)
@@ -61,8 +103,17 @@ export const useViewerStore = create<ViewerStore>(() => ({
       }
     } catch (error) {
       console.error('Failed to load Cesium imagery:', error)
+      if (!viewer.isDestroyed() && viewer.imageryLayers.length === 0) {
+        try {
+          const fallbackImagery = await IonImageryProvider.fromAssetId(2)
+          viewer.imageryLayers.addImageryProvider(fallbackImagery)
+        } catch (fallbackError) {
+          console.error('Failed to load fallback imagery:', fallbackError)
+        }
+      }
     }
 
+    // Terrain 로딩 시도
     try {
       if (terrainAssetId) {
         const terrainResource = await IonResource.fromAssetId(terrainAssetId)
@@ -72,7 +123,7 @@ export const useViewerStore = create<ViewerStore>(() => ({
         }
       }
     } catch (error) {
-      console.error('Failed to load Cesium terrain:', error)
+      console.warn('Failed to load Cesium terrain, using default ellipsoid:', error)
     }
   },
 }))

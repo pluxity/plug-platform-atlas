@@ -13,50 +13,41 @@ import {
   useMarkerStore,
   DEFAULT_CAMERA_POSITION,
 } from '../stores/cesium'
-import { Viewer as CesiumViewer } from 'cesium'
 
 function MyMapComponent() {
-  const { createViewer, setupCesiumResources } = useViewerStore()
-  const { setView } = useCameraStore()
+  const { viewer, isLoading, initializeViewer } = useViewerStore()
+  const { focusOn } = useCameraStore()
   const { addMarker } = useMarkerStore()
 
-  const [viewer, setViewer] = useState<CesiumViewer | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!containerRef.current) return
+    if (!containerRef.current || viewer) return
 
-    const initViewer = async () => {
-      // Viewer 생성
-      const newViewer = createViewer(containerRef.current!)
-      setViewer(newViewer)
+    initializeViewer(containerRef.current)
+  }, [containerRef, viewer, initializeViewer])
 
-      // 카메라 위치 설정
-      setView(newViewer, DEFAULT_CAMERA_POSITION)
+  useEffect(() => {
+    if (!viewer) return
 
-      // Cesium 리소스 로드
-      await setupCesiumResources(newViewer)
+    // 마커 추가
+    addMarker(viewer, {
+      id: 'marker-1',
+      lon: 127.1114,
+      lat: 37.3948,
+      height: 0,
+      label: 'My Location',
+    })
 
-      // 마커 추가
-      addMarker(newViewer, {
-        id: 'marker-1',
-        lon: 127.1114,
-        lat: 37.3948,
-        height: 0,
-        label: 'My Location',
-      })
-    }
+    // 카메라 포커스
+    focusOn(viewer, { lon: 127.1114, lat: 37.3948 }, 1500)
+  }, [viewer, addMarker, focusOn])
 
-    initViewer()
-
-    return () => {
-      if (viewer && !viewer.isDestroyed()) {
-        viewer.destroy()
-      }
-    }
-  }, [createViewer, setView, setupCesiumResources, addMarker])
-
-  return <div ref={containerRef} style={{ width: '100%', height: '500px' }} />
+  return (
+    <div ref={containerRef} style={{ width: '100%', height: '500px' }}>
+      {isLoading && <div>지도 로딩 중...</div>}
+    </div>
+  )
 }
 ```
 
@@ -64,15 +55,24 @@ function MyMapComponent() {
 
 ### 1. Viewer Store (`useViewerStore`)
 
-Viewer 생성 및 Cesium 리소스 관리를 담당합니다.
+Viewer 생성 및 Cesium 리소스 관리를 담당합니다. **Singleton 패턴**으로 하나의 Viewer 인스턴스를 공유합니다.
 
-#### `createViewer(container: HTMLElement): CesiumViewer`
+#### 상태
 
-Cesium Viewer를 생성하고 기본 설정을 적용합니다.
+- `viewer: CesiumViewer | null` - Cesium Viewer 인스턴스
+- `isLoading: boolean` - 리소스 로딩 상태
+
+#### `initializeViewer(container: HTMLElement): Promise<CesiumViewer>`
+
+Cesium Viewer를 생성하고 리소스를 로드합니다. 이미 생성된 Viewer가 있으면 재사용합니다.
 
 ```tsx
-const { createViewer } = useViewerStore()
-const viewer = createViewer(containerRef.current!)
+const { viewer, isLoading, initializeViewer } = useViewerStore()
+
+useEffect(() => {
+  if (!containerRef.current || viewer) return
+  initializeViewer(containerRef.current)
+}, [containerRef, viewer, initializeViewer])
 ```
 
 **자동으로 적용되는 설정:**
@@ -80,15 +80,24 @@ const viewer = createViewer(containerRef.current!)
 - 기본 UI 제거 (타임라인, 애니메이션 등)
 - requestRenderMode 활성화 (성능 최적화)
 - 우클릭 메뉴 비활성화
-- 기본 이미지 레이어 제거
+- Google Map Imagery 및 World Terrain 자동 로드
 
-#### `setupCesiumResources(viewer: CesiumViewer): Promise<void>`
+#### `getViewer(): CesiumViewer | null`
 
-Google Map Imagery 및 World Terrain을 로드합니다.
+현재 Viewer 인스턴스를 반환합니다.
 
 ```tsx
-const { setupCesiumResources } = useViewerStore()
-await setupCesiumResources(viewer)
+const { getViewer } = useViewerStore()
+const viewer = getViewer()
+```
+
+#### `destroyViewer(): void`
+
+Viewer를 파괴하고 상태를 초기화합니다.
+
+```tsx
+const { destroyViewer } = useViewerStore()
+destroyViewer()
 ```
 
 ---
@@ -99,7 +108,7 @@ await setupCesiumResources(viewer)
 
 #### `setView(viewer: CesiumViewer, position: CameraPosition): void`
 
-카메라 위치를 즉시 변경합니다.
+카메라 위치를 즉시 변경합니다 (애니메이션 없음).
 
 ```tsx
 const { setView } = useCameraStore()
@@ -125,6 +134,27 @@ flyToPosition(viewer, {
   pitch: -30,
 })
 ```
+
+#### `focusOn(viewer: CesiumViewer, target: FocusTarget, distance?: number): void`
+
+특정 대상을 바라보도록 카메라를 배치합니다. 좌표 객체 또는 WKT 형식을 지원합니다.
+
+```tsx
+const { focusOn } = useCameraStore()
+
+// 좌표 객체 사용
+focusOn(viewer, { lon: 127.1114, lat: 37.3948 }, 1500)
+
+// WKT POINT 사용
+focusOn(viewer, 'POINT(127.1114 37.3948)', 1500)
+
+// WKT POLYGON 사용 (전체 영역이 보이게 자동 조정)
+focusOn(viewer, 'POLYGON((127.1 37.39, 127.12 37.39, 127.12 37.40, 127.1 37.40, 127.1 37.39))')
+```
+
+**파라미터:**
+- `target`: 좌표 객체 `{ lon: number, lat: number }` 또는 WKT 문자열
+- `distance`: 대상으로부터의 거리 (미터, 기본값: 1500)
 
 ---
 
@@ -215,6 +245,14 @@ interface CameraPosition {
 }
 ```
 
+### `FocusTarget`
+
+```typescript
+type FocusTarget =
+  | { lon: number; lat: number }
+  | string // WKT format (POINT, POLYGON)
+```
+
 ### `MarkerOptions`
 
 ```typescript
@@ -263,6 +301,7 @@ Store는 다음 환경 변수를 사용합니다:
 
 ```tsx
 const { addMarker } = useMarkerStore()
+const { focusOn } = useCameraStore()
 
 cctvList.forEach(cctv => {
   addMarker(viewer, {
@@ -274,6 +313,11 @@ cctvList.forEach(cctv => {
     label: cctv.name,
   })
 })
+
+// 첫 번째 CCTV에 포커스
+if (cctvList.length > 0) {
+  focusOn(viewer, { lon: cctvList[0].lon, lat: cctvList[0].lat }, 1000)
+}
 ```
 
 ### 여러 IoT 센서 표시
@@ -297,7 +341,7 @@ sensors.forEach(sensor => {
 
 ```tsx
 const { addMarker } = useMarkerStore()
-const { flyToPosition } = useCameraStore()
+const { focusOn } = useCameraStore()
 
 // 알람 위치에 마커 추가
 addMarker(viewer, {
@@ -309,24 +353,29 @@ addMarker(viewer, {
   labelColor: '#ff0000',
 })
 
-// 해당 위치로 카메라 이동
-flyToPosition(viewer, {
-  lon: alarm.lon,
-  lat: alarm.lat,
-  height: 1000,
-  pitch: -45,
-})
+// 해당 위치로 카메라 포커스 (빠른 접근)
+focusOn(viewer, { lon: alarm.lon, lat: alarm.lat }, 800)
+```
+
+### WKT 좌표로 영역 포커스
+
+```tsx
+const { focusOn } = useCameraStore()
+
+// 공원 경계를 WKT POLYGON으로 포커스
+const parkBoundary = 'POLYGON((127.1 37.39, 127.12 37.39, 127.12 37.40, 127.1 37.40, 127.1 37.39))'
+focusOn(viewer, parkBoundary)
 ```
 
 ---
 
 ## 주의사항
 
-1. **Viewer 생명주기 관리**: 각 컴포넌트가 자체 Viewer를 생성하므로, 언마운트 시 반드시 `viewer.destroy()`를 호출해야 합니다.
+1. **Viewer Singleton**: Viewer는 전역으로 하나만 존재하며 여러 컴포넌트/다이얼로그에서 공유됩니다. 필요한 경우에만 `destroyViewer()`를 호출하세요.
 
 2. **메모리 관리**: 불필요한 마커는 `removeMarker`나 `clearAllMarkers`로 제거하세요.
 
-3. **비동기 초기화**: `setupCesiumResources`는 비동기 함수이므로 `async/await`를 사용하세요.
+3. **비동기 초기화**: `initializeViewer`는 비동기 함수이므로 `isLoading` 상태를 활용하여 로딩 UI를 표시하세요.
 
 4. **중복 ID 방지**: 마커 ID는 고유해야 합니다. 중복 시 예상치 못한 동작이 발생할 수 있습니다.
 
@@ -338,6 +387,11 @@ flyToPosition(viewer, {
    // ❌ 전체 Store import 불필요
    const cesiumStore = useCesiumStore() // 이제 존재하지 않음
    ```
+
+6. **카메라 제어 선택**:
+   - `setView`: 즉시 이동 (애니메이션 없음)
+   - `flyToPosition`: 특정 위치/자세로 애니메이션 이동
+   - `focusOn`: 대상을 바라보도록 자동 배치 (추천)
 
 ---
 
