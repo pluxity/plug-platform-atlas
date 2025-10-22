@@ -13,9 +13,9 @@ export function useMobiusConfig(options?: SWRConfiguration<MobiusConfigResponse,
   const client = useApiClient()
 
   return useSWR(
-    'mobius/config',
+    'mobius/api-url',
     async () => {
-      const response = await client.get<DataResponse<MobiusConfigResponse>>('mobius/config')
+      const response = await client.get<DataResponse<MobiusConfigResponse>>('mobius/api-url')
       return response.data
     },
     options
@@ -31,9 +31,9 @@ export function useUpdateMobiusConfig(
   const client = useApiClient()
 
   return useSWRMutation(
-    'mobius/config',
+    'mobius/api-url',
     async (_key: string, { arg }: { arg: MobiusConfigUpdateRequest }) => {
-      await client.put('mobius/config', arg)
+      await client.post('mobius/api-url', arg)
     },
     options
   )
