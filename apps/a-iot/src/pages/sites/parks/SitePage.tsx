@@ -39,6 +39,7 @@ export default function SitePage() {
     const handleCreateSite = async () => {
         try {
             await createSiteMutation.trigger(formData);
+            setIsCreateModalOpen(false);
         } catch (error) {
         }
     };
@@ -51,6 +52,7 @@ export default function SitePage() {
                 id: selectedSite.id,
                 data: formData
             });
+            setIsEditModalOpen(false);
         } catch (error) {
         }
     };

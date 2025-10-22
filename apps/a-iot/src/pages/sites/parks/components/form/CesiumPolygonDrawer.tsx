@@ -8,6 +8,7 @@ import {
     DEFAULT_CAMERA_POSITION
 } from '../../../../../stores/cesium'
 import {Cartesian3, Color, Viewer as CesiumViewer} from 'cesium'
+import { MapIcon, MousePointer, RotateCcw, CheckCircle, X, Info } from 'lucide-react'
 
 interface CesiumPolygonDrawerProps {
     onPolygonComplete: (wktString: string) => void
@@ -20,12 +21,13 @@ export default function CesiumPolygonDrawer({
                                             }: CesiumPolygonDrawerProps) {
     const cesiumContainerRef = useRef<HTMLDivElement>(null)
     const viewerRef = useRef<CesiumViewer | null>(null)
-    const [showHelp, setShowHelp] = useState(true)
+    const [showHelp, setShowHelp] = useState(false)
+    const [isInitialized, setIsInitialized] = useState(false)
 
     const viewerId = useRef(`polygon-drawer-${Date.now()}`).current
 
-    const { createViewer, setupCesiumResources } = useViewerStore()
-    const { setView } = useCameraStore()
+    const { initializeViewer } = useViewerStore()
+    const { setView, focusOn } = useCameraStore()
     const {
         startDrawing,
         completeDrawing,
@@ -43,288 +45,265 @@ export default function CesiumPolygonDrawer({
 
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
-            if (!isDrawing || !viewerRef.current) return
+            if (!isDrawing || !viewerRef.current || !isInitialized) return
 
-            switch (event.key) {
-                case 'Escape':
-                    event.preventDefault()
-                    handleCancelDrawing()
-                    break
-                case 'Enter':
-                    event.preventDefault()
-                    if (canComplete) {
-                        handleCompleteDrawing()
-                    }
-                    break
-                case 'Backspace':
-                    event.preventDefault()
-                    handleRemoveLastPoint()
-                    break
-                case 'h':
-                case 'H':
-                    if (event.ctrlKey || event.metaKey) {
+            try {
+                switch (event.key) {
+                    case 'Enter':
                         event.preventDefault()
-                        setShowHelp(prev => !prev)
-                    }
-                    break
+                        if (canComplete) {
+                            handleCompleteDrawing()
+                        }
+                        break
+                    case 'Backspace':
+                        event.preventDefault()
+                        handleRemoveLastPoint()
+                        break
+                    case 'Escape':
+                        event.preventDefault()
+                        handleCancelDrawing()
+                        break
+                }
+            } catch (error) {
+                console.error('키보드 이벤트 처리 중 오류:', error)
             }
         }
 
-        if (isDrawing) {
+        if (isDrawing && isInitialized) {
             document.addEventListener('keydown', handleKeyPress)
             return () => document.removeEventListener('keydown', handleKeyPress)
         }
-    }, [isDrawing, canComplete])
+    }, [isDrawing, canComplete, isInitialized])
 
     useEffect(() => {
         if (!cesiumContainerRef.current) return
 
         const initViewer = async () => {
             try {
-                const viewer = createViewer(cesiumContainerRef.current!)
+                setIsInitialized(false)
+                
+                const viewer = await initializeViewer(cesiumContainerRef.current!)
                 viewerRef.current = viewer
 
+                // 카메라 위치 설정 전에 잠시 대기
+                await new Promise(resolve => setTimeout(resolve, 100))
+                
                 setView(viewer, DEFAULT_CAMERA_POSITION)
 
-                await setupCesiumResources(viewer)
-
                 if (initialWkt && initialWkt.trim()) {
-                    displayWktPolygon(viewer, initialWkt, {
+                    const entity = displayWktPolygon(viewer, initialWkt, {
                         name: 'Initial Polygon',
                         fillColor: Color.BLUE,
                         fillAlpha: 0.4,
                     })
-
-                    focusOnWktPolygon(viewer, initialWkt)
+                    
+                    if (entity) {
+                        await focusOn(viewer, initialWkt, 3000)
+                    }
                 }
+
+                setIsInitialized(true)
             } catch (error) {
                 console.error('세슘 뷰어 초기화 오류:', error)
-                toast.error('지도를 로드하는 중 오류가 발생했습니다.')
+                toast.error('지도를 로드하는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.')
             }
         }
 
         initViewer()
 
         return () => {
-            if (viewerRef.current && !viewerRef.current.isDestroyed()) {
-                cancelDrawing(viewerRef.current, viewerId)
-                viewerRef.current.destroy()
+            try {
+                if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+                    cancelDrawing(viewerRef.current, viewerId)
+                    viewerRef.current.destroy()
+                }
+            } catch (error) {
+                console.error('뷰어 정리 중 오류:', error)
             }
+            setIsInitialized(false)
         }
     }, [initialWkt])
 
-
-    const focusOnWktPolygon = async (viewer: CesiumViewer, wkt: string) => {
+    const handleStartDrawing = () => {
+        if (!viewerRef.current || !isInitialized) {
+            toast.warning('지도가 아직 로드 중입니다. 잠시 후 다시 시도해 주세요.')
+            return
+        }
+        
         try {
-            const match = wkt.match(/POLYGON\s*\(\s*\((.*?)\)\s*\)/i)
-            if (!match || !match[1]) {
-                console.warn('유효하지 않은 WKT 형식입니다.')
-                return
-            }
-
-            const coordinates = match[1].split(',')
-                .map((coord: string) => {
-                    const parts = coord.trim().split(/\s+/).map(Number)
-                    const lon = parts[0]
-                    const lat = parts[1]
-
-                    if (parts.length >= 2 &&
-                        typeof lon === 'number' && !isNaN(lon) &&
-                        typeof lat === 'number' && !isNaN(lat)) {
-                        return [lon, lat] as [number, number]
-                    }
-                    return null
-                })
-                .filter((coord): coord is [number, number] => coord !== null)
-
-            if (coordinates.length === 0) {
-                console.warn('좌표를 추출할 수 없습니다.')
-                return
-            }
-
-            let centerLon = 0
-            let centerLat = 0
-
-            coordinates.forEach(([lon, lat]) => {
-                centerLon += lon
-                centerLat += lat
-            })
-
-            centerLon /= coordinates.length
-            centerLat /= coordinates.length
-
-            const lons = coordinates.map(coord => coord[0])
-            const lats = coordinates.map(coord => coord[1])
-
-            const minLon = Math.min(...lons)
-            const maxLon = Math.max(...lons)
-            const minLat = Math.min(...lats)
-            const maxLat = Math.max(...lats)
-
-            const lonDiff = maxLon - minLon
-            const latDiff = maxLat - minLat
-            const maxDiff = Math.max(lonDiff, latDiff)
-
-            let cameraHeight = 1000
-            if (maxDiff < 0.001) {
-                cameraHeight = 500
-            } else if (maxDiff < 0.01) {
-                cameraHeight = 2000
-            } else if (maxDiff < 0.1) {
-                cameraHeight = 10000
-            } else {
-                cameraHeight = 20000
-            }
-
-            viewer.camera.flyTo({
-                destination: Cartesian3.fromDegrees(centerLon, centerLat, cameraHeight),
-                orientation: {
-                    heading: 0,
-                    pitch: -Math.PI / 4,
-                    roll: 0
-                },
-                duration: 2.0,
-                complete: () => {
-                    console.log('폴리곤 중심으로 카메라 이동 완료')
-                }
-            })
-
+            startDrawing(viewerRef.current, viewerId)
+            setShowHelp(true)
         } catch (error) {
-            console.error('카메라 포커스 오류:', error)
+            console.error('그리기 시작 오류:', error)
+            toast.error('그리기를 시작할 수 없습니다. 페이지를 새로고침해 주세요.')
         }
     }
 
-    const handleStartDrawing = () => {
-        if (!viewerRef.current) return
-        startDrawing(viewerRef.current, viewerId)
-    }
-
     const handleCompleteDrawing = () => {
-        if (!viewerRef.current) return
+        if (!viewerRef.current || !isInitialized) return
 
-        const wktString = completeDrawing(viewerRef.current, viewerId)
-        if (wktString) {
-            onPolygonComplete(wktString)
-            toast.success('폴리곤이 성공적으로 생성되었습니다!')
-        } else {
-            toast.warning('폴리곤을 완성하려면 최소 3개의 점이 필요합니다.')
+        try {
+            const wktString = completeDrawing(viewerRef.current, viewerId)
+            if (wktString) {
+                onPolygonComplete(wktString)
+                toast.success('폴리곤이 성공적으로 생성되었습니다!')
+                setShowHelp(false)
+            } else {
+                toast.warning('폴리곤을 완성하려면 최소 3개의 점이 필요합니다.')
+            }
+        } catch (error) {
+            console.error('그리기 완료 오류:', error)
+            toast.error('폴리곤 생성 중 오류가 발생했습니다.')
         }
     }
 
     const handleCancelDrawing = () => {
-        if (!viewerRef.current) return
-        cancelDrawing(viewerRef.current, viewerId)
+        if (!viewerRef.current || !isInitialized) return
+        
+        try {
+            cancelDrawing(viewerRef.current, viewerId)
+            setShowHelp(false)
+        } catch (error) {
+            console.error('그리기 취소 오류:', error)
+        }
     }
 
     const handleRemoveLastPoint = () => {
-        if (!viewerRef.current) return
-        removeLastPoint(viewerRef.current, viewerId)
+        if (!viewerRef.current || !isInitialized) return
+        
+        try {
+            removeLastPoint(viewerRef.current, viewerId)
+        } catch (error) {
+            console.error('포인트 제거 오류:', error)
+        }
     }
 
     const handleClearAll = () => {
-        if (!viewerRef.current) return
-        clearAllPolygons(viewerRef.current)
-        onPolygonComplete('')
-        toast.info('모든 폴리곤이 제거되었습니다.')
+        if (!viewerRef.current || !isInitialized) return
+        
+        try {
+            clearAllPolygons(viewerRef.current)
+            onPolygonComplete('')
+            toast.info('모든 폴리곤이 제거되었습니다.')
+        } catch (error) {
+            console.error('폴리곤 제거 오류:', error)
+        }
     }
 
     return (
-        <div className="space-y-4">
-            <div className="flex gap-2 flex-wrap items-center">
-                <Button
-                    onClick={handleStartDrawing}
-                    disabled={isDrawing}
-                    variant={isDrawing ? 'secondary' : 'default'}
-                    className={isDrawing ? 'animate-pulse' : ''}
-                    size="sm"
-                >
-                    {isDrawing ? '그리는 중...' : '폴리곤 그리기 시작'}
-                </Button>
-
-                {isDrawing && (
-                    <>
+        <div className="relative">
+            {/* 메인 컨트롤 패널 */}
+            <div className="mb-3">
+                {!isDrawing ? (
+                    <div className="flex gap-2 items-center">
                         <Button
-                            onClick={handleCompleteDrawing}
-                            disabled={!canComplete}
-                            variant={canComplete ? 'default' : 'outline'}
+                            onClick={handleStartDrawing}
+                            disabled={!isInitialized}
+                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50"
                             size="sm"
-                            className={canComplete ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
                         >
-                            그리기 완료 {canComplete && '(Enter)'}
+                            <MapIcon className="w-4 h-4 mr-2" />
+                            {isInitialized ? '영역 그리기' : '지도 로딩중...'}
                         </Button>
                         <Button
-                            onClick={handleRemoveLastPoint}
-                            disabled={pointCount === 0}
+                            onClick={handleClearAll}
+                            disabled={!isInitialized}
                             variant="outline"
                             size="sm"
+                            className="text-red-600 border-red-200 hover:bg-red-50 disabled:opacity-50"
                         >
-                            실행 취소 (Backspace)
+                            모두 지우기
                         </Button>
-                        <Button
-                            onClick={handleCancelDrawing}
-                            variant="destructive"
-                            size="sm"
-                        >
-                            취소 (Esc)
-                        </Button>
-                        <Button
-                            onClick={() => setShowHelp(!showHelp)}
-                            variant="ghost"
-                            size="sm"
-                        >
-                            도움말 {showHelp ? '숨기기' : '보기'}
-                        </Button>
-                    </>
-                )}
+                    </div>
+                ) : (
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                <span className="text-sm font-medium text-blue-800">영역 그리는 중</span>
+                                <span className="text-xs bg-blue-200 px-2 py-1 rounded-full text-blue-700">
+                                    {pointCount}개 점
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setShowHelp(!showHelp)}
+                                className="text-blue-600 hover:text-blue-800 p-1"
+                            >
+                                <Info className="w-4 h-4" />
+                            </button>
+                        </div>
+                        
+                        <div className="flex gap-2 flex-wrap">
+                            <Button
+                                onClick={handleCompleteDrawing}
+                                disabled={!canComplete}
+                                size="sm"
+                                className={canComplete ? 
+                                    'bg-green-600 hover:bg-green-700 text-white shadow-sm' : 
+                                    'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                }
+                            >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                완료
+                            </Button>
+                            <Button
+                                onClick={handleRemoveLastPoint}
+                                disabled={pointCount === 0}
+                                variant="outline"
+                                size="sm"
+                                className="text-orange-600 border-orange-200 hover:bg-orange-50 disabled:text-gray-400"
+                            >
+                                <RotateCcw className="w-4 h-4 mr-1" />
+                                실행취소
+                            </Button>
+                            <Button
+                                onClick={handleCancelDrawing}
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                                <X className="w-4 h-4 mr-1" />
+                                취소
+                            </Button>
+                        </div>
 
-                {!isDrawing && (
-                    <Button
-                        onClick={handleClearAll}
-                        variant="destructive"
-                    >
-                        모두 지우기
-                    </Button>
+                        {canComplete && (
+                            <div className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                우클릭으로 완료하거나 '완료' 버튼을 누르세요
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 
-            {isDrawing && showHelp && (
-                <div className="text-sm space-y-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
-                    <div className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                        그리기 도움말
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <p>• <strong>왼쪽 클릭:</strong> 점 추가</p>
-                        <p>• <strong>우클릭:</strong> 마지막 점 제거</p>
-                        <p>• <strong>더블클릭:</strong> 그리기 완료</p>
-                        <p>• <strong>Enter:</strong> 그리기 완료</p>
-                        <p>• <strong>Backspace:</strong> 실행 취소</p>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-blue-200">
-                        <div className="flex items-center justify-between">
-              <span className="font-medium text-blue-800">
-                현재 점 개수: <span className="text-lg">{pointCount}</span>개
-              </span>
-                            {canComplete && (
-                                <span className="text-green-600 font-medium animate-pulse">
-                  ✓ 완료 가능
-                </span>
-                            )}
-                            {!canComplete && pointCount > 0 && (
-                                <span className="text-orange-600 font-medium">
-                  {3 - pointCount}개 더 필요
-                </span>
-                            )}
-                        </div>
+            <div
+                ref={cesiumContainerRef}
+                className="w-full h-[400px] border rounded-lg overflow-hidden shadow-sm relative"
+                style={{ position: 'relative' }}
+                tabIndex={0}
+            />
+
+            {isDrawing && isInitialized && (
+                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border">
+                    <div className="flex items-center gap-2 text-sm">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                        <span className="text-gray-700">점 {pointCount}개</span>
+                        {canComplete && (
+                            <span className="text-green-600 font-medium ml-2">✓ 완료 가능</span>
+                        )}
                     </div>
                 </div>
             )}
 
-            <div
-                ref={cesiumContainerRef}
-                className="w-full h-[400px] border rounded-md overflow-hidden shadow-sm"
-                style={{ position: 'relative' }}
-                tabIndex={0}
-            />
+            {!isInitialized && (
+                <div className="absolute inset-0 bg-gray-100/80 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                        <span className="text-sm text-gray-600">지도 로딩 중...</span>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

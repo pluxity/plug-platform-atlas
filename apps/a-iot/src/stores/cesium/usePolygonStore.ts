@@ -15,6 +15,7 @@ import {
     VerticalOrigin,
     Cartesian2,
     LabelStyle,
+    defined,
 } from 'cesium'
 
 interface DrawingState {
@@ -52,6 +53,8 @@ interface PolygonActions {
     cleanupDrawingElements: (viewer: CesiumViewer, viewerId: string) => void
     parseWktToCoordinates: (wkt: string) => [number, number][]
     updateDynamicPoint: (viewer: CesiumViewer, viewerId: string, position: Cartesian3) => void
+    isValidCartesian3: (position: Cartesian3) => boolean
+    safeFromDegrees: (lon: number, lat: number, height?: number) => Cartesian3 | null
 }
 
 interface PolygonDisplayOptions {
@@ -91,27 +94,66 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
         return state?.activePoints.length || 0
     },
 
+    // Cartesian3 좌표 검증 함수
+    isValidCartesian3: (position: Cartesian3): boolean => {
+        return defined(position) &&
+               defined(position.x) && !isNaN(position.x) && isFinite(position.x) &&
+               defined(position.y) && !isNaN(position.y) && isFinite(position.y) &&
+               defined(position.z) && !isNaN(position.z) && isFinite(position.z)
+    },
+
+    // 안전한 좌표 변환 함수
+    safeFromDegrees: (lon: number, lat: number, height: number = 0): Cartesian3 | null => {
+        try {
+            // 좌표값 유효성 검증
+            if (!isFinite(lon) || !isFinite(lat) || !isFinite(height) ||
+                Math.abs(lon) > 180 || Math.abs(lat) > 90) {
+                console.warn('잘못된 좌표값:', lon, lat, height)
+                return null
+            }
+
+            const cartesian = Cartesian3.fromDegrees(lon, lat, height)
+            
+            // 결과 검증
+            if (!get().isValidCartesian3(cartesian)) {
+                console.warn('변환된 좌표가 유효하지 않음:', cartesian)
+                return null
+            }
+
+            return cartesian
+        } catch (error) {
+            console.error('좌표 변환 실패:', error, lon, lat, height)
+            return null
+        }
+    },
+
     createPoint: (viewer: CesiumViewer, worldPosition: Cartesian3, pointIndex: number): Entity => {
+        if (!get().isValidCartesian3(worldPosition)) {
+            console.error('잘못된 좌표로 포인트를 생성할 수 없습니다:', worldPosition)
+            throw new Error('Invalid cartesian coordinates for point creation')
+        }
+
         return viewer.entities.add({
             position: worldPosition,
             point: {
                 pixelSize: 12,
-                heightReference: HeightReference.CLAMP_TO_GROUND,
                 color: Color.CYAN,
                 outlineColor: Color.AQUAMARINE,
                 outlineWidth: 2,
                 disableDepthTestDistance: Number.POSITIVE_INFINITY,
                 scaleByDistance: new NearFarScalar(1.5e2, 1.0, 1.5e7, 0.5),
+                // HeightReference 제거하여 지형 상호작용 문제 방지
             },
             label: {
-                text: `점 ${pointIndex + 1}`,
+                text: `${pointIndex + 1}`,
                 font: '12pt monospace',
                 style: LabelStyle.FILL_AND_OUTLINE,
                 outlineWidth: 2,
                 verticalOrigin: VerticalOrigin.BOTTOM,
-                pixelOffset: new Cartesian2(0, -10),
+                pixelOffset: new Cartesian2(0, -8),
                 fillColor: Color.WHITE,
-                outlineColor: Color.BLACK,
+                outlineColor: Color.BLUE,
+                scale: 0.8,
             },
         })
     },
@@ -120,25 +162,33 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
         const state = get().getDrawingState(viewerId)
         if (!state) return
 
-        if (state.activeShape) {
-            viewer.entities.remove(state.activeShape)
-            state.activeShape = null
+        try {
+            if (state.activeShape) {
+                viewer.entities.remove(state.activeShape)
+                state.activeShape = null
+            }
+
+            if (state.dynamicPoint) {
+                viewer.entities.remove(state.dynamicPoint)
+                state.dynamicPoint = null
+            }
+
+            state.activePoints.forEach((point: Entity) => {
+                if (viewer.entities.contains(point)) {
+                    viewer.entities.remove(point)
+                }
+            })
+
+            state.activePoints = []
+            state.activeShapePoints = []
+        } catch (error) {
+            console.error('엔티티 정리 중 오류 발생:', error)
         }
-
-        if (state.dynamicPoint) {
-            viewer.entities.remove(state.dynamicPoint)
-            state.dynamicPoint = null
-        }
-
-        state.activePoints.forEach((point: Entity) => {
-            viewer.entities.remove(point)
-        })
-
-        state.activePoints = []
-        state.activeShapePoints = []
     },
 
     parseWktToCoordinates: (wkt: string): [number, number][] => {
+        if (!wkt || typeof wkt !== 'string') return []
+
         const match = wkt.match(/POLYGON\s*\(\s*\((.*?)\)\s*\)/i)
         if (!match || !match[1]) return []
 
@@ -149,8 +199,9 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
                 const lat = parts[1]
 
                 if (parts.length >= 2 &&
-                    typeof lon === 'number' && !isNaN(lon) &&
-                    typeof lat === 'number' && !isNaN(lat)) {
+                    typeof lon === 'number' && !isNaN(lon) && isFinite(lon) &&
+                    typeof lat === 'number' && !isNaN(lat) && isFinite(lat) &&
+                    Math.abs(lon) <= 180 && Math.abs(lat) <= 90) {
                     return [lon, lat] as [number, number]
                 }
                 return null
@@ -162,25 +213,35 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
         const state = get().getDrawingState(viewerId)
         if (!state?.isDrawing) return
 
-        if (state.dynamicPoint) {
-            viewer.entities.remove(state.dynamicPoint)
+        if (!get().isValidCartesian3(position)) {
+            console.warn('잘못된 좌표로 동적 포인트를 업데이트할 수 없습니다:', position)
+            return
         }
 
-        state.dynamicPoint = viewer.entities.add({
-            position: position,
-            point: {
-                pixelSize: 8,
-                color: Color.CYAN.withAlpha(0.7),
-                outlineColor: Color.WHITE,
-                outlineWidth: 2,
-                heightReference: HeightReference.CLAMP_TO_GROUND,
-                disableDepthTestDistance: Number.POSITIVE_INFINITY,
-            },
-        })
+        try {
+            if (state.dynamicPoint) {
+                viewer.entities.remove(state.dynamicPoint)
+                state.dynamicPoint = null
+            }
 
-        set((prev) => ({
-            drawingStates: new Map(prev.drawingStates.set(viewerId, state))
-        }))
+            state.dynamicPoint = viewer.entities.add({
+                position: position,
+                point: {
+                    pixelSize: 8,
+                    color: Color.YELLOW.withAlpha(0.8),
+                    outlineColor: Color.WHITE,
+                    outlineWidth: 2,
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                    // HeightReference 제거
+                },
+            })
+
+            set((prev) => ({
+                drawingStates: new Map(prev.drawingStates.set(viewerId, state))
+            }))
+        } catch (error) {
+            console.error('동적 포인트 업데이트 중 오류 발생:', error)
+        }
     },
 
     startDrawing: (viewer: CesiumViewer, viewerId: string) => {
@@ -195,128 +256,171 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
         const newState = createInitialDrawingState()
         newState.isDrawing = true
         
-        const entitiesToRemove: Entity[] = []
-        viewer.entities.values.forEach((entity: Entity) => {
-            if (entity.name !== 'Initial Polygon') {
-                entitiesToRemove.push(entity)
-            }
-        })
-        entitiesToRemove.forEach(entity => viewer.entities.remove(entity))
-
-        viewer.canvas.style.cursor = 'crosshair'
-        
-        // 초기 동적 포인트 생성
-        newState.dynamicPoint = viewer.entities.add({
-            position: Cartesian3.ZERO,
-            point: {
-                pixelSize: 8,
-                color: Color.CYAN.withAlpha(0.7),
-                outlineColor: Color.WHITE,
-                outlineWidth: 2,
-                heightReference: HeightReference.CLAMP_TO_GROUND,
-                disableDepthTestDistance: Number.POSITIVE_INFINITY,
-            },
-        })
-
-        const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
-        newState.handler = handler
-
-        // 마우스 이동 이벤트
-        handler.setInputAction((movement: any) => {
-            const state = get().getDrawingState(viewerId)
-            if (!state?.isDrawing) return
-
-            const pickedPosition = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid)
-            if (!pickedPosition) return
-
-            get().updateDynamicPoint(viewer, viewerId, pickedPosition)
-
-            if (state.activeShapePoints.length >= 2) {
-                const tempPoints = [...state.activeShapePoints, pickedPosition]
-                if (state.activeShape?.polygon) {
-                    state.activeShape.polygon.hierarchy = new ConstantProperty(
-                        new PolygonHierarchy(tempPoints)
-                    )
+        try {
+            const entitiesToRemove: Entity[] = []
+            viewer.entities.values.forEach((entity: Entity) => {
+                if (entity.name !== 'Initial Polygon') {
+                    entitiesToRemove.push(entity)
                 }
-            }
-        }, ScreenSpaceEventType.MOUSE_MOVE)
+            })
+            entitiesToRemove.forEach(entity => viewer.entities.remove(entity))
 
-        // 왼쪽 클릭 이벤트
-        handler.setInputAction((click: any) => {
-            const state = get().getDrawingState(viewerId)
-            if (!state?.isDrawing) return
+            viewer.canvas.style.cursor = 'crosshair'
 
-            const pickedPosition = viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid)
-            if (!pickedPosition) return
+            const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
+            newState.handler = handler
 
-            if (state.activeShapePoints.length === 0) {
-                state.activeShape = viewer.entities.add({
-                    polygon: {
-                        hierarchy: new ConstantProperty(new PolygonHierarchy([pickedPosition])),
-                        material: Color.CYAN.withAlpha(0.4),
-                        outline: true,
-                        outlineColor: Color.CYAN,
-                        height: 0,
-                    },
-                })
-            }
+            // 마우스 이동 이벤트
+            handler.setInputAction((movement: any) => {
+                const state = get().getDrawingState(viewerId)
+                if (!state?.isDrawing) return
 
-            // 포인트 엔티티 생성
-            const pointEntity = get().createPoint(viewer, pickedPosition, state.activePoints.length)
-            state.activePoints.push(pointEntity)
-            state.activeShapePoints.push(pickedPosition)
+                try {
+                    const pickedPosition = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid)
+                    if (!pickedPosition || !get().isValidCartesian3(pickedPosition)) {
+                        return
+                    }
 
-            if (state.activeShape?.polygon) {
-                state.activeShape.polygon.hierarchy = new ConstantProperty(
-                    new PolygonHierarchy(state.activeShapePoints)
-                )
-            }
+                    get().updateDynamicPoint(viewer, viewerId, pickedPosition)
+
+                    if (state.activeShapePoints.length >= 2) {
+                        const tempPoints = [...state.activeShapePoints, pickedPosition]
+                        if (state.activeShape?.polygon && tempPoints.every(p => get().isValidCartesian3(p))) {
+                            state.activeShape.polygon.hierarchy = new ConstantProperty(
+                                new PolygonHierarchy(tempPoints)
+                            )
+                        }
+                    }
+                } catch (error) {
+                    console.error('마우스 이동 처리 중 오류:', error)
+                }
+            }, ScreenSpaceEventType.MOUSE_MOVE)
+
+            handler.setInputAction((click: any) => {
+                const state = get().getDrawingState(viewerId)
+                if (!state?.isDrawing) return
+
+                try {
+                    const pickedPosition = viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid)
+                    if (!pickedPosition || !get().isValidCartesian3(pickedPosition)) {
+                        console.warn('유효하지 않은 좌표입니다. 다른 위치를 클릭해 주세요.')
+                        return
+                    }
+
+                    if (state.activeShapePoints.length === 0) {
+                        state.activeShape = viewer.entities.add({
+                            polygon: {
+                                hierarchy: new ConstantProperty(new PolygonHierarchy([pickedPosition])),
+                                material: Color.BLUE.withAlpha(0.3),
+                                outline: true,
+                                outlineColor: Color.BLUE,
+                                height: 0,
+                                // HeightReference 제거
+                            },
+                        })
+                    }
+
+                    // 포인트 엔티티 생성
+                    const pointEntity = get().createPoint(viewer, pickedPosition, state.activePoints.length)
+                    state.activePoints.push(pointEntity)
+                    state.activeShapePoints.push(pickedPosition)
+
+                    if (state.activeShape?.polygon && state.activeShapePoints.every(p => get().isValidCartesian3(p))) {
+                        state.activeShape.polygon.hierarchy = new ConstantProperty(
+                            new PolygonHierarchy(state.activeShapePoints)
+                        )
+                    }
+
+                    set((prev) => ({
+                        drawingStates: new Map(prev.drawingStates.set(viewerId, state))
+                    }))
+                } catch (error) {
+                    console.error('점 추가 중 오류 발생:', error)
+                }
+            }, ScreenSpaceEventType.LEFT_CLICK)
+
+            // 우클릭 이벤트 - 완료 (3개 이상의 점이 있을 때)
+            handler.setInputAction((click: any) => {
+                const state = get().getDrawingState(viewerId)
+                if (!state?.isDrawing) return
+
+                try {
+                    // 우클릭 위치에서 좌표를 가져옵니다
+                    const pickedPosition = viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid)
+
+                    if (state.activeShapePoints.length >= 3) {
+                        // 3개 이상의 점이 있으면 완료
+                        get().completeDrawing(viewer, viewerId)
+                    } else if (state.activeShapePoints.length > 0 && pickedPosition && get().isValidCartesian3(pickedPosition)) {
+                        // 3개 미만이면 우클릭 위치에 점을 추가하고 완료 시도
+                        const pointEntity = get().createPoint(viewer, pickedPosition, state.activePoints.length)
+                        state.activePoints.push(pointEntity)
+                        state.activeShapePoints.push(pickedPosition)
+
+                        if (state.activeShape?.polygon && state.activeShapePoints.every(p => get().isValidCartesian3(p))) {
+                            state.activeShape.polygon.hierarchy = new ConstantProperty(
+                                new PolygonHierarchy(state.activeShapePoints)
+                            )
+                        }
+
+                        set((prev) => ({
+                            drawingStates: new Map(prev.drawingStates.set(viewerId, state))
+                        }))
+
+                        // 3개가 되면 완료
+                        if (state.activeShapePoints.length >= 3) {
+                            get().completeDrawing(viewer, viewerId)
+                        }
+                    } else {
+                        // 점이 없거나 유효하지 않은 위치면 마지막 점 제거
+                        get().removeLastPoint(viewer, viewerId)
+                    }
+                } catch (error) {
+                    console.error('우클릭 처리 중 오류:', error)
+                }
+            }, ScreenSpaceEventType.RIGHT_CLICK)
+
+            // 기본 우클릭 메뉴 차단
+            viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(() => {}, ScreenSpaceEventType.RIGHT_CLICK)
 
             set((prev) => ({
-                drawingStates: new Map(prev.drawingStates.set(viewerId, state))
+                drawingStates: new Map(prev.drawingStates.set(viewerId, newState))
             }))
-        }, ScreenSpaceEventType.LEFT_CLICK)
-
-        handler.setInputAction(() => {
-            get().completeDrawing(viewer, viewerId)
-        }, ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
-
-        handler.setInputAction(() => {
-            get().removeLastPoint(viewer, viewerId)
-        }, ScreenSpaceEventType.RIGHT_CLICK)
-
-        viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(() => {}, ScreenSpaceEventType.RIGHT_CLICK)
-
-        set((prev) => ({
-            drawingStates: new Map(prev.drawingStates.set(viewerId, newState))
-        }))
+        } catch (error) {
+            console.error('그리기 시작 중 오류 발생:', error)
+            get().cancelDrawing(viewer, viewerId)
+        }
     },
 
     removeLastPoint: (viewer: CesiumViewer, viewerId: string) => {
         const state = get().getDrawingState(viewerId)
         if (!state?.isDrawing || state.activePoints.length === 0) return
 
-        const lastPoint = state.activePoints.pop()
-        if (lastPoint) {
-            viewer.entities.remove(lastPoint)
-        }
-
-        state.activeShapePoints.pop()
-
-        if (state.activeShape?.polygon) {
-            if (state.activeShapePoints.length >= 3) {
-                state.activeShape.polygon.hierarchy = new ConstantProperty(
-                    new PolygonHierarchy(state.activeShapePoints)
-                )
-            } else if (state.activeShapePoints.length === 0) {
-                viewer.entities.remove(state.activeShape)
-                state.activeShape = null
+        try {
+            const lastPoint = state.activePoints.pop()
+            if (lastPoint && viewer.entities.contains(lastPoint)) {
+                viewer.entities.remove(lastPoint)
             }
-        }
 
-        set((prev) => ({
-            drawingStates: new Map(prev.drawingStates.set(viewerId, state))
-        }))
+            state.activeShapePoints.pop()
+
+            if (state.activeShape?.polygon) {
+                if (state.activeShapePoints.length >= 1 && state.activeShapePoints.every(p => get().isValidCartesian3(p))) {
+                    state.activeShape.polygon.hierarchy = new ConstantProperty(
+                        new PolygonHierarchy(state.activeShapePoints)
+                    )
+                } else {
+                    viewer.entities.remove(state.activeShape)
+                    state.activeShape = null
+                }
+            }
+
+            set((prev) => ({
+                drawingStates: new Map(prev.drawingStates.set(viewerId, state))
+            }))
+        } catch (error) {
+            console.error('마지막 점 제거 중 오류 발생:', error)
+        }
     },
 
     completeDrawing: (viewer: CesiumViewer, viewerId: string): string | null => {
@@ -325,80 +429,117 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
             return null
         }
 
-        const coordinates = state.activeShapePoints.map((cartesian: Cartesian3) => {
-            const cartographic = Cartographic.fromCartesian(cartesian)
-            return [
-                CesiumMath.toDegrees(cartographic.longitude),
-                CesiumMath.toDegrees(cartographic.latitude)
-            ]
-        })
+        try {
+            // 모든 좌표가 유효한지 확인
+            const validPoints = state.activeShapePoints.filter(point => get().isValidCartesian3(point))
+            if (validPoints.length < 3) {
+                console.error('유효한 좌표가 3개 미만입니다.')
+                return null
+            }
 
-        const firstCoordinate = coordinates[0]
-        if (firstCoordinate) {
-            coordinates.push(firstCoordinate)
+            const coordinates = validPoints.map((cartesian: Cartesian3) => {
+                try {
+                    const cartographic = Cartographic.fromCartesian(cartesian)
+                    const lon = CesiumMath.toDegrees(cartographic.longitude)
+                    const lat = CesiumMath.toDegrees(cartographic.latitude)
+                    
+                    // 좌표 유효성 재검증
+                    if (!isFinite(lon) || !isFinite(lat) || Math.abs(lon) > 180 || Math.abs(lat) > 90) {
+                        console.warn('변환된 좌표가 범위를 벗어남:', lon, lat)
+                        return null
+                    }
+                    
+                    return [lon, lat] as [number, number]
+                } catch (error) {
+                    console.error('좌표 변환 오류:', error, cartesian)
+                    return null
+                }
+            }).filter((coord): coord is [number, number] => coord !== null)
+
+            if (coordinates.length < 3) {
+                console.error('변환된 유효한 좌표가 3개 미만입니다.')
+                return null
+            }
+
+            const firstCoordinate = coordinates[0]
+            if (firstCoordinate) {
+                coordinates.push(firstCoordinate)
+            }
+
+            const wktString = `POLYGON ((${coordinates
+                .map((coord) => `${coord[0].toFixed(6)} ${coord[1].toFixed(6)}`)
+                .join(', ')})))`
+
+            get().cleanupDrawingElements(viewer, viewerId)
+
+            viewer.entities.add({
+                name: 'Drawn Polygon',
+                polygon: {
+                    hierarchy: validPoints,
+                    material: Color.BLUE.withAlpha(0.4),
+                    outline: true,
+                    outlineColor: Color.BLUE,
+                    outlineWidth: 2,
+                    height: 0,
+                    // HeightReference 제거
+                },
+            })
+
+            state.isDrawing = false
+            viewer.canvas.style.cursor = 'default'
+
+            set((prev) => ({
+                drawingStates: new Map(prev.drawingStates.set(viewerId, state))
+            }))
+
+            return wktString
+        } catch (error) {
+            console.error('그리기 완료 중 오류 발생:', error)
+            return null
         }
-
-        const wktString = `POLYGON ((${coordinates
-            .filter((coord): coord is [number, number] => coord !== undefined && coord.length === 2)
-            .map((coord) => `${coord[0].toFixed(6)} ${coord[1].toFixed(6)}`)
-            .join(', ')})))`
-
-        get().cleanupDrawingElements(viewer, viewerId)
-
-        viewer.entities.add({
-            name: 'Drawn Polygon',
-            polygon: {
-                hierarchy: state.activeShapePoints,
-                material: Color.BLUE.withAlpha(0.4),
-                outline: true,
-                outlineColor: Color.BLUE,
-                height: 0,
-            },
-        })
-
-        state.isDrawing = false
-        viewer.canvas.style.cursor = 'default'
-
-        set((prev) => ({
-            drawingStates: new Map(prev.drawingStates.set(viewerId, state))
-        }))
-
-        return wktString
     },
 
     cancelDrawing: (viewer: CesiumViewer, viewerId: string) => {
-        const state = get().getDrawingState(viewerId)
-        if (!state) return
+        try {
+            const state = get().getDrawingState(viewerId)
+            if (!state) return
 
-        get().cleanupDrawingElements(viewer, viewerId)
+            get().cleanupDrawingElements(viewer, viewerId)
 
-        if (state.handler) {
-            state.handler.destroy()
-            state.handler = null
+            if (state.handler && !state.handler.isDestroyed()) {
+                state.handler.destroy()
+                state.handler = null
+            }
+
+            const newState = createInitialDrawingState()
+            viewer.canvas.style.cursor = 'default'
+
+            set((prev) => ({
+                drawingStates: new Map(prev.drawingStates.set(viewerId, newState))
+            }))
+        } catch (error) {
+            console.error('그리기 취소 중 오류 발생:', error)
         }
-
-        const newState = createInitialDrawingState()
-        viewer.canvas.style.cursor = 'default'
-
-        set((prev) => ({
-            drawingStates: new Map(prev.drawingStates.set(viewerId, newState))
-        }))
     },
 
     displayWktPolygon: (viewer: CesiumViewer, wkt: string, options?: PolygonDisplayOptions): Entity | null => {
         try {
             const coordinates = get().parseWktToCoordinates(wkt)
-            if (coordinates.length === 0) return null
+            if (coordinates.length === 0) {
+                console.warn('WKT에서 좌표를 추출할 수 없습니다:', wkt)
+                return null
+            }
 
             const cartesianCoords = coordinates
-                .filter((coord: [number, number]): coord is [number, number] =>
-                    coord.length === 2 &&
-                    typeof coord[0] === 'number' &&
-                    typeof coord[1] === 'number'
-                )
-                .map((coord: [number, number]) => Cartesian3.fromDegrees(coord[0], coord[1]))
+                .map((coord: [number, number]) => {
+                    return get().safeFromDegrees(coord[0], coord[1], 0)
+                })
+                .filter((coord): coord is Cartesian3 => coord !== null)
 
-            if (cartesianCoords.length === 0) return null
+            if (cartesianCoords.length === 0) {
+                console.error('변환된 유효한 좌표가 없습니다.')
+                return null
+            }
 
             const entity = viewer.entities.add({
                 name: options?.name || 'WKT Polygon',
@@ -407,7 +548,9 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
                     material: options?.fillColor?.withAlpha(options.fillAlpha || 0.4) || Color.BLUE.withAlpha(0.4),
                     outline: true,
                     outlineColor: options?.outlineColor || Color.BLUE,
+                    outlineWidth: 2,
                     height: options?.height || 0,
+                    // HeightReference 제거
                 },
             })
 
@@ -419,19 +562,31 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
     },
 
     removePolygon: (viewer: CesiumViewer, entityId: string) => {
-        const entity = viewer.entities.getById(entityId)
-        if (entity) {
-            viewer.entities.remove(entity)
+        try {
+            const entity = viewer.entities.getById(entityId)
+            if (entity && viewer.entities.contains(entity)) {
+                viewer.entities.remove(entity)
+            }
+        } catch (error) {
+            console.error('폴리곤 제거 중 오류 발생:', error)
         }
     },
 
     clearAllPolygons: (viewer: CesiumViewer) => {
-        const entitiesToRemove: Entity[] = []
-        viewer.entities.values.forEach((entity: Entity) => {
-            if (entity.polygon) {
-                entitiesToRemove.push(entity)
-            }
-        })
-        entitiesToRemove.forEach(entity => viewer.entities.remove(entity))
+        try {
+            const entitiesToRemove: Entity[] = []
+            viewer.entities.values.forEach((entity: Entity) => {
+                if (entity.polygon) {
+                    entitiesToRemove.push(entity)
+                }
+            })
+            entitiesToRemove.forEach(entity => {
+                if (viewer.entities.contains(entity)) {
+                    viewer.entities.remove(entity)
+                }
+            })
+        } catch (error) {
+            console.error('모든 폴리곤 제거 중 오류 발생:', error)
+        }
     },
 }))
