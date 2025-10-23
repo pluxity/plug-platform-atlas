@@ -7,8 +7,8 @@ import {
     useCameraStore,
     DEFAULT_CAMERA_POSITION
 } from '../../../../../stores/cesium'
-import {Cartesian3, Color, Viewer as CesiumViewer} from 'cesium'
-import { MapIcon, MousePointer, RotateCcw, CheckCircle, X, Info } from 'lucide-react'
+import { Color, Viewer as CesiumViewer} from 'cesium'
+import { MapIcon, RotateCcw, CheckCircle, X, Info } from 'lucide-react'
 
 interface CesiumPolygonDrawerProps {
     onPolygonComplete: (wktString: string) => void

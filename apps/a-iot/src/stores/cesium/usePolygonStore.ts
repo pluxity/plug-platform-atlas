@@ -1,21 +1,21 @@
-import { create } from 'zustand'
+import {create} from 'zustand'
 import {
-    Viewer as CesiumViewer,
-    Entity,
+    Cartesian2,
     Cartesian3,
-    ScreenSpaceEventHandler,
-    ScreenSpaceEventType,
+    Cartographic,
     Color,
     ConstantProperty,
-    PolygonHierarchy,
-    Cartographic,
-    Math as CesiumMath,
-    HeightReference,
-    NearFarScalar,
-    VerticalOrigin,
-    Cartesian2,
-    LabelStyle,
     defined,
+    Entity,
+    HeightReference,
+    LabelStyle,
+    Math as CesiumMath,
+    NearFarScalar,
+    PolygonHierarchy,
+    ScreenSpaceEventHandler,
+    ScreenSpaceEventType,
+    VerticalOrigin,
+    Viewer as CesiumViewer,
 } from 'cesium'
 
 interface DrawingState {
@@ -200,7 +200,7 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
     },
 
     parseWktToCoordinates: (wkt: string): [number, number][] => {
-        if (!wkt || typeof wkt !== 'string') return []
+        if (!wkt) return []
 
         const match = wkt.match(/POLYGON\s*\(\s*\((.*?)\)\s*\)/i)
         if (!match || !match[1]) return []
@@ -584,7 +584,7 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
                 return null
             }
 
-            const entity = viewer.entities.add({
+            return viewer.entities.add({
                 name: options?.name || 'WKT Polygon',
                 polygon: {
                     hierarchy: cartesianCoords,
@@ -596,8 +596,6 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
                     // HeightReference 제거
                 },
             })
-
-            return entity
         } catch (error) {
             console.error('WKT 폴리곤 표시 오류:', error)
             return null
