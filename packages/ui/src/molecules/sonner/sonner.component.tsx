@@ -1,5 +1,5 @@
 import { Toaster as Sonner, toast } from "sonner"
-import { cn } from "../../lib/utils"
+import type React from "react"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
@@ -76,7 +76,7 @@ const DefaultIcon = () => (
 )
 
 // Success Toast
-const toastSuccess = (message: string, options?: ToastOptions) => {
+const toastSuccess = (message: React.ReactNode, options?: ToastOptions) => {
   return toast(message, {
     description: options?.description,
     duration: options?.duration,
@@ -92,7 +92,7 @@ const toastSuccess = (message: string, options?: ToastOptions) => {
 }
 
 // Warning Toast
-const toastWarning = (message: string, options?: ToastOptions) => {
+const toastWarning = (message: React.ReactNode, options?: ToastOptions) => {
   return toast(message, {
     description: options?.description,
     duration: options?.duration,
@@ -108,7 +108,7 @@ const toastWarning = (message: string, options?: ToastOptions) => {
 }
 
 // Error Toast
-const toastError = (message: string, options?: ToastOptions) => {
+const toastError = (message: React.ReactNode, options?: ToastOptions) => {
   return toast(message, {
     description: options?.description,
     duration: options?.duration,
@@ -124,7 +124,7 @@ const toastError = (message: string, options?: ToastOptions) => {
 }
 
 // Info Toast
-const toastInfo = (message: string, options?: ToastOptions) => {
+const toastInfo = (message: React.ReactNode, options?: ToastOptions) => {
   return toast(message, {
     description: options?.description,
     duration: options?.duration,
@@ -140,7 +140,7 @@ const toastInfo = (message: string, options?: ToastOptions) => {
 }
 
 // Default Toast
-const toastDefault = (message: string, options?: ToastOptions) => {
+const toastDefault = (message: React.ReactNode, options?: ToastOptions) => {
   return toast(message, {
     description: options?.description,
     duration: options?.duration,
@@ -158,19 +158,19 @@ const toastDefault = (message: string, options?: ToastOptions) => {
 // 통합된 toast 객체 타입
 type BaseToastFn = typeof toast
 type ColoredToast = BaseToastFn & {
-  success: typeof toastSuccess
-  warning: typeof toastWarning
-  error: typeof toastError
-  info: typeof toastInfo
-  default: typeof toastDefault
+  success: (message: React.ReactNode, options?: ToastOptions) => string | number
+  warning: (message: React.ReactNode, options?: ToastOptions) => string | number
+  error: (message: React.ReactNode, options?: ToastOptions) => string | number
+  info: (message: React.ReactNode, options?: ToastOptions) => string | number
+  default: (message: React.ReactNode, options?: ToastOptions) => string | number
 }
 
 // toast 객체 확장
 const extendedToast = toast as ColoredToast
-extendedToast.success = toastSuccess
-extendedToast.warning = toastWarning
-extendedToast.error = toastError
-extendedToast.info = toastInfo
-extendedToast.default = toastDefault
+extendedToast.success = toastSuccess as any
+extendedToast.warning = toastWarning as any
+extendedToast.error = toastError as any
+extendedToast.info = toastInfo as any
+extendedToast.default = toastDefault as any
 
 export { Toaster, extendedToast as toast }

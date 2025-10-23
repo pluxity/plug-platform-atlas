@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { UserResponse } from '@plug-atlas/types'
 
-interface AuthState {
+export interface AuthState {
   user: UserResponse | null
   isAuthenticated: boolean
   token: string | null
