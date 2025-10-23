@@ -271,18 +271,44 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
             newState.handler = handler
 
             // 마우스 이동 이벤트
+// 마우스 이동 이벤트 부분을 다음과 같이 수정하세요:
+
+// 마우스 이동 이벤트 - 개선된 버전
             handler.setInputAction((movement: any) => {
                 const state = get().getDrawingState(viewerId)
                 if (!state?.isDrawing) return
 
                 try {
-                    const pickedPosition = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid)
+                    // 더 정확한 좌표 획득을 위해 다양한 방법 시도
+                    let pickedPosition: Cartesian3 | undefined
+
+                    // 1. 먼저 3D 객체와의 교점을 확인
+                    const pickedObject = viewer.scene.pick(movement.endPosition)
+                    if (defined(pickedObject)) {
+                        pickedPosition = viewer.scene.pickPosition(movement.endPosition)
+                    }
+
+                    // 2. 3D 객체가 없으면 지구 표면과의 교점 계산
+                    if (!pickedPosition || !get().isValidCartesian3(pickedPosition)) {
+                        pickedPosition = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid)
+                    }
+
+                    // 3. 지구 표면도 없으면 지형과의 교점 시도
+                    if (!pickedPosition || !get().isValidCartesian3(pickedPosition)) {
+                        const ray = viewer.camera.getPickRay(movement.endPosition)
+                        if (ray) {
+                            pickedPosition = viewer.scene.globe.pick(ray, viewer.scene)
+                        }
+                    }
+
                     if (!pickedPosition || !get().isValidCartesian3(pickedPosition)) {
                         return
                     }
 
+                    // 동적 포인트 업데이트
                     get().updateDynamicPoint(viewer, viewerId, pickedPosition)
 
+                    // 활성 폴리곤 실시간 미리보기 업데이트
                     if (state.activeShapePoints.length >= 2) {
                         const tempPoints = [...state.activeShapePoints, pickedPosition]
                         if (state.activeShape?.polygon && tempPoints.every(p => get().isValidCartesian3(p))) {
@@ -291,6 +317,10 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
                             )
                         }
                     }
+
+                    // 렌더링 요청 (부드러운 애니메이션을 위해)
+                    viewer.scene.requestRender()
+
                 } catch (error) {
                     console.error('마우스 이동 처리 중 오류:', error)
                 }
