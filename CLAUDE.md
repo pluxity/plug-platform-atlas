@@ -119,15 +119,24 @@ export const Default: Story = {
 
 ---
 
-## GitHub 이슈 관리
+## GitHub 이슈 및 프로젝트 관리
 
-### 이슈 템플릿
+### 이슈/PR 관리 스킬
 
-프로젝트는 4가지 이슈 템플릿을 제공합니다:
-- **Feature**: 새로운 기능 구현 요청
-- **Bug**: 버그 리포트 및 수정 요청
-- **Enhancement**: 기존 기능 개선 제안
-- **Documentation**: 문서 작성 및 개선
+이슈 생성, PR 관리, 프로젝트 필드 설정은 **`github-project-manager` 스킬**이 자동으로 처리합니다.
+
+**사용 예시:**
+- "Feature 이슈 만들어줘 - [기능명], high priority로 seung-choi에게 할당"
+- "이슈 #42에 대한 PR 생성해줘"
+- "이슈에 Sprint 필드 설정해줘"
+
+### 프로젝트 정보
+
+- **Organization**: pluxity
+- **Repository**: plug-platform-atlas
+- **프로젝트**: plug-platform-atlas
+- **프로젝트 URL**: https://github.com/orgs/pluxity/projects/11
+- **프로젝트 번호**: 11
 
 ### 담당자 목록
 
@@ -136,150 +145,23 @@ export const Default: Story = {
 - `yjsun1996` - 선용준
 - `Nadk-pluxity` - 김낙현
 
-### GitHub 프로젝트
+### API 문서
 
-**프로젝트**: plug-platform-atlas
-**URL**: https://github.com/orgs/pluxity/projects/11
-**프로젝트 번호**: 11
-**프로젝트 ID**: `PVT_kwDOC1m_S84BEip8`
-
-**주요 필드 ID:**
-- Start Date: `PVTF_lADOC1m_S84BEip8zg2I3Yc`
-- Due Date: `PVTF_lADOC1m_S84BEip8zg2I3Yg`
-- Priority: `PVTSSF_lADOC1m_S84BEip8zg2I3bM`
-- Component: `PVTSSF_lADOC1m_S84BEip8zg2I_HA`
-- Sprint: `PVTSSF_lADOC1m_S84BEip8zg2I3bI`
-- Status: `PVTSSF_lADOC1m_S84BEip8zg2I2ls`
-
-⚠️ **중요**: 모든 이슈는 반드시 이 프로젝트에 할당되어야 합니다.
-
-### 이슈 생성 명령어
-
-```bash
-# 기본 이슈 생성 (프로젝트에 할당)
-ISSUE_URL=$(gh issue create --title "제목" --body "내용" --json url -q .url)
-gh project item-add 11 --owner pluxity --url $ISSUE_URL
-
-# 담당자 지정 + 프로젝트 할당
-ISSUE_URL=$(gh issue create --title "제목" --body "내용" --assignee seung-choi --json url -q .url)
-gh project item-add 11 --owner pluxity --url $ISSUE_URL
-
-# 라벨 추가 + 프로젝트 할당
-ISSUE_URL=$(gh issue create --title "제목" --body "내용" --label feature,high-priority --json url -q .url)
-gh project item-add 11 --owner pluxity --url $ISSUE_URL
-
-# 완전한 이슈 생성 예시
-ISSUE_URL=$(gh issue create \
-  --title "[FEATURE] 제목" \
-  --body "내용" \
-  --assignee seung-choi \
-  --label feature,high-priority \
-  --json url -q .url)
-gh project item-add 11 --owner pluxity --url $ISSUE_URL
-
-# 템플릿 사용
-gh issue create --template feature.md
-```
-
-### 프로젝트 필드 설정
-
-이슈를 프로젝트에 추가한 후 날짜, 우선순위 등을 설정할 수 있습니다.
-
-```bash
-# 프로젝트 아이템 ID 찾기
-gh project item-list 11 --owner pluxity --format json --limit 100 | grep "issues/7" -A 5 -B 5
-
-# 또는 이슈 번호로 직접 아이템 ID 추출
-ITEM_ID=$(gh project item-list 11 --owner pluxity --format json | jq -r '.items[] | select(.content.number==7) | .id')
-
-# Start Date 설정 (YYYY-MM-DD)
-gh project item-edit \
-  --id $ITEM_ID \
-  --project-id PVT_kwDOC1m_S84BEip8 \
-  --field-id PVTF_lADOC1m_S84BEip8zg2I3Yc \
-  --date 2025-10-14
-
-# Due Date 설정 (YYYY-MM-DD)
-gh project item-edit \
-  --id $ITEM_ID \
-  --project-id PVT_kwDOC1m_S84BEip8 \
-  --field-id PVTF_lADOC1m_S84BEip8zg2I3Yg \
-  --date 2025-10-17
-
-# Priority 설정 (High)
-gh project item-edit \
-  --id $ITEM_ID \
-  --project-id PVT_kwDOC1m_S84BEip8 \
-  --field-id PVTSSF_lADOC1m_S84BEip8zg2I3bM \
-  --single-select-option-id 9355da36
-
-# 우선순위 옵션 ID:
-# Critical: e768bd0c
-# High: 9355da36
-# Medium: cdcaf50d
-# Low: 62a4196e
-```
-
-### 주요 라벨
-
-- `feature`: 새로운 기능
-- `bug`: 버그
-- `enhancement`: 개선
-- `documentation`: 문서
-- `high-priority`: 높은 우선순위
-- `low-priority`: 낮은 우선순위
-- `in-progress`: 진행 중
-- `needs-review`: 리뷰 필요
-
-### 이슈 작성 템플릿 구조
-
-모든 Feature 이슈는 다음 섹션을 포함해야 합니다:
-
-```markdown
-## 개요
-기능에 대한 간단한 설명
-
-## 주요 기능
-1. 기능 1
-2. 기능 2
-...
-
-## 요구사항
-
-### UI/UX
-- [ ] 체크리스트
-...
-
-### 기술 요구사항
-- [ ] 체크리스트
-...
-
-## 기술 스택
-- **Frontend**: React 19, TypeScript
-- **UI**: Radix UI, Tailwind CSS v4
-- **Form**: React Hook Form (권장)
-- **Validation**: Zod or Yup
-- **API**: [API 이름] (Swagger 참고)
-- **State**: SWR
-
-## 참고 자료
+⚠️ **모든 Feature 이슈는 반드시 API 문서를 참고 자료에 포함해야 합니다:**
 - **API 문서**: http://dev.pluxity.com/api/api-docs
 - **Swagger UI**: http://dev.pluxity.com/api/swagger-ui/index.html
-- **UI 컴포넌트**: packages/ui (관련 컴포넌트 나열)
-
-## 참고사항
-- 추가 컨텍스트 및 주의사항
-```
-
-### 이슈 작성 주의사항
-
-⚠️ **중요**:
-- 이슈 본문에 "Generated with Claude Code" 같은 자동 생성 메시지를 포함하지 마세요.
-- **모든 이슈는 반드시 "참고 자료" 섹션에 API 문서와 Swagger UI 링크를 포함해야 합니다.**
 
 ---
 
 ## 최근 작업
+
+### 2025-10-24
+- **GitHub Project Manager 스킬 생성**:
+  - 이슈/PR 관리 자동화 스킬 개발 (전역 스킬로 설치)
+  - 프로젝트 필드 자동 설정 기능
+  - 템플릿 기반 이슈 생성
+- **CLAUDE.md 간소화**: 이슈 관리 관련 상세 내용을 스킬로 이관
+- **.gitignore 업데이트**: .claude/ 디렉토리 추가 (로컬 스킬 제외)
 
 ### 2025-10-16
 - **앱 통합**: admin 앱을 a-iot로 통합 (단일 앱으로 관리)
@@ -302,4 +184,4 @@ gh project item-edit \
 
 ---
 
-**마지막 업데이트**: 2025-10-16
+**마지막 업데이트**: 2025-10-24
