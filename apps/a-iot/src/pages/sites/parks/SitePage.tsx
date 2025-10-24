@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { DataTable, Dialog, DialogTrigger, Button } from '@plug-atlas/ui';
 import { Plus } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@plug-atlas/ui';
 import SiteForm from './components/form/SiteForm';
 import DeleteConfirmation from './components/data/DeleteConfirmation.tsx';
-import { useCreateSite, useUpdateSite, useDeleteSite, useSites } from "../../../services/hooks/site/useSite.ts";
+import { useCreateSite, useUpdateSite, useDeleteSite, useSites } from "../../../services/hooks/useSite.ts";
 import { createSiteColumns } from "./components/data/SiteColumns";
 import ErrorDisplay from "../../../components/error/ErrorDisplay";
-import type {Site} from "../../../services/types/site/site";
+import type {Site} from "../../../services/types/site.ts";
 import {useSiteForm} from "./components/form/useSiteForm.ts";
 
 export default function SitePage() {

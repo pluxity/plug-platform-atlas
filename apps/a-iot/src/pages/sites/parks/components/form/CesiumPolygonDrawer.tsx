@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@plug-atlas/ui'
-import { toast } from 'sonner'
+import { toast } from '@plug-atlas/ui'
 import {
     useViewerStore,
     usePolygonStore,
