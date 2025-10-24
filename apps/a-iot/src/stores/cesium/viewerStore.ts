@@ -77,7 +77,7 @@ export const useViewerStore = create<ViewerStore>((set, get) => ({
       maximumRenderTimeChange: Infinity,
     })
 
-    viewer.imageryLayers.removeAll()
+    // viewer.imageryLayers.removeAll()
 
     viewer.scene.canvas.addEventListener('contextmenu', (e) => {
       e.preventDefault()
