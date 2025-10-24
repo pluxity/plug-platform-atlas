@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { Toaster } from '@plug-atlas/ui/toaster'
+import { Toaster } from '@plug-atlas/ui'
 import { TrackingPage } from './pages/TrackingPage'
 
 function App() {

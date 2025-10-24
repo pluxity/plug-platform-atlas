@@ -1,5 +1,21 @@
 import { create } from 'zustand'
-import { Viewer as CesiumViewer, ViewerOptions } from 'cesium'
+import { Viewer as CesiumViewer } from 'cesium'
+
+interface ViewerOptions {
+  animation?: boolean
+  baseLayerPicker?: boolean
+  fullscreenButton?: boolean
+  geocoder?: boolean
+  homeButton?: boolean
+  infoBox?: boolean
+  sceneModePicker?: boolean
+  selectionIndicator?: boolean
+  timeline?: boolean
+  navigationHelpButton?: boolean
+  shouldAnimate?: boolean
+  terrain?: any
+  vrButton?: boolean
+}
 
 interface CesiumViewerState {
   viewer: CesiumViewer | null

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Viewer, Ion, Cartesian3 } from 'cesium'
+import { Ion, Cartesian3 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { useCesiumViewer } from '../stores/cesium/useCesiumViewer'
 
