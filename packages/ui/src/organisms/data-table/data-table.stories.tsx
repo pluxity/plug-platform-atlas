@@ -29,7 +29,7 @@ interface User {
 const usersData: User[] = [
   { id: 1, name: '김철수', email: 'kim@example.com', role: 'admin' },
   { id: 2, name: '이영희', email: 'lee@example.com', role: 'user' },
-  { id: 3, name: '박민수', email: 'park@example.com', role: 'user' },
+  { id: 3, name: '박민수', email: 'site@example.com', role: 'user' },
   { id: 4, name: '정지은', email: 'jung@example.com', role: 'moderator' },
   { id: 5, name: '최동욱', email: 'choi@example.com', role: 'user' },
 ]
