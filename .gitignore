@@ -43,6 +43,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Claude Code 로컬 설정 (스킬은 전역으로 관리)
+.claude/
+
 # Storybook 빌드 산출물
 storybook-static/
 
