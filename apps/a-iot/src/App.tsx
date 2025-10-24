@@ -7,14 +7,15 @@ import Dashboard from './pages/Dashboard'
 import MapDashboard from './pages/dashboard/MapDashboard'
 import Parks from './pages/sites/Parks'
 import VirtualPatrol from './pages/sites/VirtualPatrol'
-import SensorCategories from './pages/devices/SensorCategories'
-import Sensors from './pages/devices/Sensors'
+import SensorCategoriesPage from './pages/devices/sensor/category/SensorCategoriesPage.tsx'
+import Sensors from './pages/devices/sensor/list/Sensors.tsx'
 import CCTV from './pages/devices/CCTV'
 import Events from './pages/history/Events'
 import Users from './pages/users/Users'
 import Roles from './pages/users/Roles'
 import Permissions from './pages/users/Permissions'
 import Mobius from './pages/system/Mobius'
+import SensorCategoryDetailPage from "./pages/devices/sensor/detail/SensorCategoryDetailPage.tsx";
 
 function App() {
   return (
@@ -33,8 +34,9 @@ function App() {
                   <Route path="/dashboard/map" element={<MapDashboard />} />
                   <Route path="/sites/parks" element={<Parks />} />
                   <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
-                  <Route path="/devices/sensor-categories" element={<SensorCategories />} />
-                  <Route path="/devices/sensors" element={<Sensors />} />
+                  <Route path="/devices/sensors" element={<SensorCategoriesPage />} />
+                  <Route path="/devices/sensors/:id" element={<SensorCategoryDetailPage />} />
+                  <Route path="/sensors" element={<Sensors />} />
                   <Route path="/devices/cctv" element={<CCTV />} />
                   <Route path="/history/events" element={<Events />} />
                   <Route path="/users" element={<Users />} />

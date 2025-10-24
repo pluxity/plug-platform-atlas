@@ -1,4 +1,4 @@
-export default function SensorCategories() {
+export default function SensorCategoryDetailPage() {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">IoT 센서 분류 관리</h1>
