@@ -1,20 +1,35 @@
 import { useState } from 'react'
-import { useCctvList, useCreateCctv, useUpdateCctv, useDeleteCctv } from '../../services/cctv'
-import type { CctvResponse, CctvCreateRequest } from '../../types/cctv'
-import { DataTable, type Column } from '@plug-atlas/ui'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@plug-atlas/ui'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@plug-atlas/ui'
-import { Button } from '@plug-atlas/ui'
-import { Input } from '@plug-atlas/ui'
-import { Label } from '@plug-atlas/ui'
-import { Switch } from '@plug-atlas/ui'
-import { AspectRatio } from '@plug-atlas/ui'
-import { Plus, Map, Copy } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { cctvCreateRequestSchema } from '../../types/cctv'
+import { Plus, Map, Copy } from 'lucide-react'
+import {
+  DataTable,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+  Input,
+  Label,
+  Switch,
+  AspectRatio,
+  toast,
+} from '@plug-atlas/ui'
+import type { Column } from '@plug-atlas/ui'
+import { useCctvList, useCreateCctv, useUpdateCctv, useDeleteCctv } from '../../services/hooks'
+import type { CctvResponse, CctvCreateRequest } from '../../services/types'
+import { cctvCreateRequestSchema } from '../../services/types'
 import LocationPicker from '../../components/LocationPicker'
-import { toast } from '@plug-atlas/ui'
 
 export default function CCTV() {
   const { data: cctvs, mutate, isLoading } = useCctvList()
