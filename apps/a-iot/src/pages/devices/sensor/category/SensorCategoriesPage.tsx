@@ -1,8 +1,8 @@
 import { DataTable } from '@plug-atlas/ui';
-import {DeviceProfile, DeviceType, useDeviceTypes} from '../../../../services/deviceCategory/useDeviceCategory';
+import {useDeviceTypes} from '../../../../services/hooks';
+import type { DeviceType, DeviceProfile } from '../../../../services/types';
 import {useNavigate} from "react-router-dom";
 import ErrorDisplay from "../components/ErrorDisplay.tsx";
-
 
 export default function SensorCategoriesPage() {
     const navigate = useNavigate();

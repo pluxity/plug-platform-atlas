@@ -13,6 +13,16 @@ export {
   cctvUpdateRequestSchema,
 } from './cctv'
 
+export type {
+  DeviceType,
+  DeviceProfile,
+} from './deviceType'
+
+export type {
+  EventCondition,
+  EventConditionRequest,
+} from './eventCondition'
+
 // Site types
 export type {
   Site,

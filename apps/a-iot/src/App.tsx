@@ -35,7 +35,7 @@ function App() {
                   <Route path="/sites/parks" element={<SitePage />} />
                   <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
                   <Route path="/devices/sensors" element={<SensorCategoriesPage />} />
-                  <Route path="/devices/sensors/:id" element={<SensorCategoryDetailPage />} />
+                  <Route path="/devices/sensors/:objectId" element={<SensorCategoryDetailPage />} />
                   <Route path="/sensors" element={<Sensors />} />
                   <Route path="/devices/cctv" element={<CCTV />} />
                   <Route path="/history/events" element={<Events />} />
