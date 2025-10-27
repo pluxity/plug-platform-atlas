@@ -1,11 +1,16 @@
 import { DataTable } from '@plug-atlas/ui';
-import { DeviceType, useDeviceTypes } from '../../../../services/deviceCategory/useDeviceCategory';
+import {DeviceProfile, DeviceType, useDeviceTypes} from '../../../../services/deviceCategory/useDeviceCategory';
 import {useNavigate} from "react-router-dom";
+import ErrorDisplay from "../components/ErrorDisplay.tsx";
 
 
 export default function SensorCategoriesPage() {
     const navigate = useNavigate();
-    const { data: deviceTypes = [] } = useDeviceTypes();
+    const { data: deviceTypes = [], error, mutate } = useDeviceTypes();
+
+    if (error) {
+        return <ErrorDisplay onRetry={() => mutate()} />;
+    }
 
     const columns = [
         {
@@ -34,10 +39,10 @@ export default function SensorCategoriesPage() {
         },
         {
             key: 'profiles' as keyof DeviceType,
-            header: '프로필 수',
+            header: '프로필',
             cell: (value: DeviceType[keyof DeviceType]) => (
                 <div className="text-sm text-muted-foreground">
-                    {Array.isArray(value) ? `${value.length}개` : '0개'}
+                    {(value as DeviceProfile[]).map(profile => profile.description).join(', ')}
                 </div>
             ),
         },
@@ -45,11 +50,8 @@ export default function SensorCategoriesPage() {
 
     const handleManage = (deviceType: DeviceType) => {
         console.log('디바이스 타입 관리:', deviceType);
-        navigate(`/devices/sensor-categories/${deviceType.id}`);
+        navigate(`/devices/sensors/${deviceType.objectId}`);
     };
-
-    // 데이터 확인을 위한 디버깅
-    console.log('Device Types Data:', deviceTypes);
 
     return (
         <div className="p-6">
