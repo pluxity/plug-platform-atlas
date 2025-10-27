@@ -38,8 +38,14 @@ export function useWebSocket() {
   const { updateObjectPosition, setConnectionStatus } = useTrackingStore()
 
   const connect = useCallback(() => {
-    // 이미 연결되어 있으면 종료
-    if (wsRef.current?.readyState === WebSocket.OPEN) return
+    // 이미 연결되어 있거나 연결 중이면 종료
+    if (
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING
+    ) {
+      console.log('WebSocket 이미 연결 중 또는 연결됨')
+      return
+    }
 
     // 최대 재연결 시도 횟수 초과 시
     if (reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
