@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { Cartesian3, Color, Entity, HeightReference } from 'cesium'
+import { Cartesian3, Color, Entity, HeightReference, ConstantProperty } from 'cesium'
 import { useCesiumViewer } from '../stores/cesium/useCesiumViewer'
 import { useTrackingStore } from '../stores/useTrackingStore'
+import { useSceneModeStore } from '../stores/useSceneModeStore'
 import type { TrackingObject } from '../stores/useTrackingStore'
 
 // 객체 타입별 색상 정의
@@ -10,6 +11,9 @@ const OBJECT_COLORS = {
   vehicle: Color.RED,
   unknown: Color.YELLOW,
 } as const
+
+// 야간 모드 색상 (녹색 강조)
+const NIGHT_COLOR = Color.LIME
 
 // 객체 타입별 라벨 텍스트
 const OBJECT_LABELS = {
@@ -21,6 +25,7 @@ const OBJECT_LABELS = {
 export function ObjectTracker() {
   const viewer = useCesiumViewer((state) => state.viewer)
   const objects = useTrackingStore((state) => state.objects)
+  const mode = useSceneModeStore((state) => state.mode)
 
   useEffect(() => {
     if (!viewer) return
@@ -38,7 +43,7 @@ export function ObjectTracker() {
 
     // 객체 업데이트/추가
     objects.forEach((obj) => {
-      updateOrCreateEntity(viewer, obj, entityMap)
+      updateOrCreateEntity(viewer, obj, entityMap, mode)
     })
 
     // 더 이상 추적되지 않는 객체 제거
@@ -55,7 +60,7 @@ export function ObjectTracker() {
         entities.remove(entity)
       })
     }
-  }, [viewer, objects])
+  }, [viewer, objects, mode])
 
   return null // 이 컴포넌트는 렌더링 없이 Cesium Entity만 관리
 }
@@ -64,7 +69,8 @@ export function ObjectTracker() {
 function updateOrCreateEntity(
   viewer: NonNullable<ReturnType<typeof useCesiumViewer>['viewer']>,
   obj: TrackingObject,
-  entityMap: Map<string, Entity>
+  entityMap: Map<string, Entity>,
+  mode: 'day' | 'night' | 'tactical'
 ) {
   const position = Cartesian3.fromDegrees(
     obj.position.longitude,
@@ -72,14 +78,18 @@ function updateOrCreateEntity(
     obj.position.altitude ?? 0
   )
 
-  const color = OBJECT_COLORS[obj.type] || OBJECT_COLORS.unknown
+  // 야간 모드 시 녹색으로 강조, 그 외에는 타입별 색상
+  const color = mode === 'night' ? NIGHT_COLOR : (OBJECT_COLORS[obj.type] || OBJECT_COLORS.unknown)
   const label = OBJECT_LABELS[obj.type] || OBJECT_LABELS.unknown
 
   let entity = entityMap.get(obj.id)
 
   if (entity) {
-    // 기존 Entity 업데이트
+    // 기존 Entity 업데이트 (위치 및 색상)
     entity.position = position as any
+    if (entity.point) {
+      entity.point.color = new ConstantProperty(color)
+    }
   } else {
     // 새 Entity 생성
     entity = viewer.entities.add({
