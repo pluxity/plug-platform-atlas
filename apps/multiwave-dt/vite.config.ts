@@ -16,7 +16,7 @@ export default defineConfig({
     }
   },
   server: {
-    port: 4001, // a-iot는 4000, multiwave-dt는 4001
+    port: 4000, // a-iot는 4000, multiwave-dt는 4001
     host: true,
   },
 })

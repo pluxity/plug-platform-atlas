@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { Ion, Cartesian3 } from 'cesium'
+import { Cartesian3 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { useCesiumViewer } from '../stores/cesium/useCesiumViewer'
-
-// Cesium Ion 액세스 토큰 설정
-Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_ACCESS_TOKEN || ''
+import { ObjectTracker } from './ObjectTracker'
+import { PathRenderer } from './PathRenderer'
 
 export function CesiumMap() {
   const cesiumContainer = useRef<HTMLDivElement>(null)
@@ -13,22 +12,8 @@ export function CesiumMap() {
   useEffect(() => {
     if (!cesiumContainer.current) return
 
-    // Cesium Viewer 초기화
-    initializeViewer(cesiumContainer.current, {
-      terrain: undefined,
-      baseLayerPicker: false,
-      geocoder: false,
-      homeButton: false,
-      sceneModePicker: false,
-      navigationHelpButton: false,
-      animation: false,
-      timeline: false,
-      fullscreenButton: false,
-      vrButton: false,
-      selectionIndicator: true,
-      infoBox: true,
-      shouldAnimate: true,
-    })
+    // Cesium Viewer 비동기 초기화
+    initializeViewer(cesiumContainer.current)
 
     return () => {
       destroyViewer()
@@ -38,11 +23,22 @@ export function CesiumMap() {
   useEffect(() => {
     if (!viewer) return
 
-    // 기본 카메라 위치 설정 (서울 상공)
+    // 기본 카메라 위치 설정 (알펜시아 리조트 스키장 - 강원도 평창)
     viewer.camera.setView({
-      destination: Cartesian3.fromDegrees(127.0276, 37.4979, 1000),
+      destination: Cartesian3.fromDegrees(128.6703, 37.6560, 2000),
     })
   }, [viewer])
 
-  return <div ref={cesiumContainer} className="h-full w-full" />
+  return (
+    <>
+      <div ref={cesiumContainer} className="h-full w-full" />
+      {/* 객체 및 경로 렌더링 */}
+      {viewer && (
+        <>
+          <ObjectTracker />
+          <PathRenderer />
+        </>
+      )}
+    </>
+  )
 }
