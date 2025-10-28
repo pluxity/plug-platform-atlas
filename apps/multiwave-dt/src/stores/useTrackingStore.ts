@@ -1,43 +1,33 @@
 import { create } from 'zustand'
-
-export interface TrackingObject {
-  id: string
-  type: 'person' | 'vehicle' | 'unknown'
-  position: {
-    latitude: number
-    longitude: number
-    altitude?: number
-  }
-  timestamp: number
-  cameraId?: string
-  metadata?: Record<string, unknown>
-}
-
-export interface TrackingPath {
-  objectId: string
-  positions: Array<{
-    latitude: number
-    longitude: number
-    altitude?: number
-    timestamp: number
-  }>
-}
+import type {
+  TrackingObject,
+  TrackingPath,
+  ConnectionStatus,
+} from '../types/tracking.types'
+import { saveObjectMetadata, saveTrackingPointsBatch } from '../services/indexeddb.service'
+import { MAX_PATH_POINTS } from '../constants/indexeddb'
 
 interface TrackingState {
   objects: Map<string, TrackingObject>
   paths: Map<string, TrackingPath>
-  connectionStatus: 'connected' | 'disconnected' | 'error'
+  pinnedObjects: Set<string>
+  connectionStatus: ConnectionStatus
+  lastUpdatedObjectId: string | null
   addTrackingData: (data: TrackingObject[]) => void
   updateObjectPosition: (data: TrackingObject) => void
   removeObject: (id: string) => void
   clearAll: () => void
-  setConnectionStatus: (status: 'connected' | 'disconnected' | 'error') => void
+  setConnectionStatus: (status: ConnectionStatus) => void
+  togglePinObject: (id: string) => void
+  isPinned: (id: string) => boolean
 }
 
 export const useTrackingStore = create<TrackingState>((set, get) => ({
   objects: new Map(),
   paths: new Map(),
+  pinnedObjects: new Set(),
   connectionStatus: 'disconnected',
+  lastUpdatedObjectId: null,
 
   addTrackingData: (data: TrackingObject[]) => {
     const objects = new Map(get().objects)
@@ -46,7 +36,6 @@ export const useTrackingStore = create<TrackingState>((set, get) => ({
     data.forEach((obj) => {
       objects.set(obj.id, obj)
 
-      // 경로 초기화
       if (!paths.has(obj.id)) {
         paths.set(obj.id, {
           objectId: obj.id,
@@ -69,10 +58,8 @@ export const useTrackingStore = create<TrackingState>((set, get) => ({
     const objects = new Map(get().objects)
     const paths = new Map(get().paths)
 
-    // 객체 정보 업데이트
     objects.set(data.id, data)
 
-    // 경로에 위치 추가
     const path = paths.get(data.id)
     if (path) {
       path.positions.push({
@@ -81,6 +68,11 @@ export const useTrackingStore = create<TrackingState>((set, get) => ({
         altitude: data.position.altitude,
         timestamp: data.timestamp,
       })
+
+      if (path.positions.length > MAX_PATH_POINTS) {
+        path.positions = path.positions.slice(-MAX_PATH_POINTS)
+      }
+
       paths.set(data.id, path)
     } else {
       paths.set(data.id, {
@@ -96,7 +88,30 @@ export const useTrackingStore = create<TrackingState>((set, get) => ({
       })
     }
 
-    set({ objects, paths })
+    set({ objects, paths, lastUpdatedObjectId: data.id })
+
+    saveObjectMetadata({
+      id: data.id,
+      name: data.metadata?.name || data.id,
+      type: data.type,
+      timestamp: data.timestamp,
+      cameraId: data.cameraId,
+    }).catch(() => {})
+
+    saveTrackingPointsBatch([
+      {
+        objectId: data.id,
+        latitude: data.position.latitude,
+        longitude: data.position.longitude,
+        altitude: data.position.altitude ?? 0,
+        timestamp: data.timestamp,
+        speed: data.metadata?.speed ?? 0,
+        direction: data.metadata?.direction ?? 0,
+        confidence: data.metadata?.confidence ?? 0,
+        cameraId: data.cameraId ?? '',
+        detectionCount: data.metadata?.detection_count ?? 0,
+      },
+    ]).catch(() => {})
   },
 
   removeObject: (id: string) => {
@@ -115,5 +130,19 @@ export const useTrackingStore = create<TrackingState>((set, get) => ({
 
   setConnectionStatus: (status) => {
     set({ connectionStatus: status })
+  },
+
+  togglePinObject: (id: string) => {
+    const pinnedObjects = new Set(get().pinnedObjects)
+    if (pinnedObjects.has(id)) {
+      pinnedObjects.delete(id)
+    } else {
+      pinnedObjects.add(id)
+    }
+    set({ pinnedObjects })
+  },
+
+  isPinned: (id: string) => {
+    return get().pinnedObjects.has(id)
   },
 }))

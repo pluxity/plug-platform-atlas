@@ -7,7 +7,6 @@ import {
   CesiumTerrainProvider,
 } from 'cesium'
 
-// Cesium Ion 액세스 토큰 설정
 Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_ACCESS_TOKEN || ''
 
 interface CesiumViewerState {
@@ -30,7 +29,6 @@ export const useCesiumViewer = create<CesiumViewerState>((set, get) => ({
     set({ isInitializing: true })
 
     try {
-      // Cesium Viewer 초기화
       const viewer = new CesiumViewer(container, {
         animation: false,
         baseLayerPicker: false,
@@ -47,26 +45,17 @@ export const useCesiumViewer = create<CesiumViewerState>((set, get) => ({
         maximumRenderTimeChange: Infinity,
       })
 
-      // 마우스 우클릭 컨텍스트 메뉴 비활성화
-      viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(
-        2 // RIGHT_CLICK
-      )
+      viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(2)
 
-      // 기본 Bing Maps Imagery 사용 (Google Maps 대신)
-      // Google Maps (Asset ID: 3830182)가 더 이상 지원되지 않아 Bing Maps 사용
       try {
         const bingMapsImagery = await IonImageryProvider.fromAssetId(2)
         if (!viewer.isDestroyed() && viewer.imageryLayers.length > 0) {
-          // 기본 레이어를 Bing Maps로 교체
           viewer.imageryLayers.removeAll()
           viewer.imageryLayers.addImageryProvider(bingMapsImagery)
         }
       } catch (error) {
-        console.warn('Failed to load Bing Maps, using default imagery:', error)
-        // 기본 imagery 레이어 유지
       }
 
-      // World Terrain 설정
       const terrainAssetId = Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID)
 
       try {
@@ -78,12 +67,10 @@ export const useCesiumViewer = create<CesiumViewerState>((set, get) => ({
           }
         }
       } catch (error) {
-        console.warn('Failed to load Cesium terrain, using default ellipsoid:', error)
       }
 
       set({ viewer, isInitializing: false })
     } catch (error) {
-      console.error('Failed to initialize Cesium viewer:', error)
       set({ viewer: null, isInitializing: false })
     }
   },
