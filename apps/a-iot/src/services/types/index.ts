@@ -28,4 +28,4 @@ export type {
 
 export type {
   PermissionCheckboxItem,
-} from './permissonCheckbox'
+} from './permissionCheckbox'

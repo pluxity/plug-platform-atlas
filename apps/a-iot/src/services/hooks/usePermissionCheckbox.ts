@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { PermissionCheckboxItem } from '../types/permissonCheckbox';
+import type { PermissionCheckboxItem } from '../types/permissionCheckbox';
 
 /**
  * Permission Checkbox 선택 관리
@@ -28,7 +28,10 @@ export function usePermissionCheckbox() {
         if (existingPermissionIndex >= 0) {
           const permission = newPermissions[existingPermissionIndex]; 
           if (permission && !permission.resourceIds.includes(resourceId)) {
-            permission.resourceIds.push(resourceId);
+            newPermissions[existingPermissionIndex] = {
+              ...permission,
+              resourceIds: [...permission.resourceIds, resourceId]
+            };
           }
         } else {
           newPermissions.push({ resourceType, resourceIds: [resourceId] });
@@ -37,9 +40,14 @@ export function usePermissionCheckbox() {
         if (existingPermissionIndex >= 0) {
           const permission = newPermissions[existingPermissionIndex]; 
           if (permission) {
-            permission.resourceIds = permission.resourceIds.filter((id: string) => id !== resourceId);
-            if (permission.resourceIds.length === 0) {
+            const newResourceIds = permission.resourceIds.filter((id: string) => id !== resourceId);
+            if (newResourceIds.length === 0) {
               newPermissions.splice(existingPermissionIndex, 1);
+            } else {
+              newPermissions[existingPermissionIndex] = {
+                ...permission,
+                resourceIds: newResourceIds
+              };
             }
           }
         }

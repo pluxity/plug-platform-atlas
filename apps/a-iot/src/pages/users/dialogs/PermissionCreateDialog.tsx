@@ -18,6 +18,8 @@ export default function PermissionCreateDialog({ isOpen, onClose, onSuccess }: P
     const { data: resourceTypes } = useResourceTypes();
     const { data: resourceData = {} } = usePermissionResources();
 
+    const { isSelected, handleCheckboxChange } = usePermissionCheckbox();
+
     const createPermissionForm = useForm<PermissionGroupCreateRequest>({
         resolver: zodResolver(PermissionGroupCreateRequestSchema),
         defaultValues: {
@@ -97,8 +99,6 @@ export default function PermissionCreateDialog({ isOpen, onClose, onSuccess }: P
                               name="permissions"
                               control={createPermissionForm.control}
                               render={({ field }) => {
-                                const { isSelected, handleCheckboxChange } = usePermissionCheckbox();
-
                                 return (
                                   <FormControl>
                                     <div className="flex flex-col gap-6 max-h-96 overflow-y-auto border rounded-lg p-4">

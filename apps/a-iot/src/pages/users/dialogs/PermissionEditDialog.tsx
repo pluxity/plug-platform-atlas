@@ -19,6 +19,8 @@ export default function PermissionEditDialog({ isOpen, permission, onClose, onSu
     const { data: resourceTypes } = useResourceTypes();
     const { data: resourceData = {} } = usePermissionResources();
 
+    const { isSelected, handleCheckboxChange } = usePermissionCheckbox();
+
     const editPermissionForm = useForm<PermissionGroupUpdateRequest>({
         resolver: zodResolver(PermissionGroupUpdateRequestSchema),
         mode: 'onChange'
@@ -111,8 +113,6 @@ export default function PermissionEditDialog({ isOpen, permission, onClose, onSu
                               name="permissions"
                               control={editPermissionForm.control}
                               render={({ field }) => {
-                                const { isSelected, handleCheckboxChange } = usePermissionCheckbox();
-
                                 return (
                                   <FormControl>
                                     <div className="flex flex-col gap-6 max-h-96 overflow-y-auto border rounded-lg p-4">

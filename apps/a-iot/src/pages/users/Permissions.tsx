@@ -33,9 +33,9 @@ export default function Permissions() {
             {permissions
               .sort((a, b) => a.resourceType.localeCompare(b.resourceType))
               .map((permission, index) => {
-                const validResourceIds = permission.resourceIds.filter((resourceId) => 
-                  resourceData[permission.resourceType]?.find((resource) => resource.id === resourceId)
-                );
+                const resourceList = resourceData[permission.resourceType];
+                const resourceMap = resourceList ? new Map(resourceList.map(r => [r.id, r.name])) : new Map();
+                const validResourceIds = permission.resourceIds.filter(id => resourceMap.has(id));
                 
                 return (
                   <div key={`${permission.resourceType}-${index}`} className="flex flex-col gap-1">
@@ -49,7 +49,7 @@ export default function Permissions() {
                               variant="outline"
                               className="text-xs"
                             >
-                              {resourceData[permission.resourceType]?.find((resource) => resource.id === resourceId)?.name}
+                              {resourceMap.get(resourceId)}
                             </Badge>
                           ))}
                         </div>
@@ -110,9 +110,8 @@ export default function Permissions() {
     const counts: { [key: string]: number } = { all: data.length };
     
     roles.forEach(role => {
-      counts[role.name] = data.filter(permission =>
-        role.permissions?.some(p => p.id === permission.id)
-      ).length;
+      const permissionIdSet = new Set(role.permissions?.map(p => p.id));
+      counts[role.name] = data.filter(permission => permissionIdSet.has(permission.id)).length;
     });
     
     setCategories(roles.map(role => role.name).sort());
@@ -163,7 +162,7 @@ export default function Permissions() {
     }
   };
 
-  
+
   const handlePermissionToggle = async (roleId: number, roleName: string, permissionGroupId: number, isChecked: boolean) => {
     const role = roles?.find(r => r.id === roleId);
     if (!role) return;
