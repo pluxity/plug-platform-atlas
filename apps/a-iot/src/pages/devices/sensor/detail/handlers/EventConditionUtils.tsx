@@ -1,3 +1,4 @@
+import React from "react";
 import {EventCondition} from "../../../../../services/types";
 
 export type CreateConditionData = Omit<EventCondition, 'id'>;
@@ -21,11 +22,6 @@ export interface NewConditionHandlers {
     handleSaveNew: () => Promise<void>;
     handleCancelNew: () => void;
 }
-
-export interface DeleteHandlers {
-    handleDeleteSelected: () => Promise<void>;
-}
-
 
 export const getLevelBadge = (level: EventCondition['level']) => {
     const levelConfigs = {
@@ -59,11 +55,48 @@ export const createDefaultCondition = (objectId: string): CreateConditionData =>
     level: 'NORMAL',
     conditionType: 'SINGLE',
     operator: 'GE',
-    thresholdValue: 0.1,
-    leftValue: 0.1,
-    rightValue: 0.1,
+    thresholdValue: 1.0,
+    leftValue: 1.0,
+    rightValue: 2.0,
     booleanValue: true,
     notificationEnabled: true,
     order: 0,
     activate: true,
 });
+
+export const toCreateConditionData = (condition: EventCondition | CreateConditionData): CreateConditionData => {
+    const { id, ...rest } = condition as any;
+    return rest;
+};
+
+export const toApiConditionData = (condition: CreateConditionData) => {
+    const { objectId, order, ...apiData } = condition;
+    return apiData;
+};
+
+export const validateConditionData = (condition: CreateConditionData): boolean => {
+    if (!condition.fieldKey || condition.fieldKey.trim() === '') {
+        return false;
+    }
+    
+    if (condition.conditionType === 'SINGLE') {
+        return condition.thresholdValue !== undefined &&
+            condition.thresholdValue !== null &&
+            !isNaN(Number(condition.thresholdValue));
+    }
+    
+    if (condition.conditionType === 'RANGE') {
+        const hasValidLeft = condition.leftValue !== undefined && 
+                             condition.leftValue !== null && 
+                             !isNaN(Number(condition.leftValue));
+        const hasValidRight = condition.rightValue !== undefined && 
+                              condition.rightValue !== null && 
+                              !isNaN(Number(condition.rightValue));
+        
+        if (!hasValidLeft || !hasValidRight) return false;
+        
+        return Number(condition.leftValue) < Number(condition.rightValue);
+    }
+    
+    return true;
+};

@@ -44,7 +44,7 @@ export default function SensorCategoryDetailPage() {
   }
 
   return (
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6">
         <div className="mb-6">
           <Button
               variant="ghost"
@@ -62,7 +62,6 @@ export default function SensorCategoryDetailPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{deviceType.description}</h1>
-              <p className="text-lg text-gray-600 mt-1">IoT 센서 분류 상세 정보</p>
             </div>
           </div>
         </div>

@@ -1,27 +1,22 @@
 import { DeviceProfile, EventCondition } from "../../../../../services/types";
-import {getLevelBadge, getOperatorLabel} from "../handlers/eventConditionUtils.tsx";
 
 interface EditableFieldKeyProps {
     value: string;
     onChange: (value: string) => void;
-    isEditing: boolean;
     profiles: DeviceProfile[];
+    isEditing?: boolean;
 }
 
-export const EditableFieldKey = ({ value, onChange, isEditing, profiles }: EditableFieldKeyProps) => {
-    if (!isEditing) {
-        return (
-            <div className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
-                {value}
-            </div>
-        );
-    }
+export const EditableFieldKey = ({ value, onChange, profiles, isEditing = true }: EditableFieldKeyProps) => {
+    // 값이 undefined나 null인 경우 빈 문자열로 처리
+    const safeValue = value || '';
 
     return (
         <select
-            value={value}
+            value={safeValue}
             onChange={(e) => onChange(e.target.value)}
             className="w-full p-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            disabled={!isEditing}
         >
             <option value="">선택하세요</option>
             {profiles.map(profile => (
@@ -36,19 +31,19 @@ export const EditableFieldKey = ({ value, onChange, isEditing, profiles }: Edita
 interface EditableLevelProps {
     value: EventCondition['level'];
     onChange: (value: EventCondition['level']) => void;
-    isEditing: boolean;
+    isEditing?: boolean;
 }
 
-export const EditableLevel = ({ value, onChange, isEditing }: EditableLevelProps) => {
-    if (!isEditing) {
-        return getLevelBadge(value);
-    }
+export const EditableLevel = ({ value, onChange, isEditing = true }: EditableLevelProps) => {
+    // 값이 undefined인 경우 기본값 설정
+    const safeValue = value || 'NORMAL';
 
     return (
         <select
-            value={value}
+            value={safeValue}
             onChange={(e) => onChange(e.target.value as EventCondition['level'])}
             className="w-full p-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            disabled={!isEditing}
         >
             <option value="NORMAL">일반</option>
             <option value="WARNING">경고</option>
@@ -62,23 +57,19 @@ export const EditableLevel = ({ value, onChange, isEditing }: EditableLevelProps
 interface EditableConditionTypeProps {
     value: EventCondition['conditionType'];
     onChange: (value: EventCondition['conditionType']) => void;
-    isEditing: boolean;
+    isEditing?: boolean;
 }
 
-export const EditableConditionType = ({ value, onChange, isEditing }: EditableConditionTypeProps) => {
-    if (!isEditing) {
-        return (
-            <span className="text-sm text-gray-600">
-                {value === 'SINGLE' ? '단일' : '범위'}
-            </span>
-        );
-    }
+export const EditableConditionType = ({ value, onChange, isEditing = true }: EditableConditionTypeProps) => {
+    // 값이 undefined인 경우 기본값 설정
+    const safeValue = value || 'SINGLE';
 
     return (
         <select
-            value={value}
+            value={safeValue}
             onChange={(e) => onChange(e.target.value as EventCondition['conditionType'])}
             className="w-full p-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            disabled={!isEditing}
         >
             <option value="SINGLE">단일</option>
             <option value="RANGE">범위</option>
@@ -88,35 +79,30 @@ export const EditableConditionType = ({ value, onChange, isEditing }: EditableCo
 
 interface EditableConditionProps {
     row: EventCondition;
-    isEditing: boolean;
+    isEditing?: boolean;
     onChange: (field: keyof EventCondition, value: any) => void;
 }
 
-export const EditableCondition = ({ row, isEditing, onChange }: EditableConditionProps) => {
-    if (!isEditing) {
-        return (
-            <div className="text-sm">
-                {row.conditionType === 'SINGLE' ? (
-                    <span className="font-mono">
-                        {getOperatorLabel(row.operator)} {row.thresholdValue}
-                    </span>
-                ) : (
-                    <span className="font-mono">
-                        {row.leftValue} ~ {row.rightValue}
-                    </span>
-                )}
-            </div>
-        );
-    }
+export const EditableCondition = ({ row, onChange, isEditing = true }: EditableConditionProps) => {
+    // 안전한 값들 설정
+    const safeRow = {
+        ...row,
+        operator: row.operator || 'GE',
+        conditionType: row.conditionType || 'SINGLE',
+        thresholdValue: row.thresholdValue ?? 0,
+        leftValue: row.leftValue ?? 0,
+        rightValue: row.rightValue ?? 0
+    };
 
     return (
         <div className="space-y-1">
-            {row.conditionType === 'SINGLE' ? (
+            {safeRow.conditionType === 'SINGLE' ? (
                 <div className="flex gap-1">
                     <select
-                        value={row.operator}
+                        value={safeRow.operator}
                         onChange={(e) => onChange('operator', e.target.value)}
                         className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                        disabled={!isEditing}
                     >
                         <option value="GE">≥</option>
                         <option value="LE">≤</option>
@@ -124,9 +110,11 @@ export const EditableCondition = ({ row, isEditing, onChange }: EditableConditio
                     <input
                         type="number"
                         step="0.1"
-                        value={row.thresholdValue || ''}
-                        onChange={(e) => onChange('thresholdValue', parseFloat(e.target.value))}
+                        value={safeRow.thresholdValue || ''}
+                        onChange={(e) => onChange('thresholdValue', e.target.value ? parseFloat(e.target.value) : undefined)}
                         className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                        disabled={!isEditing}
+                        placeholder="값 입력"
                     />
                 </div>
             ) : (
@@ -134,18 +122,20 @@ export const EditableCondition = ({ row, isEditing, onChange }: EditableConditio
                     <input
                         type="number"
                         step="0.1"
-                        value={row.leftValue || ''}
-                        onChange={(e) => onChange('leftValue', parseFloat(e.target.value))}
+                        value={safeRow.leftValue || ''}
+                        onChange={(e) => onChange('leftValue', e.target.value ? parseFloat(e.target.value) : undefined)}
                         placeholder="최소"
                         className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                        disabled={!isEditing}
                     />
                     <input
                         type="number"
                         step="0.1"
-                        value={row.rightValue || ''}
-                        onChange={(e) => onChange('rightValue', parseFloat(e.target.value))}
+                        value={safeRow.rightValue || ''}
+                        onChange={(e) => onChange('rightValue', e.target.value ? parseFloat(e.target.value) : undefined)}
                         placeholder="최대"
                         className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                        disabled={!isEditing}
                     />
                 </div>
             )}
