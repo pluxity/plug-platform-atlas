@@ -15,7 +15,6 @@ interface ObjectPanelPosition {
 export function ObjectInfoPanel() {
   const viewer = useCesiumViewer((state: any) => state.viewer)
   const objects = useTrackingStore((state: any) => state.objects)
-  const pinnedObjects = useTrackingStore((state: any) => state.pinnedObjects)
   const togglePinObject = useTrackingStore((state: any) => state.togglePinObject)
 
   const [positions, setPositions] = useState<Map<string, ObjectPanelPosition>>(new Map())
@@ -28,12 +27,14 @@ export function ObjectInfoPanel() {
     const UPDATE_INTERVAL = 1000 / 30
 
     const updatePositions = (currentTime: number) => {
+      animationFrameId = requestAnimationFrame(updatePositions)
+
       if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
-        animationFrameId = requestAnimationFrame(updatePositions)
         return
       }
       lastUpdateTime = currentTime
 
+      const { objects, pinnedObjects } = useTrackingStore.getState()
       const newPositions = new Map<string, ObjectPanelPosition>()
 
       pinnedObjects.forEach((objectId: string) => {
@@ -82,8 +83,6 @@ export function ObjectInfoPanel() {
       })
 
       setPositions(newPositions)
-
-      animationFrameId = requestAnimationFrame(updatePositions)
     }
 
     animationFrameId = requestAnimationFrame(updatePositions)
@@ -91,7 +90,7 @@ export function ObjectInfoPanel() {
     return () => {
       cancelAnimationFrame(animationFrameId)
     }
-  }, [viewer, objects, pinnedObjects])
+  }, [viewer])
 
   const getIcon = (type: string) => {
     switch (type) {

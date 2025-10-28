@@ -3,13 +3,11 @@ import { useTrackingStore } from '../stores/useTrackingStore'
 import { OBJECT_TIMEOUT_MS } from '../constants/indexeddb'
 
 export function useObjectTimeout() {
-  const objects = useTrackingStore((state) => state.objects)
-  const removeObject = useTrackingStore((state) => state.removeObject)
-
   useEffect(() => {
     const intervalId = setInterval(() => {
       const now = Date.now()
       const timedOutObjects: string[] = []
+      const { objects, removeObject } = useTrackingStore.getState()
 
       objects.forEach((obj) => {
         const timeSinceLastUpdate = now - obj.timestamp
@@ -27,5 +25,5 @@ export function useObjectTimeout() {
     return () => {
       clearInterval(intervalId)
     }
-  }, [objects, removeObject])
+  }, [])
 }

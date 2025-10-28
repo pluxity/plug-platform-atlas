@@ -57,9 +57,9 @@ export function ObjectTracker() {
     if (!viewer) return
 
     const intervalId = setInterval(() => {
+      const currentObjectIds = new Set(useTrackingStore.getState().objects.keys())
       const entities = viewer.entities
       const entityMap = entityMapRef.current
-      const currentObjectIds = new Set(objects.keys())
       const entitiesToRemove: Entity[] = []
 
       entityMap.forEach((entity, id) => {
@@ -78,7 +78,7 @@ export function ObjectTracker() {
     }, 5000) // 5초마다 체크
 
     return () => clearInterval(intervalId)
-  }, [viewer, objects])
+  }, [viewer])
 
   // Cleanup: 컴포넌트 언마운트 시에만 모든 Entity 제거
   useEffect(() => {

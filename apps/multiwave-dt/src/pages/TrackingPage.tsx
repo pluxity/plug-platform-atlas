@@ -20,7 +20,9 @@ export function TrackingPage() {
         scheduleAutoCleanup()
         getStorageStats()
       })
-      .catch(() => {})
+      .catch((error) => {
+        console.error('Failed to initialize DB:', error)
+      })
   }, [])
 
   return (

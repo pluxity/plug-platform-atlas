@@ -41,7 +41,7 @@ export function CesiumMap() {
         }
         scene.backgroundColor = Color.BLACK
 
-        viewer.imageryLayers.get(0).brightness = 1.0
+        if (viewer.imageryLayers.length > 0) viewer.imageryLayers.get(0).brightness = 1.0
         break
 
       case 'night':
@@ -51,7 +51,7 @@ export function CesiumMap() {
         }
         scene.backgroundColor = Color.fromCssColorString('#0a0a0a')
 
-        viewer.imageryLayers.get(0).brightness = 0.3
+        if (viewer.imageryLayers.length > 0) viewer.imageryLayers.get(0).brightness = 0.3
         break
 
       case 'tactical':

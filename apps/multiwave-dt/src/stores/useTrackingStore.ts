@@ -96,7 +96,7 @@ export const useTrackingStore = create<TrackingState>((set, get) => ({
       type: data.type,
       timestamp: data.timestamp,
       cameraId: data.cameraId,
-    }).catch(() => {})
+    }).catch((error) => console.error('Failed to save object metadata:', error))
 
     saveTrackingPointsBatch([
       {
@@ -111,7 +111,7 @@ export const useTrackingStore = create<TrackingState>((set, get) => ({
         cameraId: data.cameraId ?? '',
         detectionCount: data.metadata?.detection_count ?? 0,
       },
-    ]).catch(() => {})
+    ]).catch((error) => console.error('Failed to save tracking points:', error))
   },
 
   removeObject: (id: string) => {
