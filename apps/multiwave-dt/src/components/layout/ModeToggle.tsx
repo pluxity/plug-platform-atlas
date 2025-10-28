@@ -1,5 +1,5 @@
 import { Sun, Moon, Map } from 'lucide-react'
-import { useSceneModeStore, type SceneMode } from '../stores/useSceneModeStore'
+import { useSceneModeStore, type SceneMode } from '../../stores/useSceneModeStore'
 
 export function ModeToggle() {
   const { mode, setMode } = useSceneModeStore()
