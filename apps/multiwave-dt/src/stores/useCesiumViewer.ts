@@ -54,6 +54,7 @@ export const useCesiumViewer = create<CesiumViewerState>((set, get) => ({
           viewer.imageryLayers.addImageryProvider(bingMapsImagery)
         }
       } catch (error) {
+        console.error('Failed to load imagery provider:', error)
       }
 
       const terrainAssetId = Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID)
@@ -67,6 +68,7 @@ export const useCesiumViewer = create<CesiumViewerState>((set, get) => ({
           }
         }
       } catch (error) {
+        console.error('Failed to load terrain provider:', error)
       }
 
       set({ viewer, isInitializing: false })

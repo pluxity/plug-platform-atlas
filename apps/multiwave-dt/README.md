@@ -30,7 +30,7 @@ CCTV와 센서 데이터를 활용한 실시간 객체 추적 및 경로 시각�
 | **Framework** | React 19, TypeScript |
 | **Build** | Vite 6 |
 | **3D Map** | Cesium.js |
-| **Real-time** | Socket.io-client |
+| **Real-time** | WebSocket API |
 | **State** | Zustand |
 | **UI** | Tailwind CSS v4, Radix UI |
 | **Router** | React Router v7 |
@@ -49,8 +49,7 @@ apps/multiwave-dt/
 │   ├── hooks/
 │   │   └── useWebSocket.ts      # WebSocket 훅
 │   ├── stores/
-│   │   ├── cesium/
-│   │   │   └── useCesiumViewer.ts  # Cesium Viewer 상태 관리
+│   │   ├── useCesiumViewer.ts      # Cesium Viewer 상태 관리
 │   │   └── useTrackingStore.ts     # 추적 데이터 상태 관리
 │   ├── App.tsx                  # 라우팅 설정
 │   └── main.tsx                 # 엔트리 포인트
@@ -73,7 +72,7 @@ apps/multiwave-dt/
 VITE_CESIUM_ION_ACCESS_TOKEN=your_token_here
 
 # WebSocket Server
-VITE_WEBSOCKET_URL=ws://localhost:3000
+VITE_WEBSOCKET_URL=ws://localhost:8765
 ```
 
 ### 2. 앱 실행
@@ -86,7 +85,7 @@ pnpm dev:multiwave
 pnpm multiwave-dt dev
 ```
 
-앱이 http://localhost:4001 에서 실행됩니다.
+앱이 http://localhost:4000 에서 실행됩니다.
 
 ### 3. 빌드
 

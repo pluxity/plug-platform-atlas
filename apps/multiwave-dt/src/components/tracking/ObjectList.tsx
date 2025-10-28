@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Cartesian3 } from 'cesium'
 import { useTrackingStore } from '../../stores/useTrackingStore'
 import { useCesiumViewer } from '../../stores/useCesiumViewer'
@@ -10,7 +11,7 @@ export function ObjectList() {
   const togglePinObject = useTrackingStore((state: any) => state.togglePinObject)
   const isPinned = useTrackingStore((state: any) => state.isPinned)
   const viewer = useCesiumViewer((state: any) => state.viewer)
-  const objectArray = Array.from(objects.values()) as TrackingObject[]
+  const objectArray = useMemo(() => Array.from(objects.values()) as TrackingObject[], [objects])
 
   const handleObjectClick = (obj: typeof objectArray[0]) => {
     if (!viewer) return
