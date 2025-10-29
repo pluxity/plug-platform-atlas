@@ -23,10 +23,11 @@ export default function CesiumPolygonDrawer({
     const viewerRef = useRef<CesiumViewer | null>(null)
     const [showHelp, setShowHelp] = useState(false)
     const [isInitialized, setIsInitialized] = useState(false)
+    const initialWktProcessedRef = useRef<string | undefined>(undefined)
 
     const viewerId = useRef(`polygon-drawer-${Date.now()}`).current
 
-    const { initializeViewer } = useViewerStore()
+    const { createViewer, setupImagery } = useViewerStore()
     const { setView, focusOn } = useCameraStore()
     const {
         startDrawing,
@@ -65,7 +66,6 @@ export default function CesiumPolygonDrawer({
                         break
                 }
             } catch (error) {
-                console.error('키보드 이벤트 처리 중 오류:', error)
             }
         }
 
@@ -78,51 +78,80 @@ export default function CesiumPolygonDrawer({
     useEffect(() => {
         if (!cesiumContainerRef.current) return
 
+        if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+            return
+        }
+
+        let mounted = true
+
         const initViewer = async () => {
             try {
+                if (!mounted) return
+
                 setIsInitialized(false)
-                
-                const viewer = await initializeViewer(cesiumContainerRef.current!)
-                viewerRef.current = viewer
 
-                // 카메라 위치 설정 전에 잠시 대기
-                await new Promise(resolve => setTimeout(resolve, 100))
-                
-                setView(viewer, DEFAULT_CAMERA_POSITION)
+                const viewer = createViewer(cesiumContainerRef.current!)
 
-                if (initialWkt && initialWkt.trim()) {
-                    const entity = displayWktPolygon(viewer, initialWkt, {
-                        name: 'Initial Polygon',
-                        fillColor: Color.BLUE,
-                        fillAlpha: 0.4,
-                    })
-                    
-                    if (entity) {
-                        await focusOn(viewer, initialWkt, 3000)
-                    }
+                if (!mounted) {
+                    viewer.destroy()
+                    return
                 }
 
+                viewerRef.current = viewer
+
+                await setupImagery(viewer)
+
+                await new Promise(resolve => setTimeout(resolve, 100))
+
+                if (!mounted) return
+
+                setView(viewer, DEFAULT_CAMERA_POSITION)
                 setIsInitialized(true)
             } catch (error) {
-                console.error('세슘 뷰어 초기화 오류:', error)
-                toast.error('지도를 로드하는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.')
+                if (mounted) {
+                    toast.error('지도를 로드하는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.')
+                }
             }
         }
 
         initViewer()
 
         return () => {
+            mounted = false
             try {
                 if (viewerRef.current && !viewerRef.current.isDestroyed()) {
                     cancelDrawing(viewerRef.current, viewerId)
                     viewerRef.current.destroy()
+                    viewerRef.current = null
                 }
             } catch (error) {
-                console.error('뷰어 정리 중 오류:', error)
             }
             setIsInitialized(false)
         }
-    }, [initialWkt])
+    }, [])
+
+    useEffect(() => {
+        if (!viewerRef.current || !isInitialized) return
+        if (!initialWkt || !initialWkt.trim()) return
+
+        if (initialWktProcessedRef.current === initialWkt) return
+
+        try {
+            clearAllPolygons(viewerRef.current)
+            const entity = displayWktPolygon(viewerRef.current, initialWkt, {
+                name: 'Initial Polygon',
+                fillColor: Color.BLUE,
+                fillAlpha: 0.4,
+            })
+
+            if (entity) {
+                focusOn(viewerRef.current, initialWkt, 3000)
+            }
+
+            initialWktProcessedRef.current = initialWkt
+        } catch (error) {
+        }
+    }, [initialWkt, isInitialized])
 
     const handleStartDrawing = () => {
         if (!viewerRef.current || !isInitialized) {
@@ -134,7 +163,6 @@ export default function CesiumPolygonDrawer({
             startDrawing(viewerRef.current, viewerId)
             setShowHelp(true)
         } catch (error) {
-            console.error('그리기 시작 오류:', error)
             toast.error('그리기를 시작할 수 없습니다. 페이지를 새로고침해 주세요.')
         }
     }
@@ -152,7 +180,6 @@ export default function CesiumPolygonDrawer({
                 toast.warning('폴리곤을 완성하려면 최소 3개의 점이 필요합니다.')
             }
         } catch (error) {
-            console.error('그리기 완료 오류:', error)
             toast.error('폴리곤 생성 중 오류가 발생했습니다.')
         }
     }
@@ -164,7 +191,6 @@ export default function CesiumPolygonDrawer({
             cancelDrawing(viewerRef.current, viewerId)
             setShowHelp(false)
         } catch (error) {
-            console.error('그리기 취소 오류:', error)
         }
     }
 
@@ -174,25 +200,23 @@ export default function CesiumPolygonDrawer({
         try {
             removeLastPoint(viewerRef.current, viewerId)
         } catch (error) {
-            console.error('포인트 제거 오류:', error)
         }
     }
 
     const handleClearAll = () => {
         if (!viewerRef.current || !isInitialized) return
-        
+
         try {
             clearAllPolygons(viewerRef.current)
             onPolygonComplete('')
+            initialWktProcessedRef.current = undefined
             toast.info('모든 폴리곤이 제거되었습니다.')
         } catch (error) {
-            console.error('폴리곤 제거 오류:', error)
         }
     }
 
     return (
         <div className="relative">
-            {/* 메인 컨트롤 패널 */}
             <div className="mb-3">
                 {!isDrawing ? (
                     <div className="flex gap-2 items-center">
@@ -271,6 +295,31 @@ export default function CesiumPolygonDrawer({
                             <div className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">
                                 <CheckCircle className="w-3 h-3" />
                                 우클릭으로 완료하거나 '완료' 버튼을 누르세요
+                            </div>
+                        )}
+
+                        {showHelp && (
+                            <div className="mt-3 pt-3 border-t border-blue-200">
+                                <div className="text-xs text-blue-700 space-y-1">
+                                    <div className="font-semibold mb-1.5">⌨️ 키보드 단축키</div>
+                                    <div className="flex items-center gap-2">
+                                        <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Enter</kbd>
+                                        <span>완료 (3개 이상의 점 필요)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Backspace</kbd>
+                                        <span>마지막 점 제거</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Esc</kbd>
+                                        <span>그리기 취소</span>
+                                    </div>
+                                    <div className="mt-1.5 pt-1.5 border-t border-blue-200">
+                                        <div className="font-semibold mb-1">🖱️ 마우스 조작</div>
+                                        <div>• 좌클릭: 점 추가</div>
+                                        <div>• 우클릭: 그리기 완료</div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
