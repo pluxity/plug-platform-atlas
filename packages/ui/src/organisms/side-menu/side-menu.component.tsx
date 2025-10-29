@@ -169,6 +169,20 @@ const SideMenuSubItem = React.forwardRef<HTMLLIElement, React.ComponentProps<"li
 )
 SideMenuSubItem.displayName = "SideMenuSubItem"
 
+const SubMenuIcon = () => (
+  <svg
+    width="10"
+    height="10"
+    viewBox="0 0 10 10"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="shrink-0"
+  >
+    <rect x="1" y="2" width="1.5" height="6" fill="currentColor"/>
+    <rect x="1" y="6.5" width="6" height="1.5" fill="currentColor"/>
+  </svg>
+)
+
 const SideMenuSubButton = React.forwardRef<HTMLAnchorElement, React.ComponentProps<"a">>(
   ({ className, children, ...props }, ref) => (
     <a
@@ -181,7 +195,9 @@ const SideMenuSubButton = React.forwardRef<HTMLAnchorElement, React.ComponentPro
       )}
       {...props}
     >
-      <span className="text-gray-400 shrink-0">ㄴ</span>
+      <span className="text-gray-400">
+        <SubMenuIcon />
+      </span>
       <span className="truncate">{children}</span>
     </a>
   )
