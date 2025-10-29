@@ -89,6 +89,7 @@ export const useViewerStore = create<ViewerFactory>(() => ({
             viewer.imageryLayers.addImageryProvider(fallbackImagery)
           }
         } catch (fallbackError) {
+          console.error('Failed to load fallback imagery:', fallbackError)
         }
       }
     }
@@ -108,6 +109,7 @@ export const useViewerStore = create<ViewerFactory>(() => ({
         }
       }
     } catch (error) {
+      console.warn('Failed to load Cesium terrain, using default ellipsoid:', error)
     }
   },
 

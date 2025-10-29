@@ -66,6 +66,7 @@ export default function CesiumPolygonDrawer({
                         break
                 }
             } catch (error) {
+                console.error('키보드 이벤트 처리 중 오류:', error)
             }
         }
 
@@ -125,6 +126,7 @@ export default function CesiumPolygonDrawer({
                     viewerRef.current = null
                 }
             } catch (error) {
+                console.error('뷰어 정리 중 오류:', error)
             }
             setIsInitialized(false)
         }
@@ -150,6 +152,8 @@ export default function CesiumPolygonDrawer({
 
             initialWktProcessedRef.current = initialWkt
         } catch (error) {
+            console.error('초기 WKT 폴리곤 표시에 실패했습니다:', error)
+            toast.error('초기 영역을 불러오는 데 실패했습니다.')
         }
     }, [initialWkt, isInitialized])
 
@@ -191,6 +195,7 @@ export default function CesiumPolygonDrawer({
             cancelDrawing(viewerRef.current, viewerId)
             setShowHelp(false)
         } catch (error) {
+            console.error('그리기 취소 오류:', error)
         }
     }
 
@@ -200,6 +205,7 @@ export default function CesiumPolygonDrawer({
         try {
             removeLastPoint(viewerRef.current, viewerId)
         } catch (error) {
+            console.error('포인트 제거 오류:', error)
         }
     }
 
@@ -212,6 +218,7 @@ export default function CesiumPolygonDrawer({
             initialWktProcessedRef.current = undefined
             toast.info('모든 폴리곤이 제거되었습니다.')
         } catch (error) {
+            console.error('폴리곤 제거 오류:', error)
         }
     }
 
