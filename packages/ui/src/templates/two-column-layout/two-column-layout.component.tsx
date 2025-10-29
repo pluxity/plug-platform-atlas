@@ -1,34 +1,90 @@
 import * as React from "react"
 import { cn } from "../../lib/utils"
-import { TwoColumnLayoutProps } from "./two-column-layout.types"
+import { TwoColumnLayoutProps, ColumnProps } from "./two-column-layout.types"
 
-export const TwoColumnLayout = React.forwardRef<HTMLDivElement, TwoColumnLayoutProps>(
+const LeftColumn = React.forwardRef<HTMLDivElement, ColumnProps>(
+  ({ scroll = true, className, style, children }, ref) => {
+    return (
+      <div
+        ref={ref}
+        data-slot="left-column"
+        className={cn(
+          "flex-shrink-0 bg-white rounded-lg shadow-md border",
+          scroll && "overflow-y-auto",
+          className
+        )}
+        style={style}
+      >
+        {children}
+      </div>
+    )
+  }
+)
+LeftColumn.displayName = "TwoColumnLayout.Left"
+
+const RightColumn = React.forwardRef<HTMLDivElement, ColumnProps>(
+  ({ scroll = true, className, style, children }, ref) => {
+    return (
+      <div
+        ref={ref}
+        data-slot="right-column"
+        className={cn(
+          "flex-1 bg-white rounded-lg shadow-md border",
+          scroll && "overflow-y-auto",
+          className
+        )}
+        style={style}
+      >
+        {children}
+      </div>
+    )
+  }
+)
+RightColumn.displayName = "TwoColumnLayout.Right"
+
+const TwoColumnLayoutRoot = React.forwardRef<HTMLDivElement, TwoColumnLayoutProps>(
   (
     {
       leftWidth = "35%",
       rightWidth = "65%",
       gap = 16,
-      leftScroll = true,
-      rightScroll = true,
       minLeftWidth,
       minRightWidth,
       className,
-      leftClassName,
-      rightClassName,
       children,
     },
     ref
   ) => {
-    if (!Array.isArray(children) || children.length !== 2) {
-      throw new Error("TwoColumnLayout requires exactly 2 children")
-    }
-
-    const [leftChild, rightChild] = children
-
     const leftWidthStyle =
       typeof leftWidth === "number" ? `${leftWidth}px` : leftWidth
     const rightWidthStyle =
       typeof rightWidth === "number" ? `${rightWidth}px` : rightWidth
+
+    const childrenArray = React.Children.toArray(children)
+    const leftChild = childrenArray.find(
+      (child): child is React.ReactElement<ColumnProps> =>
+        React.isValidElement<ColumnProps>(child) &&
+        (child.type === LeftColumn ||
+          (typeof child.props === "object" &&
+            child.props !== null &&
+            "data-slot" in child.props &&
+            child.props["data-slot"] === "left-column"))
+    )
+    const rightChild = childrenArray.find(
+      (child): child is React.ReactElement<ColumnProps> =>
+        React.isValidElement<ColumnProps>(child) &&
+        (child.type === RightColumn ||
+          (typeof child.props === "object" &&
+            child.props !== null &&
+            "data-slot" in child.props &&
+            child.props["data-slot"] === "right-column"))
+    )
+
+    if (!leftChild || !rightChild) {
+      throw new Error(
+        "TwoColumnLayout requires both TwoColumnLayout.Left and TwoColumnLayout.Right as children"
+      )
+    }
 
     return (
       <div
@@ -36,36 +92,27 @@ export const TwoColumnLayout = React.forwardRef<HTMLDivElement, TwoColumnLayoutP
         className={cn("flex h-full w-full", className)}
         style={{ gap: `${gap}px` }}
       >
-        <div
-          className={cn(
-            "flex-shrink-0",
-            leftScroll && "overflow-y-auto",
-            leftClassName
-          )}
-          style={{
+        {React.cloneElement(leftChild, {
+          style: {
             width: leftWidthStyle,
             minWidth: minLeftWidth ? `${minLeftWidth}px` : undefined,
-          }}
-        >
-          {leftChild}
-        </div>
-
-        <div
-          className={cn(
-            "flex-1",
-            rightScroll && "overflow-y-auto",
-            rightClassName
-          )}
-          style={{
+            ...(leftChild.props.style as React.CSSProperties | undefined),
+          },
+        })}
+        {React.cloneElement(rightChild, {
+          style: {
             width: rightWidthStyle,
             minWidth: minRightWidth ? `${minRightWidth}px` : undefined,
-          }}
-        >
-          {rightChild}
-        </div>
+            ...(rightChild.props.style as React.CSSProperties | undefined),
+          },
+        })}
       </div>
     )
   }
 )
+TwoColumnLayoutRoot.displayName = "TwoColumnLayout"
 
-TwoColumnLayout.displayName = "TwoColumnLayout"
+export const TwoColumnLayout = Object.assign(TwoColumnLayoutRoot, {
+  Left: LeftColumn,
+  Right: RightColumn,
+})

@@ -4,12 +4,15 @@ export interface TwoColumnLayoutProps {
   leftWidth?: string | number
   rightWidth?: string | number
   gap?: number
-  leftScroll?: boolean
-  rightScroll?: boolean
   minLeftWidth?: number
   minRightWidth?: number
   className?: string
-  leftClassName?: string
-  rightClassName?: string
-  children: [React.ReactNode, React.ReactNode]
+  children: React.ReactNode
+}
+
+export interface ColumnProps {
+  scroll?: boolean
+  className?: string
+  style?: React.CSSProperties
+  children: React.ReactNode
 }
