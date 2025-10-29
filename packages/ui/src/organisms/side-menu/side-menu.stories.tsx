@@ -186,20 +186,18 @@ export const AlwaysOpen: Story = {
   ),
 }
 
-export const DefaultClosed: Story = {
+export const WithIcon: Story = {
   render: () => (
     <div className="min-h-screen bg-gray-50">
       <div className="p-4">
-        <SideMenu defaultOpen={false} collapsible={true}>
+        <SideMenu defaultOpen={true} collapsible={true}>
           {({ open }) => (
             <>
               <SideMenuTrigger showChevron={true} open={open}>
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded bg-blue-600 flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">P</span>
-                  </div>
-                  <span className="text-sm font-medium">Pluxity Admin</span>
+                <div className="h-6 w-6 rounded bg-blue-600 flex items-center justify-center shrink-0">
+                  <span className="text-xs font-bold text-white">P</span>
                 </div>
+                <span className="text-sm font-medium">Pluxity Admin</span>
               </SideMenuTrigger>
               <SideMenuContent>
                 <SideMenuLogo>

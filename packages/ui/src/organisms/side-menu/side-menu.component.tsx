@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
-import { ChevronDown, CornerDownRight } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { cn } from "../../lib/utils"
 import {
   SideMenuProps,
@@ -40,19 +40,21 @@ const SideMenuTrigger = React.forwardRef<
   <CollapsiblePrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex items-center justify-between gap-2 rounded-lg px-4 py-2 w-72",
-      "bg-white border border-gray-200 shadow-sm",
-      "hover:bg-gray-50 active:bg-gray-100",
-      "transition-colors",
+      "flex items-center justify-between gap-2 rounded-xl px-4 py-2 w-72",
+      "bg-white border border-gray-200 shadow-md",
+      "hover:bg-gray-50 active:bg-gray-100 hover:shadow-lg",
+      "transition-all duration-200",
       className
     )}
     {...props}
   >
-    {children}
+    <div className="flex items-center gap-2">
+      {children}
+    </div>
     {showChevron && (
       <ChevronDown
         className={cn(
-          "h-4 w-4 text-gray-500 transition-transform duration-200",
+          "h-4 w-4 text-gray-500 transition-transform duration-200 shrink-0",
           open && "rotate-180"
         )}
       />
@@ -76,7 +78,7 @@ const SideMenuContent = React.forwardRef<
     {...props}
   >
     <div className={cn(
-      "mt-2 rounded-lg border bg-white shadow-lg",
+      "mt-2 rounded-xl border bg-white shadow-xl",
       "w-72"
     )}>
       <div className="flex flex-col max-h-[80vh]">
@@ -172,14 +174,15 @@ const SideMenuSubButton = React.forwardRef<HTMLAnchorElement, React.ComponentPro
     <a
       ref={ref}
       className={cn(
-        "flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-xs",
+        "relative flex h-7 min-w-0 items-center overflow-hidden rounded-md pl-4 pr-2 text-xs",
         "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
         "transition-colors",
+        "before:absolute before:left-0 before:top-0 before:h-full before:w-3",
+        "before:border-l before:border-b before:border-gray-300",
         className
       )}
       {...props}
     >
-      <CornerDownRight className="h-3 w-3 shrink-0 text-gray-400" />
       <span className="truncate">{children}</span>
     </a>
   )
