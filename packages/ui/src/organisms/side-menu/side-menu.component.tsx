@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import * as PopoverPrimitive from "@radix-ui/react-popover"
+import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
+import { ChevronDown } from "lucide-react"
 import { cn } from "../../lib/utils"
 import {
   SideMenuProps,
@@ -13,13 +14,30 @@ import {
   SideMenuNavProps,
 } from "./side-menu.types"
 
-const SideMenu = PopoverPrimitive.Root
+const SideMenu = React.forwardRef<
+  React.ElementRef<typeof CollapsiblePrimitive.Root>,
+  SideMenuProps
+>(({ defaultOpen = true, collapsible = true, children, ...props }, ref) => {
+  const [open, setOpen] = React.useState(defaultOpen)
+
+  return (
+    <CollapsiblePrimitive.Root
+      ref={ref}
+      open={collapsible ? open : true}
+      onOpenChange={collapsible ? setOpen : undefined}
+      {...props}
+    >
+      {typeof children === 'function' ? children({ open }) : children}
+    </CollapsiblePrimitive.Root>
+  )
+})
+SideMenu.displayName = "SideMenu"
 
 const SideMenuTrigger = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Trigger>,
+  React.ElementRef<typeof CollapsiblePrimitive.Trigger>,
   SideMenuTriggerProps
->(({ className, children, ...props }, ref) => (
-  <PopoverPrimitive.Trigger
+>(({ className, children, showChevron = true, open, ...props }, ref) => (
+  <CollapsiblePrimitive.Trigger
     ref={ref}
     className={cn(
       "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2",
@@ -31,39 +49,43 @@ const SideMenuTrigger = React.forwardRef<
     {...props}
   >
     {children}
-  </PopoverPrimitive.Trigger>
+    {showChevron && (
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-gray-500 transition-transform duration-200",
+          open && "rotate-180"
+        )}
+      />
+    )}
+  </CollapsiblePrimitive.Trigger>
 ))
-SideMenuTrigger.displayName = PopoverPrimitive.Trigger.displayName
+SideMenuTrigger.displayName = "SideMenuTrigger"
 
 const SideMenuContent = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ElementRef<typeof CollapsiblePrimitive.Content>,
   SideMenuContentProps
->(({ className, align = "start", sideOffset = 8, children, ...props }, ref) => (
-  <PopoverPrimitive.Portal>
-    <PopoverPrimitive.Content
-      ref={ref}
-      align={align}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 w-72 rounded-lg border bg-white shadow-lg",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out",
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        "data-[side=bottom]:slide-in-from-top-2",
-        "data-[side=left]:slide-in-from-right-2",
-        "data-[side=right]:slide-in-from-left-2",
-        "data-[side=top]:slide-in-from-bottom-2",
-        className
-      )}
-      {...props}
-    >
+>(({ className, children, ...props }, ref) => (
+  <CollapsiblePrimitive.Content
+    ref={ref}
+    className={cn(
+      "overflow-hidden",
+      "data-[state=open]:animate-in data-[state=closed]:animate-out",
+      "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
+    {...props}
+  >
+    <div className={cn(
+      "mt-2 rounded-lg border bg-white shadow-lg",
+      "w-72"
+    )}>
       <div className="flex flex-col max-h-[80vh]">
         {children}
       </div>
-    </PopoverPrimitive.Content>
-  </PopoverPrimitive.Portal>
+    </div>
+  </CollapsiblePrimitive.Content>
 ))
-SideMenuContent.displayName = PopoverPrimitive.Content.displayName
+SideMenuContent.displayName = "SideMenuContent"
 
 const SideMenuLogo = React.forwardRef<HTMLDivElement, SideMenuLogoProps>(
   ({ className, children, ...props }, ref) => (

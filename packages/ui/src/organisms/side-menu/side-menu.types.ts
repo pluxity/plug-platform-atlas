@@ -1,11 +1,18 @@
 import * as React from "react"
-import * as PopoverPrimitive from "@radix-ui/react-popover"
+import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
 
-export type SideMenuProps = React.ComponentProps<typeof PopoverPrimitive.Root>
+export interface SideMenuProps extends React.ComponentPropsWithoutRef<typeof CollapsiblePrimitive.Root> {
+  defaultOpen?: boolean
+  collapsible?: boolean
+  children?: React.ReactNode | (({ open }: { open: boolean }) => React.ReactNode)
+}
 
-export type SideMenuTriggerProps = React.ComponentProps<typeof PopoverPrimitive.Trigger>
+export interface SideMenuTriggerProps extends React.ComponentPropsWithoutRef<typeof CollapsiblePrimitive.Trigger> {
+  showChevron?: boolean
+  open?: boolean
+}
 
-export type SideMenuContentProps = React.ComponentProps<typeof PopoverPrimitive.Content>
+export type SideMenuContentProps = React.ComponentPropsWithoutRef<typeof CollapsiblePrimitive.Content>
 
 export type SideMenuLogoProps = React.ComponentProps<"div">
 
