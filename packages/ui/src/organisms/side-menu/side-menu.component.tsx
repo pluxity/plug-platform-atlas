@@ -40,7 +40,7 @@ const SideMenuTrigger = React.forwardRef<
   <CollapsiblePrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2",
+      "flex items-center justify-between gap-2 rounded-lg px-4 py-2 w-72",
       "bg-white border border-gray-200 shadow-sm",
       "hover:bg-gray-50 active:bg-gray-100",
       "transition-colors",
