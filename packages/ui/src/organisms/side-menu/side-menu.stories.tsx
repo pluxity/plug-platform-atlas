@@ -7,8 +7,11 @@ import {
   SideMenuHeader,
   SideMenuNav,
   SideMenuFooter,
+  SideMenuSubMenu,
+  SideMenuSubItem,
+  SideMenuSubButton,
 } from './side-menu.component'
-import { Home, Settings, Users, FileText, BarChart, LogOut } from 'lucide-react'
+import { Home, Settings, Users, FileText, BarChart, LogOut, Wifi, MapPin } from 'lucide-react'
 
 const meta: Meta<typeof SideMenu> = {
   title: 'Organisms/SideMenu',
@@ -278,7 +281,7 @@ export const DefaultClosed: Story = {
   ),
 }
 
-export const Compact: Story = {
+export const WithSubMenu: Story = {
   render: () => (
     <div className="min-h-screen bg-gray-50">
       <div className="p-4">
@@ -286,34 +289,104 @@ export const Compact: Story = {
           {({ open }) => (
             <>
               <SideMenuTrigger showChevron={true} open={open}>
-                <span className="text-sm font-medium">메뉴</span>
+                <span className="text-sm font-medium">양산시 시민안전관리 서비스</span>
               </SideMenuTrigger>
-              <SideMenuContent className="w-56">
+              <SideMenuContent>
+                <SideMenuHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-blue-600">김</span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">김영광</div>
+                      <div className="text-xs text-gray-500">관리자</div>
+                    </div>
+                  </div>
+                </SideMenuHeader>
+
                 <SideMenuNav>
                   <nav className="space-y-1">
                     <a
                       href="#"
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-3 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600"
                     >
                       <Home className="h-4 w-4" />
-                      <span>홈</span>
+                      <span>대시보드</span>
                     </a>
+
+                    <div>
+                      <a
+                        href="#"
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FileText className="h-4 w-4" />
+                        <span>이벤트 관리</span>
+                      </a>
+                      <SideMenuSubMenu>
+                        <SideMenuSubItem>
+                          <SideMenuSubButton href="#">양잠 이벤트</SideMenuSubButton>
+                        </SideMenuSubItem>
+                        <SideMenuSubItem>
+                          <SideMenuSubButton href="#">조지 이벤트</SideMenuSubButton>
+                        </SideMenuSubItem>
+                      </SideMenuSubMenu>
+                    </div>
+
+                    <div>
+                      <a
+                        href="#"
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Wifi className="h-4 w-4" />
+                        <span>IoT 센서</span>
+                      </a>
+                      <SideMenuSubMenu>
+                        <SideMenuSubItem>
+                          <SideMenuSubButton href="#">센서 내역</SideMenuSubButton>
+                        </SideMenuSubItem>
+                      </SideMenuSubMenu>
+                    </div>
+
+                    <div>
+                      <a
+                        href="#"
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>관리 설정</span>
+                      </a>
+                      <SideMenuSubMenu>
+                        <SideMenuSubItem>
+                          <SideMenuSubButton href="#">서울라디</SideMenuSubButton>
+                        </SideMenuSubItem>
+                        <SideMenuSubItem>
+                          <SideMenuSubButton href="#">IoT 센서 관리</SideMenuSubButton>
+                        </SideMenuSubItem>
+                        <SideMenuSubItem>
+                          <SideMenuSubButton href="#">사용자 관리</SideMenuSubButton>
+                        </SideMenuSubItem>
+                        <SideMenuSubItem>
+                          <SideMenuSubButton href="#">시스템 설정</SideMenuSubButton>
+                        </SideMenuSubItem>
+                      </SideMenuSubMenu>
+                    </div>
+
                     <a
                       href="#"
                       className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      <Users className="h-4 w-4" />
-                      <span>사용자</span>
-                    </a>
-                    <a
-                      href="#"
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Settings className="h-4 w-4" />
-                      <span>설정</span>
+                      <MapPin className="h-4 w-4" />
+                      <span>지도</span>
                     </a>
                   </nav>
                 </SideMenuNav>
+
+                <SideMenuFooter>
+                  <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <LogOut className="h-4 w-4" />
+                    <span>로그아웃</span>
+                  </button>
+                </SideMenuFooter>
               </SideMenuContent>
             </>
           )}

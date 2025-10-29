@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, CornerDownRight } from "lucide-react"
 import { cn } from "../../lib/utils"
 import {
   SideMenuProps,
@@ -142,6 +142,50 @@ const SideMenuFooter = React.forwardRef<HTMLDivElement, SideMenuFooterProps>(
 )
 SideMenuFooter.displayName = "SideMenuFooter"
 
+const SideMenuSubMenu = React.forwardRef<HTMLUListElement, React.ComponentProps<"ul">>(
+  ({ className, ...props }, ref) => (
+    <ul
+      ref={ref}
+      className={cn(
+        "ml-3 flex min-w-0 flex-col gap-1 border-l border-gray-200 pl-3 py-1",
+        className
+      )}
+      {...props}
+    />
+  )
+)
+SideMenuSubMenu.displayName = "SideMenuSubMenu"
+
+const SideMenuSubItem = React.forwardRef<HTMLLIElement, React.ComponentProps<"li">>(
+  ({ className, ...props }, ref) => (
+    <li
+      ref={ref}
+      className={cn("relative", className)}
+      {...props}
+    />
+  )
+)
+SideMenuSubItem.displayName = "SideMenuSubItem"
+
+const SideMenuSubButton = React.forwardRef<HTMLAnchorElement, React.ComponentProps<"a">>(
+  ({ className, children, ...props }, ref) => (
+    <a
+      ref={ref}
+      className={cn(
+        "flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-xs",
+        "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+        "transition-colors",
+        className
+      )}
+      {...props}
+    >
+      <CornerDownRight className="h-3 w-3 shrink-0 text-gray-400" />
+      <span className="truncate">{children}</span>
+    </a>
+  )
+)
+SideMenuSubButton.displayName = "SideMenuSubButton"
+
 export {
   SideMenu,
   SideMenuTrigger,
@@ -150,4 +194,7 @@ export {
   SideMenuHeader,
   SideMenuNav,
   SideMenuFooter,
+  SideMenuSubMenu,
+  SideMenuSubItem,
+  SideMenuSubButton,
 }
