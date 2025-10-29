@@ -1,31 +1,16 @@
 import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
 
-export interface SideMenuProps extends React.HTMLAttributes<HTMLDivElement> {
-  children?: React.ReactNode
-  className?: string
-}
+export type SideMenuProps = React.ComponentProps<typeof PopoverPrimitive.Root>
 
-export interface SideMenuLogoProps extends React.HTMLAttributes<HTMLDivElement> {
-  children?: React.ReactNode
-  className?: string
-}
+export type SideMenuTriggerProps = React.ComponentProps<typeof PopoverPrimitive.Trigger>
 
-export interface SideMenuContentProps extends React.HTMLAttributes<HTMLDivElement> {
-  children?: React.ReactNode
-  className?: string
-}
+export type SideMenuContentProps = React.ComponentProps<typeof PopoverPrimitive.Content>
 
-export interface SideMenuHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  children?: React.ReactNode
-  className?: string
-}
+export type SideMenuLogoProps = React.ComponentProps<"div">
 
-export interface SideMenuFooterProps extends React.HTMLAttributes<HTMLDivElement> {
-  children?: React.ReactNode
-  className?: string
-}
+export type SideMenuHeaderProps = React.ComponentProps<"div">
 
-export interface SideMenuNavProps extends React.HTMLAttributes<HTMLDivElement> {
-  children?: React.ReactNode
-  className?: string
-}
+export type SideMenuNavProps = React.ComponentProps<"div">
+
+export type SideMenuFooterProps = React.ComponentProps<"div">

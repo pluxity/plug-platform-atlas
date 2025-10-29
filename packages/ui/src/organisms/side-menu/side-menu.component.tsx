@@ -1,33 +1,75 @@
+"use client"
+
 import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
 import { cn } from "../../lib/utils"
 import {
   SideMenuProps,
-  SideMenuLogoProps,
+  SideMenuTriggerProps,
   SideMenuContentProps,
+  SideMenuLogoProps,
   SideMenuHeaderProps,
   SideMenuFooterProps,
   SideMenuNavProps,
 } from "./side-menu.types"
 
-const SideMenu = React.forwardRef<HTMLDivElement, SideMenuProps>(
-  ({ className, children, ...props }, ref) => (
-    <div
+const SideMenu = PopoverPrimitive.Root
+
+const SideMenuTrigger = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Trigger>,
+  SideMenuTriggerProps
+>(({ className, children, ...props }, ref) => (
+  <PopoverPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center rounded-md",
+      "hover:bg-gray-100 active:bg-gray-200",
+      "transition-colors",
+      className
+    )}
+    {...props}
+  >
+    {children}
+  </PopoverPrimitive.Trigger>
+))
+SideMenuTrigger.displayName = PopoverPrimitive.Trigger.displayName
+
+const SideMenuContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  SideMenuContentProps
+>(({ className, align = "start", sideOffset = 8, children, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
       ref={ref}
-      className={cn("flex flex-col", className)}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 w-72 rounded-xl border bg-white shadow-lg",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "data-[side=bottom]:slide-in-from-top-2",
+        "data-[side=left]:slide-in-from-right-2",
+        "data-[side=right]:slide-in-from-left-2",
+        "data-[side=top]:slide-in-from-bottom-2",
+        className
+      )}
       {...props}
     >
-      {children}
-    </div>
-  )
-)
-SideMenu.displayName = "SideMenu"
+      <div className="flex flex-col max-h-[80vh]">
+        {children}
+      </div>
+    </PopoverPrimitive.Content>
+  </PopoverPrimitive.Portal>
+))
+SideMenuContent.displayName = PopoverPrimitive.Content.displayName
 
 const SideMenuLogo = React.forwardRef<HTMLDivElement, SideMenuLogoProps>(
   ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
       className={cn(
-        "flex items-center justify-center px-3 py-3",
+        "flex items-center justify-center px-4 py-3 border-b",
         className
       )}
       {...props}
@@ -38,24 +80,11 @@ const SideMenuLogo = React.forwardRef<HTMLDivElement, SideMenuLogoProps>(
 )
 SideMenuLogo.displayName = "SideMenuLogo"
 
-const SideMenuContent = React.forwardRef<HTMLDivElement, SideMenuContentProps>(
-  ({ className, children, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn("flex flex-1 flex-col overflow-hidden", className)}
-      {...props}
-    >
-      {children}
-    </div>
-  )
-)
-SideMenuContent.displayName = "SideMenuContent"
-
 const SideMenuHeader = React.forwardRef<HTMLDivElement, SideMenuHeaderProps>(
   ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("px-3 py-2", className)}
+      className={cn("px-4 py-3 border-b", className)}
       {...props}
     >
       {children}
@@ -68,7 +97,7 @@ const SideMenuNav = React.forwardRef<HTMLDivElement, SideMenuNavProps>(
   ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex-1 overflow-y-auto px-2 py-1", className)}
+      className={cn("flex-1 overflow-y-auto px-2 py-2", className)}
       {...props}
     >
       {children}
@@ -81,7 +110,7 @@ const SideMenuFooter = React.forwardRef<HTMLDivElement, SideMenuFooterProps>(
   ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("border-t border-gray-200 px-3 py-2", className)}
+      className={cn("border-t px-4 py-3", className)}
       {...props}
     >
       {children}
@@ -92,8 +121,9 @@ SideMenuFooter.displayName = "SideMenuFooter"
 
 export {
   SideMenu,
-  SideMenuLogo,
+  SideMenuTrigger,
   SideMenuContent,
+  SideMenuLogo,
   SideMenuHeader,
   SideMenuNav,
   SideMenuFooter,
