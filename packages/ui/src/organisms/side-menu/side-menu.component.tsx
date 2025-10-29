@@ -174,15 +174,14 @@ const SideMenuSubButton = React.forwardRef<HTMLAnchorElement, React.ComponentPro
     <a
       ref={ref}
       className={cn(
-        "relative flex h-7 min-w-0 items-center overflow-hidden rounded-md pl-4 pr-2 text-xs",
+        "flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-3 text-xs",
         "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
         "transition-colors",
-        "before:absolute before:left-0 before:top-0 before:h-full before:w-3",
-        "before:border-l before:border-b before:border-gray-300",
         className
       )}
       {...props}
     >
+      <span className="text-gray-400 shrink-0">ㄴ</span>
       <span className="truncate">{children}</span>
     </a>
   )
