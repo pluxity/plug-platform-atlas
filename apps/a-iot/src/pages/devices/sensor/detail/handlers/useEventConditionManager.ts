@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { EventCondition } from '../../../../../services/types';
+import { EventCondition, DeviceProfile } from '../../../../../services/types';
 import {
     CreateConditionData,
     createDefaultCondition,
     toCreateConditionData,
     toApiConditionData,
-    validateConditionData
-} from "./EventConditionUtils.tsx";
+    validateConditionData,
+    isBooleanProfile,
+    getConditionConfigByProfile
+} from "./EventConditionUtils";
 import { useEventConditionMutations, useEventConditions } from "../../../../../services/hooks";
 
-export const useEventConditionManager = (objectId: string) => {
+export const useEventConditionManager = (objectId: string, profiles: DeviceProfile[]) => {
     const [editingData, setEditingData] = useState<{ [key: number]: EventCondition }>({});
     const [originalData, setOriginalData] = useState<{ [key: number]: EventCondition }>({});
     const [newConditions, setNewConditions] = useState<CreateConditionData[]>([]);
@@ -54,7 +56,7 @@ export const useEventConditionManager = (objectId: string) => {
         const fieldsToCompare: (keyof EventCondition)[] = [
             'fieldKey', 'level', 'conditionType', 'operator', 
             'thresholdValue', 'leftValue', 'rightValue', 
-            'notificationEnabled', 'activate'
+            'notificationEnabled', 'activate', 'booleanValue'
         ];
         
         return fieldsToCompare.some(field => {
@@ -85,14 +87,26 @@ export const useEventConditionManager = (objectId: string) => {
 
             let updatedData = { ...existingData, [field]: value };
             
+            if (field === 'fieldKey') {
+                const conditionConfig = getConditionConfigByProfile(profiles, value);
+                updatedData = { ...updatedData, ...conditionConfig };
+            }
+            
             if (field === 'conditionType') {
-                if (value === 'SINGLE') {
+                const isBoolean = isBooleanProfile(profiles, updatedData.fieldKey);
+                
+                if (isBoolean) {
+                    updatedData.conditionType = 'SINGLE';
                     updatedData.operator = 'GE';
-                    updatedData.leftValue = undefined;
-                    updatedData.rightValue = undefined;
-                } else if (value === 'RANGE') {
-                    updatedData.operator = 'BETWEEN';
-                    updatedData.thresholdValue = undefined;
+                } else {
+                    if (value === 'SINGLE') {
+                        updatedData.operator = 'GE';
+                        updatedData.leftValue = undefined;
+                        updatedData.rightValue = undefined;
+                    } else if (value === 'RANGE') {
+                        updatedData.operator = 'BETWEEN';
+                        updatedData.thresholdValue = undefined;
+                    }
                 }
             }
 
@@ -108,7 +122,7 @@ export const useEventConditionManager = (objectId: string) => {
         if (!updatedCondition?.id) return;
 
         const conditionToValidate = toCreateConditionData(updatedCondition);
-        if (!validateConditionData(conditionToValidate)) {
+        if (!validateConditionData(conditionToValidate, profiles)) {
             alert('필수 필드를 모두 입력해주세요.');
             return;
         }
@@ -153,14 +167,14 @@ export const useEventConditionManager = (objectId: string) => {
     };
 
     const handleSaveNew = async () => {
-        const invalidConditions = newConditions.filter(condition => !validateConditionData(condition));
+        const invalidConditions = newConditions.filter(condition => !validateConditionData(condition, profiles));
         if (invalidConditions.length > 0) {
             alert(`${invalidConditions.length}개의 조건에 필수 필드가 누락되었습니다.`);
             return;
         }
 
         try {
-            const apiConditions = newConditions.map(condition => toApiConditionData(condition));
+            const apiConditions = newConditions.map(condition => toApiConditionData(condition, profiles));
             
             console.log('Sending POST request with data:', {
                 objectId: objectId,
@@ -190,28 +204,37 @@ export const useEventConditionManager = (objectId: string) => {
         console.log(`handleNewConditionChange - index: ${index}, field: ${field}, value:`, value);
         
         setNewConditions(prev => {
-            console.log('Previous newConditions:', prev);
-            
             const updated = prev.map((condition, i) => {
                 if (i === index) {
                     let updatedCondition = { ...condition, [field]: value };
                     
+                    if (field === 'fieldKey') {
+                        const conditionConfig = getConditionConfigByProfile(profiles, value);
+                        updatedCondition = { ...updatedCondition, ...conditionConfig };
+                        
+                        console.log(`FieldKey changed - isBoolean: ${isBooleanProfile(profiles, value)}`, conditionConfig);
+                    }
+                    
                     if (field === 'conditionType') {
-                        if (value === 'SINGLE') {
-                            updatedCondition.operator = 'GE';
-                            updatedCondition.leftValue = undefined;
-                            updatedCondition.rightValue = undefined;
-                            if (updatedCondition.thresholdValue === undefined) {
-                                updatedCondition.thresholdValue = 1.0;
-                            }
-                        } else if (value === 'RANGE') {
-                            updatedCondition.operator = 'BETWEEN';
-                            updatedCondition.thresholdValue = undefined;
-                            if (updatedCondition.leftValue === undefined) {
-                                updatedCondition.leftValue = 1.0;
-                            }
-                            if (updatedCondition.rightValue === undefined) {
-                                updatedCondition.rightValue = 2.0;
+                        const isBoolean = isBooleanProfile(profiles, updatedCondition.fieldKey);
+                        
+                        if (!isBoolean) {
+                            if (value === 'SINGLE') {
+                                updatedCondition.operator = 'GE';
+                                updatedCondition.leftValue = undefined;
+                                updatedCondition.rightValue = undefined;
+                                if (updatedCondition.thresholdValue === undefined) {
+                                    updatedCondition.thresholdValue = 1.0;
+                                }
+                            } else if (value === 'RANGE') {
+                                updatedCondition.operator = 'BETWEEN';
+                                updatedCondition.thresholdValue = undefined;
+                                if (updatedCondition.leftValue === undefined) {
+                                    updatedCondition.leftValue = 1.0;
+                                }
+                                if (updatedCondition.rightValue === undefined) {
+                                    updatedCondition.rightValue = 2.0;
+                                }
                             }
                         }
                     }
@@ -222,7 +245,6 @@ export const useEventConditionManager = (objectId: string) => {
                 return condition;
             });
             
-            console.log('New newConditions:', updated);
             return updated;
         });
     };

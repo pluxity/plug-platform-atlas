@@ -1,157 +1,169 @@
 import React from "react";
-import {CreateConditionData} from "../handlers/EventConditionUtils.tsx";
-import {DeviceProfile} from "../../../../../services/types";
-import {EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel} from "./EditableCells";
-import {Button} from "@plug-atlas/ui";
-import {Trash2, Bell, BellOff, Eye, EyeOff} from "lucide-react";
+import { Button } from '@plug-atlas/ui';
+import { Trash2 } from 'lucide-react';
+import { DeviceProfile, EventCondition } from "../../../../../services/types";
+import { CreateConditionData } from "../handlers/EventConditionUtils";
+import {
+    EditableFieldKey,
+    EditableLevel,
+    EditableConditionType,
+    EditableCondition
+} from "./EditableCells";
 
-interface NewRowHandlers {
+interface NewRowCellHandlers {
     onChange: (index: number, field: keyof CreateConditionData, value: any) => void;
     onRemove: (index: number) => void;
-    onSaveAll: () => Promise<void>;
+    onSaveAll: () => void;
     onCancelAll: () => void;
 }
 
-interface NewRowRendererProps {
+interface RenderNewRowCellProps {
     columnKey: string;
     newCondition: CreateConditionData;
     newRowIndex: number;
-    handlers: NewRowHandlers;
+    handlers: NewRowCellHandlers;
     profiles: DeviceProfile[];
     isLastRow: boolean;
 }
 
-export const renderNewRowCell = ({
-                                     columnKey,
-                                     newCondition,
-                                     newRowIndex,
-                                     handlers,
-                                     profiles
-                                 }: NewRowRendererProps): React.ReactNode => {
+// CreateConditionData에서 EventCondition과 호환되는 형태로 변환하는 헬퍼 함수
+const createTempEventCondition = (condition: CreateConditionData, tempId: number): EventCondition => {
+    return {
+        id: tempId,
+        ...condition
+    } as EventCondition;
+};
 
-    // 디버깅: 상태 변화 확인
-    console.log(`renderNewRowCell - columnKey: ${columnKey}, newRowIndex: ${newRowIndex}`, {
-        newCondition,
-        fieldValue: newCondition[columnKey as keyof CreateConditionData]
-    });
-
-    // conditionType 변경 시 적절한 값 설정
-    const handleConditionTypeChange = (value: 'SINGLE' | 'RANGE') => {
-        console.log(`Condition type changed to: ${value} for index: ${newRowIndex}`);
-        handlers.onChange(newRowIndex, 'conditionType', value);
-    };
-
-    const handleFieldKeyChange = (value: string) => {
-        console.log(`FieldKey changed to: ${value} for index: ${newRowIndex}`);
-        handlers.onChange(newRowIndex, 'fieldKey', value);
-    };
-
-    const handleLevelChange = (value: CreateConditionData['level']) => {
-        console.log(`Level changed to: ${value} for index: ${newRowIndex}`);
-        handlers.onChange(newRowIndex, 'level', value);
-    };
+export function renderNewRowCell({
+    columnKey,
+    newCondition,
+    newRowIndex,
+    handlers,
+    profiles,
+    isLastRow
+}: RenderNewRowCellProps): React.ReactNode {
+    const { onChange, onRemove, onSaveAll, onCancelAll } = handlers;
+    
+    console.log(`renderNewRowCell - columnKey: ${columnKey}, index: ${newRowIndex}`, newCondition);
 
     switch (columnKey) {
         case 'fieldKey':
             return (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-1">
-                    <EditableFieldKey
-                        value={newCondition.fieldKey || ''}
-                        onChange={handleFieldKeyChange}
-                        isEditing={true}
-                        profiles={profiles}
-                    />
-                </div>
+                <EditableFieldKey
+                    value={newCondition.fieldKey || ''}
+                    onChange={(value) => onChange(newRowIndex, 'fieldKey', value)}
+                    profiles={profiles}
+                    isEditing={true}
+                />
             );
-
+        
         case 'level':
             return (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-1">
-                    <EditableLevel
-                        value={newCondition.level || 'NORMAL'}
-                        onChange={handleLevelChange}
-                        isEditing={true}
-                    />
-                </div>
+                <EditableLevel
+                    value={newCondition.level}
+                    onChange={(value) => onChange(newRowIndex, 'level', value)}
+                    isEditing={true}
+                    profiles={profiles}
+                    fieldKey={newCondition.fieldKey || ''}
+                />
             );
-
+        
         case 'conditionType':
+            const handleConditionTypeChange = (value: EventCondition['conditionType'] | undefined) => {
+                if (value) {  // undefined가 아닌 경우에만 처리
+                    onChange(newRowIndex, 'conditionType', value);
+                }
+            };
+            
             return (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-1">
-                    <EditableConditionType
-                        value={newCondition.conditionType || 'SINGLE'}
-                        onChange={handleConditionTypeChange}
-                        isEditing={true}
-                    />
-                </div>
+                <EditableConditionType
+                    value={newCondition.conditionType || 'SINGLE'}
+                    onChange={handleConditionTypeChange}
+                    isEditing={true}
+                    profiles={profiles}
+                    fieldKey={newCondition.fieldKey || ''}
+                />
             );
-
-        case 'operator':
+        
+        case 'condition':
+            // CreateConditionData를 EventCondition 형태로 변환 (임시 ID 사용)
+            const conditionRow = createTempEventCondition(newCondition, -(newRowIndex + 1));
+            
+            // onChange 핸들러를 CreateConditionData 필드만 처리하도록 제한
+            const handleConditionChange = (field: keyof EventCondition, value: any) => {
+                // id 필드는 무시하고, CreateConditionData에 있는 필드만 처리
+                if (field !== 'id' && field in newCondition) {
+                    onChange(newRowIndex, field as keyof CreateConditionData, value);
+                }
+            };
+            
             return (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-1">
-                    <EditableCondition
-                        row={newCondition as any}
-                        isEditing={true}
-                        onChange={(field, value) => {
-                            console.log(`Operator/Value changed - field: ${field}, value: ${value} for index: ${newRowIndex}`);
-                            handlers.onChange(newRowIndex, field as keyof CreateConditionData, value);
-                        }}
-                    />
-                </div>
+                <EditableCondition
+                    row={conditionRow}
+                    onChange={handleConditionChange}
+                    isEditing={true}
+                    profiles={profiles}
+                />
             );
-
-        case 'activate':
-            return (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-1 flex justify-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handlers.onChange(newRowIndex, 'activate', !newCondition.activate)}
-                        className={`p-1 h-8 w-8 ${newCondition.activate ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-gray-500'}`}
-                        title={newCondition.activate ? '활성화됨 (클릭하여 비활성화)' : '비활성화됨 (클릭하여 활성화)'}
-                    >
-                        {newCondition.activate ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    </Button>
-                </div>
-            );
-
+        
         case 'notificationEnabled':
             return (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-1 flex justify-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handlers.onChange(newRowIndex, 'notificationEnabled', !newCondition.notificationEnabled)}
-                        className={`p-1 h-8 w-8 ${newCondition.notificationEnabled ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 hover:text-gray-500'}`}
-                        title={newCondition.notificationEnabled ? '알림 활성화됨 (클릭하여 비활성화)' : '알림 비활성화됨 (클릭하여 활성화)'}
-                    >
-                        {newCondition.notificationEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-                    </Button>
-                </div>
+                <label className="flex items-center space-x-2">
+                    <input
+                        type="checkbox"
+                        checked={newCondition.notificationEnabled ?? true}
+                        onChange={(e) => onChange(newRowIndex, 'notificationEnabled', e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                </label>
             );
-
-        case 'id':
-            // 새 행이므로 "제거" 버튼만 표시 (삭제 버튼 아님)
+        
+        case 'activate':
             return (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-1 flex justify-center">
+                <label className="flex items-center space-x-2">
+                    <input
+                        type="checkbox"
+                        checked={newCondition.activate ?? true}
+                        onChange={(e) => onChange(newRowIndex, 'activate', e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                </label>
+            );
+        
+        case 'actions':
+            return (
+                <div className="flex items-center gap-2">
                     <Button
-                        variant="ghost"
                         size="sm"
-                        onClick={() => handlers.onRemove(newRowIndex)}
-                        className="text-gray-600 hover:text-gray-800 text-xs"
-                        title="이 새 행 제거 (저장 전이므로 안전)"
+                        variant="outline"
+                        onClick={() => onRemove(newRowIndex)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        제거
+                        <Trash2 className="h-4 w-4" />
                     </Button>
+                    
+                    {isLastRow && (
+                        <div className="flex gap-1 ml-2">
+                            <Button
+                                size="sm"
+                                onClick={onSaveAll}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                                저장
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline" 
+                                onClick={onCancelAll}
+                            >
+                                취소
+                            </Button>
+                        </div>
+                    )}
                 </div>
             );
-
+        
         default:
-            return (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-center text-gray-400 text-xs">
-                    -
-                </div>
-            );
+            return <div className="p-2 text-center text-gray-400">-</div>;
     }
-};
+}

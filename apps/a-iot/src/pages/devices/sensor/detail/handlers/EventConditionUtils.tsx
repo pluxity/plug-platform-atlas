@@ -1,5 +1,5 @@
 import React from "react";
-import {EventCondition} from "../../../../../services/types";
+import {EventCondition, DeviceProfile} from "../../../../../services/types";
 
 export type CreateConditionData = Omit<EventCondition, 'id'>;
 
@@ -40,13 +40,48 @@ export const getLevelBadge = (level: EventCondition['level']) => {
     );
 };
 
-export const getOperatorLabel = (operator: EventCondition['operator']): string => {
+export const getOperatorLabel = (operator?: EventCondition['operator']): string => {
+    if (!operator) return '-';
+
     const operatorLabels = {
         GE: '이상',
         LE: '이하',
         BETWEEN: '≥ ~ ≤',
     } as const;
     return operatorLabels[operator];
+};
+
+export const getProfileByFieldKey = (profiles: DeviceProfile[], fieldKey: string): DeviceProfile | undefined => {
+    return profiles.find(profile => profile.fieldKey === fieldKey);
+};
+
+export const isBooleanProfile = (profiles: DeviceProfile[], fieldKey: string): boolean => {
+    const profile = getProfileByFieldKey(profiles, fieldKey);
+    return profile?.fieldType?.toUpperCase() === 'BOOLEAN';
+};
+
+export const isFloatProfile = (profiles: DeviceProfile[], fieldKey: string): boolean => {
+    const profile = getProfileByFieldKey(profiles, fieldKey);
+    return profile?.fieldType?.toUpperCase() === 'FLOAT';
+};
+
+export const getBooleanAvailableLevels = (): EventCondition['level'][] => {
+    return ['NORMAL', 'DANGER'];
+};
+
+export const getFloatAvailableLevels = (): EventCondition['level'][] => {
+    return ['NORMAL', 'WARNING', 'CAUTION', 'DANGER', 'DISCONNECTED'];
+};
+
+export const getAvailableLevelsByProfile = (profiles: DeviceProfile[], fieldKey: string): EventCondition['level'][] => {
+    if (isBooleanProfile(profiles, fieldKey)) {
+        return getBooleanAvailableLevels();
+    }
+    return getFloatAvailableLevels();
+};
+
+export const getBooleanValueLabel = (booleanValue: boolean): string => {
+    return booleanValue ? '참 (True)' : '거짓 (False)';
 };
 
 export const createDefaultCondition = (objectId: string): CreateConditionData => ({
@@ -60,7 +95,6 @@ export const createDefaultCondition = (objectId: string): CreateConditionData =>
     rightValue: 2.0,
     booleanValue: true,
     notificationEnabled: true,
-    order: 0,
     activate: true,
 });
 
@@ -69,14 +103,56 @@ export const toCreateConditionData = (condition: EventCondition | CreateConditio
     return rest;
 };
 
-export const toApiConditionData = (condition: CreateConditionData) => {
-    const { objectId, order, ...apiData } = condition;
-    return apiData;
+export const toApiConditionData = (condition: CreateConditionData, profiles: DeviceProfile[]) => {
+    const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
+    
+    if (isBoolean) {
+        return {
+            fieldKey: condition.fieldKey,
+            level: condition.level,
+            booleanValue: condition.booleanValue ?? true,
+            activate: condition.activate,
+            notificationEnabled: condition.notificationEnabled,
+        };
+    } else {
+        const baseData = {
+            fieldKey: condition.fieldKey,
+            level: condition.level,
+            conditionType: condition.conditionType,
+            operator: condition.operator,
+            activate: condition.activate,
+            notificationEnabled: condition.notificationEnabled,
+        };
+
+        if (condition.conditionType === 'SINGLE') {
+            return {
+                ...baseData,
+                thresholdValue: condition.thresholdValue,
+            };
+        } else if (condition.conditionType === 'RANGE') {
+            return {
+                ...baseData,
+                leftValue: condition.leftValue,
+                rightValue: condition.rightValue,
+            };
+        }
+
+        return baseData;
+    }
 };
 
-export const validateConditionData = (condition: CreateConditionData): boolean => {
+export const validateConditionData = (condition: CreateConditionData, profiles: DeviceProfile[]): boolean => {
     if (!condition.fieldKey || condition.fieldKey.trim() === '') {
         return false;
+    }
+    
+    const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
+    
+    if (isBoolean) {
+        return condition.level !== undefined &&
+               getBooleanAvailableLevels().includes(condition.level) &&
+               condition.booleanValue !== undefined && 
+               condition.booleanValue !== null;
     }
     
     if (condition.conditionType === 'SINGLE') {
@@ -99,4 +175,30 @@ export const validateConditionData = (condition: CreateConditionData): boolean =
     }
     
     return true;
+};
+
+export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string) => {
+    const isBoolean = isBooleanProfile(profiles, fieldKey);
+    
+    if (isBoolean) {
+        return {
+            conditionType: 'SINGLE' as const,
+            operator: 'GE' as const,
+            thresholdValue: undefined,
+            leftValue: undefined,
+            rightValue: undefined,
+            booleanValue: true,
+            level: 'NORMAL' as const
+        };
+    }
+    
+    return {
+        conditionType: 'SINGLE' as const,
+        operator: 'GE' as const,
+        thresholdValue: 1.0,
+        leftValue: undefined,
+        rightValue: undefined,
+        booleanValue: false,
+        level: 'NORMAL' as const
+    };
 };

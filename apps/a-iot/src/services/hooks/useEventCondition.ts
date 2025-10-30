@@ -1,7 +1,7 @@
 import useSWR, { SWRConfiguration, mutate } from 'swr';
 import { useApiClient } from "@plug-atlas/api-hooks";
 import { EventCondition } from '../types';
-
+import {CreateConditionData} from "../../pages/devices/sensor/detail/handlers/EventConditionUtils.tsx";
 
 export interface EventConditionResponse {
     data: EventCondition;
@@ -31,20 +31,19 @@ export const useEventConditionMutations = () => {
     const client = useApiClient();
 
     const createEventConditions = async (request: {
-        conditions: {
-            activate: boolean;
-            booleanValue?: false | true | undefined;
-            conditionType: "SINGLE" | "RANGE";
+        conditions: Array<{
             fieldKey: string;
-            leftValue?: number | undefined;
             level: "NORMAL" | "WARNING" | "CAUTION" | "DANGER" | "DISCONNECTED";
+            activate: boolean;
             notificationEnabled: boolean;
-            operator: "GE" | "LE" | "BETWEEN";
-            order?: number;
-            rightValue?: number | undefined;
-            thresholdValue?: number | undefined
-        }[];
-        objectId: string
+            booleanValue?: boolean;
+            conditionType?: "SINGLE" | "RANGE";
+            operator?: "GE" | "LE" | "BETWEEN";
+            thresholdValue?: number;
+            leftValue?: number;
+            rightValue?: number;
+        }>;
+        objectId: string;
     }) => {
         const response = await client.post<ApiResponse<EventCondition[]>>(
             'event-conditions',
@@ -56,35 +55,7 @@ export const useEventConditionMutations = () => {
         return response;
     };
 
-    const updateEventConditions = async (request: {
-        conditions: ({
-            activate: boolean;
-            booleanValue?: false | true | undefined;
-            conditionType: "SINGLE" | "RANGE";
-            fieldKey: string;
-            leftValue?: number | undefined;
-            level: "NORMAL" | "WARNING" | "CAUTION" | "DANGER" | "DISCONNECTED";
-            notificationEnabled: boolean;
-            objectId: string;
-            operator: "GE" | "LE" | "BETWEEN";
-            order: number;
-            rightValue?: number | undefined;
-            thresholdValue?: number | undefined
-        } | {
-            activate: boolean;
-            booleanValue?: false | true | undefined;
-            conditionType: "SINGLE" | "RANGE";
-            fieldKey: string;
-            leftValue?: number | undefined;
-            level: "NORMAL" | "WARNING" | "CAUTION" | "DANGER" | "DISCONNECTED";
-            notificationEnabled: boolean;
-            operator: "GE" | "LE" | "BETWEEN";
-            order: number;
-            rightValue?: number | undefined;
-            thresholdValue?: number | undefined
-        })[];
-        objectId: string
-    }) => {
+    const updateEventConditions = async (request: { conditions: CreateConditionData[]; objectId: string }) => {
         const response = await client.put<ApiResponse<EventCondition[]>>(
             'event-conditions',
             request

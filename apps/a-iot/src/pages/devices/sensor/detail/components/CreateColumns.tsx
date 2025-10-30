@@ -36,26 +36,37 @@ export const createColumns = ({
         ),
     },
     {
+
         key: 'level',
         header: '레벨',
-        cell: (value: EventCondition['level'], _row: EventCondition, index: number) => (
-            <EditableLevel
-                value={editingData[index]?.level ?? value ?? 'NORMAL'}
-                onChange={(newValue: EventCondition['level']) => handleEditDataChange(index, 'level', newValue)}
-                isEditing={true}
-            />
-        ),
+        cell: (value: EventCondition['level'], row: EventCondition, index: number) => {
+            const currentRow = editingData[index] || row;
+            return (
+                <EditableLevel
+                    value={currentRow.level ?? value ?? 'NORMAL'}
+                    onChange={(newValue: EventCondition['level']) => handleEditDataChange(index, 'level', newValue)}
+                    isEditing={true}
+                    profiles={profiles}
+                    fieldKey={currentRow.fieldKey ?? ''}
+                />
+            );
+        },
     },
     {
         key: 'conditionType',
         header: '타입',
-        cell: (value: EventCondition['conditionType'], _row: EventCondition, index: number) => (
-            <EditableConditionType
-                value={editingData[index]?.conditionType ?? value ?? 'SINGLE'}
-                onChange={(newValue: EventCondition['conditionType']) => handleEditDataChange(index, 'conditionType', newValue)}
-                isEditing={true}
-            />
-        ),
+        cell: (value: EventCondition['conditionType'], row: EventCondition, index: number) => {
+            const currentRow = editingData[index] || row;
+            return (
+                <EditableConditionType
+                    value={currentRow.conditionType ?? value ?? 'SINGLE'}
+                    onChange={(newValue: EventCondition['conditionType']) => handleEditDataChange(index, 'conditionType', newValue)}
+                    isEditing={true}
+                    profiles={profiles}
+                    fieldKey={currentRow.fieldKey ?? ''}
+                />
+            );
+        },
     },
     {
         key: 'operator',
@@ -68,6 +79,7 @@ export const createColumns = ({
                     row={displayRow}
                     onChange={(field: keyof EventCondition, newValue: any) => handleEditDataChange(index, field, newValue)}
                     isEditing={true}
+                    profiles={profiles}
                 />
             );
         },

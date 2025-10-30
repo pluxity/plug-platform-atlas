@@ -1,144 +1,288 @@
-import { DeviceProfile, EventCondition } from "../../../../../services/types";
+import React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input } from '@plug-atlas/ui';
+import { DeviceProfile, EventCondition } from '../../../../../services/types';
+import { 
+    getOperatorLabel, 
+    getLevelBadge, 
+    getAvailableLevelsByProfile, 
+    isBooleanProfile,
+    getBooleanValueLabel
+} from '../handlers/EventConditionUtils';
 
 interface EditableFieldKeyProps {
     value: string;
     onChange: (value: string) => void;
     profiles: DeviceProfile[];
-    isEditing?: boolean;
+    isEditing: boolean;
 }
 
-export const EditableFieldKey = ({ value, onChange, profiles, isEditing = true }: EditableFieldKeyProps) => {
-    // 값이 undefined나 null인 경우 빈 문자열로 처리
-    const safeValue = value || '';
+export const EditableFieldKey: React.FC<EditableFieldKeyProps> = ({
+    value,
+    onChange,
+    profiles,
+    isEditing
+}) => {
+    if (!isEditing) {
+        return (
+            <div className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                {value}
+            </div>
+        );
+    }
 
     return (
-        <select
-            value={safeValue}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full p-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-            disabled={!isEditing}
-        >
-            <option value="">선택하세요</option>
-            {profiles.map(profile => (
-                <option key={profile.fieldKey} value={profile.fieldKey}>
-                    {profile.fieldKey}
-                </option>
-            ))}
-        </select>
+        <Select value={value} onValueChange={onChange}>
+            <SelectTrigger className="w-full">
+                <SelectValue placeholder="Field Key 선택" />
+            </SelectTrigger>
+            <SelectContent>
+                {profiles.map((profile) => (
+                    <SelectItem key={profile.fieldKey} value={profile.fieldKey}>
+                        <div className="flex flex-col">
+                            <span className="font-mono text-sm">{profile.fieldKey}</span>
+                            <span className="text-xs text-gray-500">
+                                {profile.description} ({profile.fieldType})
+                            </span>
+                        </div>
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
     );
 };
 
 interface EditableLevelProps {
     value: EventCondition['level'];
     onChange: (value: EventCondition['level']) => void;
-    isEditing?: boolean;
+    isEditing: boolean;
+    profiles: DeviceProfile[];
+    fieldKey: string;
 }
 
-export const EditableLevel = ({ value, onChange, isEditing = true }: EditableLevelProps) => {
-    // 값이 undefined인 경우 기본값 설정
-    const safeValue = value || 'NORMAL';
+export const EditableLevel: React.FC<EditableLevelProps> = ({
+    value,
+    onChange,
+    isEditing,
+    profiles,
+    fieldKey
+}) => {
+    if (!isEditing) {
+        return getLevelBadge(value);
+    }
+
+    const availableLevels = getAvailableLevelsByProfile(profiles, fieldKey);
+    const isBoolean = isBooleanProfile(profiles, fieldKey);
 
     return (
-        <select
-            value={safeValue}
-            onChange={(e) => onChange(e.target.value as EventCondition['level'])}
-            className="w-full p-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-            disabled={!isEditing}
-        >
-            <option value="NORMAL">일반</option>
-            <option value="WARNING">경고</option>
-            <option value="CAUTION">주의</option>
-            <option value="DANGER">위험</option>
-            <option value="DISCONNECTED">연결 끊김</option>
-        </select>
+        <Select value={value} onValueChange={(value: string) => onChange(value as EventCondition['level'])}>
+            <SelectTrigger className="w-full">
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+                {availableLevels.map((level) => (
+                    <SelectItem key={level} value={level}>
+                        <div className="flex items-center gap-2">
+                            {getLevelBadge(level)}
+                            {isBoolean && level === 'NORMAL' && (
+                                <span className="text-xs text-gray-500">(True 상태)</span>
+                            )}
+                            {isBoolean && level === 'DANGER' && (
+                                <span className="text-xs text-gray-500">(False 상태)</span>
+                            )}
+                        </div>
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
     );
 };
 
 interface EditableConditionTypeProps {
     value: EventCondition['conditionType'];
     onChange: (value: EventCondition['conditionType']) => void;
-    isEditing?: boolean;
+    isEditing: boolean;
+    profiles: DeviceProfile[];
+    fieldKey: string;
 }
 
-export const EditableConditionType = ({ value, onChange, isEditing = true }: EditableConditionTypeProps) => {
-    // 값이 undefined인 경우 기본값 설정
-    const safeValue = value || 'SINGLE';
+export const EditableConditionType: React.FC<EditableConditionTypeProps> = ({
+    value,
+    onChange,
+    isEditing,
+    profiles,
+    fieldKey
+}) => {
+    const isBoolean = isBooleanProfile(profiles, fieldKey);
+    
+    if (!isEditing || isBoolean) {
+        // Boolean 프로필이거나 편집 모드가 아닌 경우 고정 표시
+        return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                {isBoolean ? 'Boolean' : (value === 'SINGLE' ? '단일' : '범위')}
+            </span>
+        );
+    }
 
     return (
-        <select
-            value={safeValue}
-            onChange={(e) => onChange(e.target.value as EventCondition['conditionType'])}
-            className="w-full p-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-            disabled={!isEditing}
-        >
-            <option value="SINGLE">단일</option>
-            <option value="RANGE">범위</option>
-        </select>
+        <Select value={value} onValueChange={(value: string) => onChange(value as EventCondition['conditionType'])}>
+            <SelectTrigger className="w-full">
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="SINGLE">단일 조건</SelectItem>
+                <SelectItem value="RANGE">범위 조건</SelectItem>
+            </SelectContent>
+        </Select>
     );
 };
 
 interface EditableConditionProps {
     row: EventCondition;
-    isEditing?: boolean;
     onChange: (field: keyof EventCondition, value: any) => void;
+    isEditing: boolean;
+    profiles: DeviceProfile[];
 }
 
-export const EditableCondition = ({ row, onChange, isEditing = true }: EditableConditionProps) => {
-    // 안전한 값들 설정
-    const safeRow = {
-        ...row,
-        operator: row.operator || 'GE',
-        conditionType: row.conditionType || 'SINGLE',
-        thresholdValue: row.thresholdValue ?? 0,
-        leftValue: row.leftValue ?? 0,
-        rightValue: row.rightValue ?? 0
-    };
+export const EditableCondition: React.FC<EditableConditionProps> = ({
+    row,
+    onChange,
+    isEditing,
+    profiles
+}) => {
+    const isBoolean = isBooleanProfile(profiles, row.fieldKey);
 
+    if (!isEditing) {
+        if (isBoolean) {
+            return (
+                <div className="text-sm">
+                    <div className="font-medium">{getBooleanValueLabel(row.booleanValue ?? true)}</div>
+                    <div className="text-xs text-gray-500">Boolean 조건</div>
+                </div>
+            );
+        }
+
+        if (row.conditionType === 'RANGE') {
+            return (
+                <div className="text-sm">
+                    <div className="font-medium">
+                        {row.leftValue} {getOperatorLabel('BETWEEN')} {row.rightValue}
+                    </div>
+                    <div className="text-xs text-gray-500">범위 조건</div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="text-sm">
+                <div className="font-medium">
+                    {getOperatorLabel(row.operator)} {row.thresholdValue}
+                </div>
+                <div className="text-xs text-gray-500">단일 조건</div>
+            </div>
+        );
+    }
+
+    // Boolean 프로필인 경우 Boolean 값 선택
+    if (isBoolean) {
+        return (
+            <div className="space-y-2">
+                <div className="text-xs font-medium text-gray-700">트리거 조건</div>
+                <Select 
+                    value={row.booleanValue ? 'true' : 'false'} 
+                    onValueChange={(value) => onChange('booleanValue', value === 'true')}
+                >
+                    <SelectTrigger className="w-full">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="true">
+                            <div className="flex flex-col">
+                                <span>참 (True)</span>
+                                <span className="text-xs text-gray-500">값이 true일 때 알림</span>
+                            </div>
+                        </SelectItem>
+                        <SelectItem value="false">
+                            <div className="flex flex-col">
+                                <span>거짓 (False)</span>
+                                <span className="text-xs text-gray-500">값이 false일 때 알림</span>
+                            </div>
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        );
+    }
+
+    // Float 프로필인 경우 수치 조건
+    if (row.conditionType === 'RANGE') {
+        return (
+            <div className="space-y-2">
+                <div className="text-xs font-medium text-gray-700">범위 조건</div>
+                <div className="flex items-center gap-2">
+                    <Input
+                        type="number"
+                        step="0.01"
+                        value={row.leftValue ?? ''}
+                        onChange={(e) => onChange('leftValue', parseFloat(e.target.value) || undefined)}
+                        placeholder="최소값"
+                        className="w-20 text-sm"
+                    />
+                    <span className="text-xs text-gray-500">≤ 값 ≤</span>
+                    <Input
+                        type="number"
+                        step="0.01"
+                        value={row.rightValue ?? ''}
+                        onChange={(e) => onChange('rightValue', parseFloat(e.target.value) || undefined)}
+                        placeholder="최대값"
+                        className="w-20 text-sm"
+                    />
+                </div>
+                <div className="text-xs text-gray-500">
+                    값이 {row.leftValue ?? '최소값'}와 {row.rightValue ?? '최대값'} 사이에 있을 때 알림
+                </div>
+            </div>
+        );
+    }
+
+    // 단일 조건 (SINGLE)
     return (
-        <div className="space-y-1">
-            {safeRow.conditionType === 'SINGLE' ? (
-                <div className="flex gap-1">
-                    <select
-                        value={safeRow.operator}
-                        onChange={(e) => onChange('operator', e.target.value)}
-                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
-                        disabled={!isEditing}
-                    >
-                        <option value="GE">≥</option>
-                        <option value="LE">≤</option>
-                    </select>
-                    <input
-                        type="number"
-                        step="0.1"
-                        value={safeRow.thresholdValue || ''}
-                        onChange={(e) => onChange('thresholdValue', e.target.value ? parseFloat(e.target.value) : undefined)}
-                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
-                        disabled={!isEditing}
-                        placeholder="값 입력"
-                    />
-                </div>
-            ) : (
-                <div className="flex gap-1">
-                    <input
-                        type="number"
-                        step="0.1"
-                        value={safeRow.leftValue || ''}
-                        onChange={(e) => onChange('leftValue', e.target.value ? parseFloat(e.target.value) : undefined)}
-                        placeholder="최소"
-                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
-                        disabled={!isEditing}
-                    />
-                    <input
-                        type="number"
-                        step="0.1"
-                        value={safeRow.rightValue || ''}
-                        onChange={(e) => onChange('rightValue', e.target.value ? parseFloat(e.target.value) : undefined)}
-                        placeholder="최대"
-                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
-                        disabled={!isEditing}
-                    />
-                </div>
-            )}
+        <div className="space-y-2">
+            <div className="text-xs font-medium text-gray-700">단일 조건</div>
+            <div className="flex items-center gap-2">
+                <Select 
+                    value={row.operator || 'GE'} 
+                    onValueChange={(value: string) => onChange('operator', value as EventCondition['operator'])}
+                >
+                    <SelectTrigger className="w-20">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="GE">
+                            <div className="flex flex-col">
+                                <span>이상</span>
+                                <span className="text-xs text-gray-400">≥</span>
+                            </div>
+                        </SelectItem>
+                        <SelectItem value="LE">
+                            <div className="flex flex-col">
+                                <span>이하</span>
+                                <span className="text-xs text-gray-400">≤</span>
+                            </div>
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <Input
+                    type="number"
+                    step="0.01"
+                    value={row.thresholdValue ?? ''}
+                    onChange={(e) => onChange('thresholdValue', parseFloat(e.target.value) || undefined)}
+                    placeholder="기준값"
+                    className="w-24 text-sm"
+                />
+            </div>
+            <div className="text-xs text-gray-500">
+                값이 {row.thresholdValue ?? '기준값'} {getOperatorLabel(row.operator || 'GE')}일 때 알림
+            </div>
         </div>
     );
 };

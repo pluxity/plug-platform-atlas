@@ -3,14 +3,13 @@ export interface EventCondition {
     objectId: string;
     fieldKey: string;
     level: 'NORMAL' | 'WARNING' | 'CAUTION' | 'DANGER' | 'DISCONNECTED';
-    conditionType: 'SINGLE' | 'RANGE';
-    operator: 'GE' | 'LE' | 'BETWEEN';
+    conditionType?: 'SINGLE' | 'RANGE';
+    operator?: 'GE' | 'LE' | 'BETWEEN';
     thresholdValue?: number;
     leftValue?: number;
     rightValue?: number;
     booleanValue?: boolean;
     notificationEnabled: boolean;
-    order: number;
     activate: boolean;
 }
 
