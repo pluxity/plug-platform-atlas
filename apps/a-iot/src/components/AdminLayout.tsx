@@ -4,9 +4,9 @@ import { Toaster } from '@plug-atlas/ui'
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="relative min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <AppSideMenu />
-      <main className="ml-[304px] min-h-screen p-6">
+      <main className="ml-[21rem] min-h-screen p-6">
         {children}
       </main>
       <Toaster />

@@ -1,4 +1,4 @@
-import { Building2, User, LogOut, Settings as SettingsIcon } from 'lucide-react'
+import { Building2, Bell, LogOut, ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   SideMenu,
@@ -6,25 +6,19 @@ import {
   SideMenuContent,
   SideMenuHeader,
   SideMenuNav,
-  SideMenuFooter,
   SideMenuSubMenu,
   SideMenuSubItem,
   Avatar,
   AvatarFallback,
   AvatarImage,
   Badge,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
+  Button,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@plug-atlas/ui'
-import { MAIN_MENU_ITEMS, REALTIME_ALARM_MENU, ADMIN_MENU_ITEMS } from '../constants/menu'
+import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../constants/menu'
 import { useAuthStore } from '../stores'
-import { ChevronRight } from 'lucide-react'
 
 const realtimeAlarmCount = 5
 
@@ -44,7 +38,8 @@ export default function AppSideMenu() {
 
   const isActive = (path: string) => location.pathname === path
 
-  const handleRealtimeAlarmClick = () => {
+  const handleAlarmClick = () => {
+    // TODO: 알람/이벤트 모달 구현
   }
 
   const renderMenuItem = (item: typeof MAIN_MENU_ITEMS[0]) => {
@@ -105,94 +100,75 @@ export default function AppSideMenu() {
   }
 
   return (
-    <div className="fixed top-0 left-0 h-screen z-50 flex flex-col">
-      <SideMenu defaultOpen={true} collapsible={false} className="flex flex-col h-full">
+    <div className="fixed top-0 left-0 h-screen z-50 p-4">
+      <SideMenu defaultOpen={true} collapsible={false} className="flex flex-col gap-2 h-full">
         {({ open }) => (
           <>
-            <SideMenuTrigger open={open} showChevron={false} className="m-4 mb-0">
+            <SideMenuTrigger open={open} showChevron={false} className="h-10 shrink-0">
               <Building2 className="size-5 text-blue-600" />
               <span className="font-semibold text-sm">시민안심공원 서비스</span>
             </SideMenuTrigger>
-            <SideMenuContent className="m-4 mt-2 flex-1 h-[calc(100vh-88px)]">
-              <SideMenuNav>
-                <div className="space-y-1">
-                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-500">
-                    메인 메뉴
-                  </div>
-                  {MAIN_MENU_ITEMS.map(renderMenuItem)}
-                </div>
 
-                <div className="space-y-1 mt-4">
-                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-500">
-                    관리 기능
+            <SideMenuContent className="w-72 flex-1 min-h-0 overflow-y-auto shrink-0">
+              <SideMenuHeader className="py-2 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Avatar className="size-8 rounded-lg">
+                    <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                    <AvatarFallback className="rounded-lg bg-blue-50 text-blue-600 text-xs font-medium">
+                      {currentUser.name.slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col items-start text-left flex-1 min-w-0">
+                    <span className="text-xs text-gray-500">{currentUser.role || '일반 사용자'}</span>
+                    <span className="text-sm font-semibold truncate">{currentUser.name}</span>
                   </div>
-                  {ADMIN_MENU_ITEMS.map(renderMenuItem)}
-                </div>
 
-                <div className="space-y-1 mt-4">
-                  <button
-                    onClick={handleRealtimeAlarmClick}
-                    className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <REALTIME_ALARM_MENU.icon className="size-4" />
-                      <span>{REALTIME_ALARM_MENU.title}</span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-gray-600 hover:text-red-600"
+                      onClick={logout}
+                    >
+                      <LogOut className="size-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 relative"
+                      onClick={handleAlarmClick}
+                    >
+                      <Bell className="size-4" />
+                      {realtimeAlarmCount > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="absolute -top-1 -right-1 size-4 flex items-center justify-center p-0 text-xs"
+                        >
+                          {realtimeAlarmCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </SideMenuHeader>
+
+              <SideMenuNav className="flex-1">
+                <div className="space-y-4">
+                  <div className="space-y-0.5">
+                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-400">
+                      메인 메뉴
                     </div>
-                    {realtimeAlarmCount > 0 && (
-                      <Badge variant="destructive" className="text-xs">
-                        {realtimeAlarmCount}
-                      </Badge>
-                    )}
-                  </button>
+                    {MAIN_MENU_ITEMS.map(renderMenuItem)}
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-400">
+                      관리 기능
+                    </div>
+                    {ADMIN_MENU_ITEMS.map(renderMenuItem)}
+                  </div>
                 </div>
               </SideMenuNav>
-
-              <SideMenuFooter>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 w-full hover:bg-gray-50 rounded-md p-2 transition-colors">
-                      <Avatar className="size-8 rounded-lg">
-                        <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                        <AvatarFallback className="rounded-lg bg-blue-600 text-white text-xs">
-                          {currentUser.name.slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col items-start text-left">
-                        <span className="text-sm font-semibold">{currentUser.name}</span>
-                        <span className="text-xs text-gray-500">{currentUser.email}</span>
-                      </div>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
-                    <div className="flex items-center gap-2 p-2">
-                      <Avatar className="size-10 rounded-lg">
-                        <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                        <AvatarFallback className="rounded-lg bg-blue-600 text-white">
-                          {currentUser.name.slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">{currentUser.name}</span>
-                        <span className="text-xs text-gray-500">{currentUser.email}</span>
-                      </div>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <User className="mr-2 size-4" />
-                      <span>프로필</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <SettingsIcon className="mr-2 size-4" />
-                      <span>설정</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600" onClick={logout}>
-                      <LogOut className="mr-2 size-4" />
-                      <span>로그아웃</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </SideMenuFooter>
             </SideMenuContent>
           </>
         )}
