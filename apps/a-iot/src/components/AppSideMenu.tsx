@@ -1,3 +1,4 @@
+import React from 'react'
 import { Building2, Bell, LogOut, ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import {
@@ -20,6 +21,7 @@ import {
 import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../constants/menu'
 import { useAuthStore } from '../stores'
 
+// TODO: API 연동 후 실제 알람 개수로 교체
 const realtimeAlarmCount = 5
 
 export default function AppSideMenu() {
@@ -36,13 +38,16 @@ export default function AppSideMenu() {
         avatar: '',
       }
 
-  const isActive = (path: string) => location.pathname === path
+  const isActive = React.useCallback(
+    (path: string) => location.pathname === path,
+    [location.pathname]
+  )
 
   const handleAlarmClick = () => {
     // TODO: 알람/이벤트 모달 구현
   }
 
-  const renderMenuItem = (item: typeof MAIN_MENU_ITEMS[0]) => {
+  const renderMenuItem = React.useCallback((item: typeof MAIN_MENU_ITEMS[0]) => {
     const Icon = item.icon
 
     if (item.children && item.children.length > 0) {
@@ -97,7 +102,7 @@ export default function AppSideMenu() {
         <span>{item.title}</span>
       </Link>
     )
-  }
+  }, [isActive])
 
   return (
     <div className="fixed top-0 left-0 h-screen z-50 p-4">
