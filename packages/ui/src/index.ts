@@ -48,3 +48,6 @@ export * from './organisms/form'
 export * from './organisms/login-form'
 export * from './organisms/navigation-menu'
 export * from './organisms/sidebar'
+export * from './organisms/side-menu'
+
+export * from './templates/two-column-layout'

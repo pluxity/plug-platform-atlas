@@ -23,3 +23,12 @@ export {
   useUpdateSite,
   useDeleteSite,
 } from './useSite'
+
+// Permission hooks
+export {
+  usePermissionResources,
+} from './usePermission'
+
+export {
+  usePermissionCheckbox,
+} from './usePermissionCheckbox'

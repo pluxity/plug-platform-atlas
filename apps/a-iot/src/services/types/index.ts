@@ -29,3 +29,13 @@ export type {
   SiteCreateRequest,
   SiteUpdateRequest,
 } from './site'
+
+// Permission types
+export type {
+  PermissionResourceItem,
+  PermissionResourcesData,
+} from './permission'
+
+export type {
+  PermissionCheckboxItem,
+} from './permissionCheckbox'
