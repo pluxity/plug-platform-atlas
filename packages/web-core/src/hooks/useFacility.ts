@@ -2,7 +2,7 @@ import useSWR, { type SWRConfiguration } from 'swr'
 import useSWRMutation, { type SWRMutationConfiguration } from 'swr/mutation'
 import { useApiClient } from '@plug-atlas/api-hooks'
 import type { FacilityResponse, FacilityRequest } from '../types/facility'
-import type { DataResponse } from '../types/feature'
+import type { TimeSeriesDataResponse } from '../types/feature'
 
 type DataResponseWrapper<T> = { data: T }
 
@@ -92,14 +92,14 @@ export function useDeleteFacility(options?: SWRMutationConfiguration<void, Error
  */
 export function useFacilityTimeSeries(
   facilityId: number | null,
-  options?: SWRConfiguration<DataResponse[], Error>
+  options?: SWRConfiguration<TimeSeriesDataResponse[], Error>
 ) {
   const client = useApiClient()
 
   return useSWR(
     facilityId ? `/facilities/${facilityId}/time-series` : null,
     async () => {
-      const response = await client.get<DataResponseWrapper<DataResponse[]>>(`/facilities/${facilityId}/time-series`)
+      const response = await client.get<DataResponseWrapper<TimeSeriesDataResponse[]>>(`/facilities/${facilityId}/time-series`)
       return response.data
     },
     options
