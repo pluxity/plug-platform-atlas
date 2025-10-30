@@ -1,204 +1,201 @@
-import React from "react";
-import {EventCondition, DeviceProfile} from "../../../../../services/types";
-
-export type CreateConditionData = Omit<EventCondition, 'id'>;
+import React from 'react';
+import {DeviceProfile, EventCondition} from "../../../../../services/types";
+import {EventConditionOperator, EventLevel} from "../../../../../services/types/eventCondition.ts";
 
 export interface Column<T> {
     key: keyof T;
     header: string;
-    cell: (value: any, row: T, index: number) => React.ReactNode;
+    cell: (value: any, row: T, index?: number) => React.ReactNode;
 }
 
-export interface EditHandlers {
-    handleStartEdit: (row: EventCondition, index: number) => void;
-    handleCancelEdit: (index: number) => void;
-    handleSaveEdit: (index: number) => Promise<void>;
-    handleEditDataChange: (index: number, field: keyof EventCondition, value: any) => void;
-    getEditingValue: (index: number, field: keyof EventCondition, originalValue: any) => any;
-}
-
-export interface NewConditionHandlers {
-    handleAddNew: () => void;
-    handleSaveNew: () => Promise<void>;
-    handleCancelNew: () => void;
-}
-
-export const getLevelBadge = (level: EventCondition['level']) => {
-    const levelConfigs = {
-        NORMAL: { color: 'bg-blue-100 text-blue-800', label: '일반' },
-        WARNING: { color: 'bg-yellow-100 text-yellow-800', label: '경고' },
-        CAUTION: { color: 'bg-orange-100 text-orange-800', label: '주의' },
-        DANGER: { color: 'bg-red-100 text-red-800', label: '위험' },
-        DISCONNECTED: { color: 'bg-gray-100 text-gray-800', label: '연결 끊김' },
-    } as const;
-
-    const config = levelConfigs[level];
-    return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
-            {config.label}
-        </span>
-    );
-};
-
-export const getOperatorLabel = (operator?: EventCondition['operator']): string => {
-    if (!operator) return '-';
-
-    const operatorLabels = {
-        GE: '이상',
-        LE: '이하',
-        BETWEEN: '≥ ~ ≤',
-    } as const;
-    return operatorLabels[operator];
-};
-
-export const getProfileByFieldKey = (profiles: DeviceProfile[], fieldKey: string): DeviceProfile | undefined => {
-    return profiles.find(profile => profile.fieldKey === fieldKey);
-};
-
-export const isBooleanProfile = (profiles: DeviceProfile[], fieldKey: string): boolean => {
-    const profile = getProfileByFieldKey(profiles, fieldKey);
-    return profile?.fieldType?.toUpperCase() === 'BOOLEAN';
-};
-
-export const isFloatProfile = (profiles: DeviceProfile[], fieldKey: string): boolean => {
-    const profile = getProfileByFieldKey(profiles, fieldKey);
-    return profile?.fieldType?.toUpperCase() === 'FLOAT';
-};
-
-export const getBooleanAvailableLevels = (): EventCondition['level'][] => {
-    return ['NORMAL', 'DANGER'];
-};
-
-export const getFloatAvailableLevels = (): EventCondition['level'][] => {
-    return ['NORMAL', 'WARNING', 'CAUTION', 'DANGER', 'DISCONNECTED'];
-};
-
-export const getAvailableLevelsByProfile = (profiles: DeviceProfile[], fieldKey: string): EventCondition['level'][] => {
-    if (isBooleanProfile(profiles, fieldKey)) {
-        return getBooleanAvailableLevels();
-    }
-    return getFloatAvailableLevels();
-};
-
-export const getBooleanValueLabel = (booleanValue: boolean): string => {
-    return booleanValue ? '참 (True)' : '거짓 (False)';
-};
-
-export const createDefaultCondition = (objectId: string): CreateConditionData => ({
+export const createDefaultCondition = (objectId: string): EventCondition => ({
     objectId,
     fieldKey: '',
     level: 'NORMAL',
     conditionType: 'SINGLE',
     operator: 'GE',
     thresholdValue: 1.0,
-    leftValue: 1.0,
-    rightValue: 2.0,
-    booleanValue: true,
+    leftValue: undefined,
+    rightValue: undefined,
     notificationEnabled: true,
     activate: true,
+    booleanValue: undefined,
+    guideMessage: ''
 });
 
-export const toCreateConditionData = (condition: EventCondition | CreateConditionData): CreateConditionData => {
-    const { id, ...rest } = condition as any;
-    return rest;
-};
+export const toCreateConditionData = (condition: EventCondition): EventCondition => ({
+    objectId: condition.objectId,
+    fieldKey: condition.fieldKey,
+    level: condition.level,
+    conditionType: condition.conditionType || 'SINGLE',
+    operator: condition.operator || 'GE',
+    thresholdValue: condition.thresholdValue,
+    leftValue: condition.leftValue,
+    rightValue: condition.rightValue,
+    notificationEnabled: condition.notificationEnabled,
+    activate: condition.activate,
+    booleanValue: condition.booleanValue,
+    guideMessage: condition.guideMessage || ''
+});
 
-export const toApiConditionData = (condition: CreateConditionData, profiles: DeviceProfile[]) => {
+export const toApiConditionData = (condition: EventCondition, profiles: DeviceProfile[]) => {
     const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
     
+    const baseData = {
+        objectId: condition.objectId,
+        fieldKey: condition.fieldKey,
+        level: condition.level,
+        conditionType: condition.conditionType,
+        operator: condition.operator,
+        notificationEnabled: condition.notificationEnabled,
+        activate: condition.activate,
+        guideMessage: condition.guideMessage || undefined
+    };
+
     if (isBoolean) {
         return {
-            fieldKey: condition.fieldKey,
-            level: condition.level,
-            booleanValue: condition.booleanValue ?? true,
-            activate: condition.activate,
-            notificationEnabled: condition.notificationEnabled,
+            ...baseData,
+            booleanValue: condition.booleanValue !== undefined ? condition.booleanValue : true
         };
     } else {
-        const baseData = {
-            fieldKey: condition.fieldKey,
-            level: condition.level,
-            conditionType: condition.conditionType,
-            operator: condition.operator,
-            activate: condition.activate,
-            notificationEnabled: condition.notificationEnabled,
+        return {
+            ...baseData,
+            ...(condition.conditionType === 'SINGLE' 
+                ? { thresholdValue: condition.thresholdValue }
+                : { leftValue: condition.leftValue, rightValue: condition.rightValue }
+            )
         };
-
-        if (condition.conditionType === 'SINGLE') {
-            return {
-                ...baseData,
-                thresholdValue: condition.thresholdValue,
-            };
-        } else if (condition.conditionType === 'RANGE') {
-            return {
-                ...baseData,
-                leftValue: condition.leftValue,
-                rightValue: condition.rightValue,
-            };
-        }
-
-        return baseData;
     }
 };
 
-export const validateConditionData = (condition: CreateConditionData, profiles: DeviceProfile[]): boolean => {
-    if (!condition.fieldKey || condition.fieldKey.trim() === '') {
+export const validateConditionData = (condition: EventCondition, profiles: DeviceProfile[]): boolean => {
+    if (!condition.fieldKey || !condition.level || !condition.conditionType || !condition.operator) {
         return false;
     }
-    
+
     const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
     
     if (isBoolean) {
-        return condition.level !== undefined &&
-               getBooleanAvailableLevels().includes(condition.level) &&
-               condition.booleanValue !== undefined && 
-               condition.booleanValue !== null;
+        return condition.booleanValue !== undefined;
     }
-    
+
     if (condition.conditionType === 'SINGLE') {
-        return condition.thresholdValue !== undefined &&
-            condition.thresholdValue !== null &&
-            !isNaN(Number(condition.thresholdValue));
+        return condition.thresholdValue !== undefined && condition.thresholdValue !== null;
+    } else if (condition.conditionType === 'RANGE') {
+        return condition.leftValue !== undefined && condition.leftValue !== null &&
+               condition.rightValue !== undefined && condition.rightValue !== null;
     }
-    
-    if (condition.conditionType === 'RANGE') {
-        const hasValidLeft = condition.leftValue !== undefined && 
-                             condition.leftValue !== null && 
-                             !isNaN(Number(condition.leftValue));
-        const hasValidRight = condition.rightValue !== undefined && 
-                              condition.rightValue !== null && 
-                              !isNaN(Number(condition.rightValue));
-        
-        if (!hasValidLeft || !hasValidRight) return false;
-        
-        return Number(condition.leftValue) < Number(condition.rightValue);
-    }
-    
-    return true;
+
+    return false;
 };
 
-export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string) => {
-    const isBoolean = isBooleanProfile(profiles, fieldKey);
+export const isBooleanProfile = (profiles: DeviceProfile[], fieldKey: string): boolean => {
+    const profile = profiles.find(p => p.fieldKey === fieldKey);
+    return profile?.fieldType === 'BOOLEAN';
+};
+
+export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string): Partial<EventCondition> => {
+    const profile = profiles.find(p => p.fieldKey === fieldKey);
     
-    if (isBoolean) {
+    if (!profile) {
+        return {};
+    }
+    
+    if (profile.fieldType === 'BOOLEAN') {
         return {
-            conditionType: 'SINGLE' as const,
-            operator: 'GE' as const,
+            conditionType: 'SINGLE',
+            operator: 'GE',
+            booleanValue: true,
             thresholdValue: undefined,
             leftValue: undefined,
-            rightValue: undefined,
-            booleanValue: true,
-            level: 'NORMAL' as const
+            rightValue: undefined
         };
     }
     
     return {
-        conditionType: 'SINGLE' as const,
-        operator: 'GE' as const,
+        conditionType: 'SINGLE',
+        operator: 'GE',
+        booleanValue: undefined,
         thresholdValue: 1.0,
         leftValue: undefined,
-        rightValue: undefined,
-        booleanValue: false,
-        level: 'NORMAL' as const
+        rightValue: undefined
     };
+};
+
+export const formatConditionSummary = (condition: EventCondition | EventCondition, profiles: DeviceProfile[]): string => {
+    if (!condition.fieldKey) return '';
+    
+    const profile = profiles.find(p => p.fieldKey === condition.fieldKey);
+    const fieldName = profile?.description || condition.fieldKey;
+    const unit = profile?.fieldUnit ? ` ${profile.fieldUnit}` : '';
+
+    const levelMap: Record<EventLevel, string> = {
+        'NORMAL': '일반',
+        'WARNING': '경고',
+        'CAUTION': '주의',
+        'DANGER': '위험',
+        'DISCONNECTED': '연결끊김'
+    };
+    
+    const level = levelMap[condition.level] || '알 수 없음';
+    const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
+    
+    if (isBoolean) {
+        const value = condition.booleanValue ? 'ON' : 'OFF';
+        return `${fieldName}이 ${value} 상태일 때 ${level} 알림`;
+    }
+    
+    if (condition.conditionType === 'SINGLE' && condition.thresholdValue !== undefined) {
+        const operatorText = getOperatorLabel(condition.operator || 'GE');
+        return `${fieldName}이 ${condition.thresholdValue}${unit} ${operatorText}일 때 ${level} 알림`;
+    } else if (condition.conditionType === 'RANGE' && condition.leftValue !== undefined && condition.rightValue !== undefined) {
+        return `${fieldName}이 ${condition.leftValue}${unit} ~ ${condition.rightValue}${unit} 범위일 때 ${level} 알림`;
+    }
+    
+    return `${fieldName} 조건 설정 미완료`;
+};
+
+export const getOperatorLabel = (operator: EventConditionOperator): string => {
+    switch (operator) {
+        case 'GE': return '이상';
+        case 'LE': return '이하';
+        case 'BETWEEN': return '범위';
+        default: return operator;
+    }
+};
+
+export const getLevelBadge = (level: EventLevel): React.ReactNode => {
+    const levelConfig: Record<EventLevel, { label: string; className: string }> = {
+        NORMAL: { label: '일반', className: 'bg-green-100 text-green-800' },
+        WARNING: { label: '경고', className: 'bg-yellow-100 text-yellow-800' },
+        CAUTION: { label: '주의', className: 'bg-orange-100 text-orange-800' },
+        DANGER: { label: '위험', className: 'bg-red-100 text-red-800' },
+        DISCONNECTED: { label: '연결끊김', className: 'bg-gray-100 text-gray-800' }
+    };
+
+    const config = levelConfig[level] || levelConfig.NORMAL;
+    
+    return (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config?.className}`}>
+            {config?.label}
+        </span>
+    );
+};
+
+export const getAvailableLevelsByProfile = (profiles: DeviceProfile[], fieldKey: string): EventLevel[] => {
+    const isBoolean = isBooleanProfile(profiles, fieldKey);
+    
+    if (isBoolean) {
+        return ['NORMAL', 'DANGER']; // Boolean은 일반/위험만
+    }
+    
+    return ['NORMAL', 'WARNING', 'CAUTION', 'DANGER']; // 숫자형은 대부분의 레벨
+};
+
+export const getBooleanValueLabel = (value: boolean): string => {
+    return value ? 'ON (True)' : 'OFF (False)';
+};
+
+export const getProfileByFieldKey = (profiles: DeviceProfile[], fieldKey: string): DeviceProfile | undefined => {
+    return profiles.find(p => p.fieldKey === fieldKey);
 };

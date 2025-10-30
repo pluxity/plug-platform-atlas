@@ -1,11 +1,11 @@
 import React from 'react';
-import { Button, DataTable } from '@plug-atlas/ui';
+import { Button } from '@plug-atlas/ui';
 import { Plus, AlertTriangle, Info, Save, X, FileEdit } from 'lucide-react';
 import { DeviceProfile, EventCondition } from '../../../../../services/types';
 import { useEventConditionManager } from "../handlers/useEventConditionManager";
 import { createColumns } from "./CreateColumns";
 import { renderNewRowCell } from "./renderNewRowCell";
-import ErrorDisplay from "../../components/ErrorDisplay";
+import ErrorDisplay from '../../components/ErrorDisplay';
 
 interface EventConditionsManagerProps {
     objectId: string;
@@ -38,6 +38,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
         handleNewConditionChange,
         handleRemoveNewCondition,
         handleDelete,
+        getConditionSummary,
         refetch
     } = useEventConditionManager(objectId, profiles);
 
@@ -55,7 +56,8 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
         handleEditDataChange,
         handleSaveRow,
         handleCancelRow,
-        handleDelete
+        handleDelete,
+        getConditionSummary
     });
 
     const displayData = React.useMemo((): DisplayRowData[] => {
@@ -111,7 +113,8 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                             onCancelAll: handleCancelNew
                         },
                         profiles,
-                        isLastRow: newRowIndex === newConditions.length - 1
+                        isLastRow: newRowIndex === newConditions.length - 1,
+                        getConditionSummary
                     });
                 }
                 
@@ -120,11 +123,89 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                 return col.cell(value, row, originalIndex);
             }
         }));
-    }, [columns, newConditions, handleNewConditionChange, handleRemoveNewCondition, handleSaveNew, handleCancelNew, profiles]);
+    }, [columns, newConditions, handleNewConditionChange, handleRemoveNewCondition, handleSaveNew, handleCancelNew, profiles, getConditionSummary]);
 
     if (error) {
         return <ErrorDisplay onRetry={refetch} />;
     }
+
+    const renderExpandedTable = () => {
+        return (
+            <div className="overflow-hidden border border-gray-200 rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            {enhancedColumns.map((column, index) => (
+                                <th 
+                                    key={index}
+                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                    {column.header}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {displayData.map((rowData, rowIndex) => {
+                            const isEditing = rowData.isNewRow || editingData[rowData.originalIndex ?? -1] !== undefined;
+                            const condition = rowData.isNewRow 
+                                ? newConditions[Math.abs(rowData.id!) - 1] 
+                                : editingData[rowData.originalIndex ?? -1] || rowData;
+                            
+                            return (
+                                <React.Fragment key={rowData.id || rowIndex}>
+                                    <tr className="hover:bg-gray-50">
+                                        {enhancedColumns.map((column, colIndex) => (
+                                            <td key={colIndex}
+                                                className="px-6 py-4 whitespace-normal text-sm text-gray-900">
+                                                {column.cell(rowData[column.key], rowData)}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                    {isEditing && (
+                                        <tr>
+                                            <td colSpan={enhancedColumns.length}
+                                                className="px-6 py-4 bg-gray-50 border-t">
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            안내 메시지
+                                                        </label>
+                                                        <textarea
+                                                            value={condition?.guideMessage || ''}
+                                                            onChange={(e) => {
+                                                                if (rowData.isNewRow) {
+                                                                    handleNewConditionChange(Math.abs(rowData.id!) - 1, 'guideMessage', e.target.value);
+                                                                } else {
+                                                                    handleEditDataChange(rowData.originalIndex ?? -1, 'guideMessage', e.target.value);
+                                                                }
+                                                            }}
+                                                            placeholder="이 이벤트 조건에 대한 안내 메시지를 입력하세요..."
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                                                            rows={2}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            설정 요약
+                                                        </label>
+                                                        <div
+                                                            className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+                                                            {getConditionSummary(condition)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
 
     return (
         <div className="bg-white">
@@ -179,17 +260,13 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                 )}
             </div>
 
-            <div >
+            <div>
                 {isLoading ? (
                     <div className="text-center py-8">
                         <p className="text-gray-600">로딩 중...</p>
                     </div>
                 ) : displayData.length > 0 ? (
-                    <DataTable
-                        columns={enhancedColumns}
-                        data={displayData}
-                        className="border-0"
-                    />
+                    renderExpandedTable()
                 ) : (
                     <div className="text-center py-12">
                         <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">

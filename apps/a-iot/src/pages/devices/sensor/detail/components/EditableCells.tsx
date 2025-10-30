@@ -6,7 +6,8 @@ import {
     getLevelBadge,
     getAvailableLevelsByProfile,
     isBooleanProfile,
-    getBooleanValueLabel, getProfileByFieldKey
+    getBooleanValueLabel, 
+    getProfileByFieldKey
 } from '../handlers/EventConditionUtils';
 
 interface EditableFieldKeyProps {
@@ -123,7 +124,7 @@ export const EditableConditionType: React.FC<EditableConditionTypeProps> = ({
     }
 
     return (
-        <Select value={value} onValueChange={(value: string) => onChange(value as EventCondition['conditionType'])}>
+        <Select value={value || 'SINGLE'} onValueChange={(value: string) => onChange(value as EventCondition['conditionType'])}>
             <SelectTrigger className="w-full">
                 <SelectValue />
             </SelectTrigger>
@@ -174,7 +175,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
         return (
             <div className="text-sm">
                 <div className="font-medium">
-                    {getOperatorLabel(row.operator)} {row.thresholdValue}
+                    {getOperatorLabel(row.operator || 'GE')} {row.thresholdValue}
                 </div>
                 <div className="text-xs text-gray-500">단일 조건</div>
             </div>
@@ -232,8 +233,9 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         placeholder="최대값"
                         className="w-20 text-sm"
                     />
-                    <span
-                        className="text-xs text-gray-500">{getProfileByFieldKey(profiles, row.fieldKey)?.fieldUnit}</span>
+                    <span className="text-xs text-gray-500">
+                        {getProfileByFieldKey(profiles, row.fieldKey)?.fieldUnit}
+                    </span>
                 </div>
             </div>
         );
@@ -250,16 +252,8 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="GE">
-                            <div className="flex flex-col">
-                                <span className="text-xs text-gray-400">≥</span>
-                            </div>
-                        </SelectItem>
-                        <SelectItem value="LE">
-                            <div className="flex flex-col">
-                                <span className="text-xs text-gray-400">≤</span>
-                            </div>
-                        </SelectItem>
+                        <SelectItem value="GE">≥</SelectItem>
+                        <SelectItem value="LE">≤</SelectItem>
                     </SelectContent>
                 </Select>
                 <Input
@@ -270,6 +264,9 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                     placeholder="기준값"
                     className="w-24 text-sm"
                 />
+                <span className="text-xs text-gray-500">
+                    {getProfileByFieldKey(profiles, row.fieldKey)?.fieldUnit}
+                </span>
             </div>
         </div>
     );

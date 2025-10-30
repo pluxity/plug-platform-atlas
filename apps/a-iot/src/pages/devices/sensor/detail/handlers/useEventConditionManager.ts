@@ -7,7 +7,8 @@ import {
     toApiConditionData,
     validateConditionData,
     isBooleanProfile,
-    getConditionConfigByProfile
+    getConditionConfigByProfile,
+    formatConditionSummary
 } from "./EventConditionUtils";
 import { useEventConditionMutations, useEventConditions } from "../../../../../services/hooks";
 
@@ -60,7 +61,7 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
         const fieldsToCompare: (keyof EventCondition)[] = [
             'fieldKey', 'level', 'conditionType', 'operator', 
             'thresholdValue', 'leftValue', 'rightValue', 
-            'notificationEnabled', 'activate', 'booleanValue'
+            'notificationEnabled', 'activate', 'booleanValue', 'guideMessage'
         ];
         
         return fieldsToCompare.some(field => {
@@ -291,6 +292,10 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
         }
     };
 
+    const getConditionSummary = (condition: CreateConditionData | EventCondition | undefined): string => {
+        return formatConditionSummary(condition, profiles);
+    };
+
     return {
         conditionsData,
         isLoading,
@@ -308,6 +313,7 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
         handleNewConditionChange,
         handleRemoveNewCondition,
         handleDelete,
+        getConditionSummary,
         refetch
     };
 };

@@ -10,6 +10,7 @@ export interface EventCondition {
     rightValue?: number;
     booleanValue?: boolean;
     notificationEnabled: boolean;
+    guideMessage?: string;
     activate: boolean;
 }
 
@@ -17,3 +18,6 @@ export interface EventConditionRequest {
     objectId: string;
     conditions: Omit<EventCondition, 'id'>[];
 }
+
+export type EventLevel = 'NORMAL' | 'WARNING' | 'CAUTION' | 'DANGER' | 'DISCONNECTED';
+export type EventConditionOperator = 'GE' | 'LE' | 'BETWEEN';

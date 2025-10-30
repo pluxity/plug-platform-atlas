@@ -1,8 +1,8 @@
 import { Button } from "@plug-atlas/ui";
 import { DeviceProfile, EventCondition } from "../../../../../services/types";
-import { Column } from "../handlers/EventConditionUtils.tsx";
-import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from "./EditableCells.tsx";
-import {Bell, BellOff, Mail, MailX} from "lucide-react";
+import { Column } from "../handlers/EventConditionUtils";
+import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from "./EditableCells";
+import { Bell, BellOff, Mail, MailX } from "lucide-react";
 
 interface CreateColumnsProps {
     profiles: DeviceProfile[];
@@ -12,6 +12,7 @@ interface CreateColumnsProps {
     handleSaveRow: (index: number) => Promise<void>;
     handleCancelRow: (index: number) => void;
     handleDelete: (conditionId: number) => Promise<void>;
+    getConditionSummary: (condition: EventCondition) => string;
 }
 
 export const createColumns = ({
@@ -21,19 +22,21 @@ export const createColumns = ({
     handleEditDataChange,
     handleSaveRow,
     handleCancelRow,
-    handleDelete
+    handleDelete,
+    getConditionSummary
 }: CreateColumnsProps): Column<EventCondition>[] => [
     {
         key: 'fieldKey',
         header: 'Field Key',
-        cell: (value: string, _row: EventCondition, index: number) => {
-            const isEditing = editingData[index] !== undefined;
-            const currentValue = editingData[index]?.fieldKey ?? value ?? '';
+        cell: (value: string, _row: EventCondition, index?: number) => {
+            const currentIndex = index ?? 0;
+            const isEditing = editingData[currentIndex] !== undefined;
+            const currentValue = editingData[currentIndex]?.fieldKey ?? value ?? '';
             
             return (
                 <EditableFieldKey
                     value={currentValue}
-                    onChange={(newValue: string) => handleEditDataChange(index, 'fieldKey', newValue)}
+                    onChange={(newValue: string) => handleEditDataChange(currentIndex, 'fieldKey', newValue)}
                     profiles={profiles}
                     isEditing={isEditing}
                 />
@@ -43,15 +46,16 @@ export const createColumns = ({
     {
         key: 'level',
         header: '레벨',
-        cell: (value: EventCondition['level'], row: EventCondition, index: number) => {
-            const isEditing = editingData[index] !== undefined;
-            const currentRow = editingData[index] || row;
+        cell: (value: EventCondition['level'], row: EventCondition, index?: number) => {
+            const currentIndex = index ?? 0;
+            const isEditing = editingData[currentIndex] !== undefined;
+            const currentRow = editingData[currentIndex] || row;
             const currentValue = currentRow.level ?? value ?? 'NORMAL';
             
             return (
                 <EditableLevel
                     value={currentValue}
-                    onChange={(newValue: EventCondition['level']) => handleEditDataChange(index, 'level', newValue)}
+                    onChange={(newValue: EventCondition['level']) => handleEditDataChange(currentIndex, 'level', newValue)}
                     isEditing={isEditing}
                     profiles={profiles}
                     fieldKey={currentRow.fieldKey ?? ''}
@@ -62,15 +66,16 @@ export const createColumns = ({
     {
         key: 'conditionType',
         header: '타입',
-        cell: (value: EventCondition['conditionType'], row: EventCondition, index: number) => {
-            const isEditing = editingData[index] !== undefined;
-            const currentRow = editingData[index] || row;
+        cell: (value: EventCondition['conditionType'], row: EventCondition, index?: number) => {
+            const currentIndex = index ?? 0;
+            const isEditing = editingData[currentIndex] !== undefined;
+            const currentRow = editingData[currentIndex] || row;
             const currentValue = currentRow.conditionType ?? value ?? 'SINGLE';
             
             return (
                 <EditableConditionType
                     value={currentValue}
-                    onChange={(newValue: EventCondition['conditionType']) => handleEditDataChange(index, 'conditionType', newValue)}
+                    onChange={(newValue: EventCondition['conditionType']) => handleEditDataChange(currentIndex, 'conditionType', newValue)}
                     isEditing={isEditing}
                     profiles={profiles}
                     fieldKey={currentRow.fieldKey ?? ''}
@@ -81,14 +86,15 @@ export const createColumns = ({
     {
         key: 'operator',
         header: '조건',
-        cell: (_value: EventCondition['operator'], row: EventCondition, index: number) => {
-            const isEditing = editingData[index] !== undefined;
-            const displayRow = editingData[index] || row;
+        cell: (_value: EventCondition['operator'], row: EventCondition, index?: number) => {
+            const currentIndex = index ?? 0;
+            const isEditing = editingData[currentIndex] !== undefined;
+            const displayRow = editingData[currentIndex] || row;
 
             return (
                 <EditableCondition
                     row={displayRow}
-                    onChange={(field: keyof EventCondition, newValue: any) => handleEditDataChange(index, field, newValue)}
+                    onChange={(field: keyof EventCondition, newValue: any) => handleEditDataChange(currentIndex, field, newValue)}
                     isEditing={isEditing}
                     profiles={profiles}
                 />
@@ -98,9 +104,10 @@ export const createColumns = ({
     {
         key: 'activate',
         header: '알림',
-        cell: (value: boolean, _row: EventCondition, index: number) => {
-            const isEditing = editingData[index] !== undefined;
-            const currentValue = editingData[index]?.activate ?? value ?? true;
+        cell: (value: boolean, _row: EventCondition, index?: number) => {
+            const currentIndex = index ?? 0;
+            const isEditing = editingData[currentIndex] !== undefined;
+            const currentValue = editingData[currentIndex]?.activate ?? value ?? true;
 
             if (!isEditing) {
                 return (
@@ -117,7 +124,7 @@ export const createColumns = ({
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditDataChange(index, 'activate', !currentValue)}
+                        onClick={() => handleEditDataChange(currentIndex, 'activate', !currentValue)}
                         className={`p-1 h-8 w-8 ${currentValue ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-gray-500'}`}
                         title={currentValue ? '활성화됨 (클릭하여 비활성화)' : '비활성화됨 (클릭하여 활성화)'}
                     >
@@ -130,9 +137,10 @@ export const createColumns = ({
     {
         key: 'notificationEnabled',
         header: 'SMS',
-        cell: (value: boolean, _row: EventCondition, index: number) => {
-            const isEditing = editingData[index] !== undefined;
-            const currentValue = editingData[index]?.notificationEnabled ?? value ?? true;
+        cell: (value: boolean, _row: EventCondition, index?: number) => {
+            const currentIndex = index ?? 0;
+            const isEditing = editingData[currentIndex] !== undefined;
+            const currentValue = editingData[currentIndex]?.notificationEnabled ?? value ?? true;
 
             if (!isEditing) {
                 return (
@@ -149,7 +157,7 @@ export const createColumns = ({
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditDataChange(index, 'notificationEnabled', !currentValue)}
+                        onClick={() => handleEditDataChange(currentIndex, 'notificationEnabled', !currentValue)}
                         className={`p-1 h-8 w-8 ${currentValue ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 hover:text-gray-500'}`}
                         title={currentValue ? '알림 활성화됨 (클릭하여 비활성화)' : '알림 비활성화됨 (클릭하여 활성화)'}
                     >
@@ -162,35 +170,46 @@ export const createColumns = ({
     {
         key: 'id',
         header: '작업',
-        cell: (_value: number | undefined, row: EventCondition, index: number) => {
-            const isEditing = editingData[index] !== undefined;
-            const rowHasChanges = hasChanges(index);
+        cell: (_value: number | undefined, row: EventCondition, index?: number) => {
+            const currentIndex = index ?? 0;
+            const isEditing = editingData[currentIndex] !== undefined;
+            const rowHasChanges = hasChanges(currentIndex);
 
             if (!isEditing) {
                 return (
-                    <div className="flex gap-1">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                                if (row.id) {
-                                    handleEditDataChange(index, 'id', row.id);
-                                }
-                            }}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="이 행 편집하기"
-                        >
-                            편집
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => row.id && handleDelete(row.id)}
-                            className="text-red-600 hover:text-red-800"
-                            title="이 조건 삭제"
-                        >
-                            삭제
-                        </Button>
+                    <div className="space-y-2">
+                        <div className="flex gap-1">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    if (row.id) {
+                                        handleEditDataChange(currentIndex, 'id', row.id);
+                                    }
+                                }}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="이 행 편집하기"
+                            >
+                                편집
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => row.id && handleDelete(row.id)}
+                                className="text-red-600 hover:text-red-800"
+                                title="이 조건 삭제"
+                            >
+                                삭제
+                            </Button>
+                        </div>
+                        {row.guideMessage && (
+                            <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded max-w-xs">
+                                {row.guideMessage}
+                            </div>
+                        )}
+                        <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded max-w-xs">
+                            {getConditionSummary(row)}
+                        </div>
                     </div>
                 );
             }
@@ -202,7 +221,7 @@ export const createColumns = ({
                             <Button
                                 variant="default"
                                 size="sm"
-                                onClick={() => handleSaveRow(index)}
+                                onClick={() => handleSaveRow(currentIndex)}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                                 title="이 행의 변경사항 저장"
                             >
@@ -211,7 +230,7 @@ export const createColumns = ({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleCancelRow(index)}
+                                onClick={() => handleCancelRow(currentIndex)}
                                 className="text-gray-600 hover:text-gray-800"
                                 title="이 행의 변경사항 취소"
                             >
@@ -222,7 +241,7 @@ export const createColumns = ({
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleCancelRow(index)}
+                            onClick={() => handleCancelRow(currentIndex)}
                             className="text-gray-600 hover:text-gray-800"
                             title="편집 모드 종료"
                         >

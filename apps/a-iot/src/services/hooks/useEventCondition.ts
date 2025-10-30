@@ -1,11 +1,6 @@
 import useSWR, { SWRConfiguration, mutate } from 'swr';
 import { useApiClient } from "@plug-atlas/api-hooks";
 import { EventCondition } from '../types';
-import {CreateConditionData} from "../../pages/devices/sensor/detail/handlers/EventConditionUtils.tsx";
-
-export interface EventConditionResponse {
-    data: EventCondition;
-}
 
 type ApiResponse<T> = { data: T };
 
@@ -55,7 +50,7 @@ export const useEventConditionMutations = () => {
         return response;
     };
 
-    const updateEventConditions = async (request: { conditions: CreateConditionData[]; objectId: string }) => {
+    const updateEventConditions = async (request: { conditions: EventCondition[]; objectId: string }) => {
         const response = await client.put<ApiResponse<EventCondition[]>>(
             'event-conditions',
             request
