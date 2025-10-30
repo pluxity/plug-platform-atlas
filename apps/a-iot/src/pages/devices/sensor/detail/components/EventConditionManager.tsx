@@ -12,7 +12,7 @@ interface EventConditionsManagerProps {
     profiles: DeviceProfile[];
 }
 
-type DisplayRowData = EventCondition & { isNewRow?: boolean };
+type DisplayRowData = EventCondition & { isNewRow?: boolean; originalIndex?: number };
 
 interface DataTableColumn<T> {
     key: keyof T;
@@ -59,11 +59,16 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
     });
 
     const displayData = React.useMemo((): DisplayRowData[] => {
-        const existingData = [...conditionsData];
+        const existingData = conditionsData.map((condition, index) => ({
+            ...condition,
+            originalIndex: index
+        }));
+        
         if (isAddingMode && newConditions.length > 0) {
             const newRowsData = newConditions.map((condition, index) => ({
                 id: -(index + 1),
                 isNewRow: true,
+                originalIndex: -1,
                 ...condition
             } as DisplayRowData));
             console.log('Adding new rows to display data:', newRowsData);
@@ -73,14 +78,6 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
     }, [conditionsData, newConditions, isAddingMode]);
 
     const enhancedColumns = React.useMemo((): DataTableColumn<DisplayRowData>[] => {
-
-        if (!isAddingMode) {
-            return columns.map(col => ({
-                ...col,
-                cell: (value: any, row: DisplayRowData) => col.cell(value, row, 0)
-            }));
-        }
-
         return columns.map(col => ({
             ...col,
             cell: (value: any, row: DisplayRowData) => {
@@ -118,11 +115,12 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                     });
                 }
                 
-                console.log('Regular row, using original cell function');
-                return col.cell(value, row, 0);
+                const originalIndex = row.originalIndex ?? 0;
+                console.log(`Regular row, using original index: ${originalIndex}`);
+                return col.cell(value, row, originalIndex);
             }
         }));
-    }, [isAddingMode, columns, newConditions, handleNewConditionChange, handleRemoveNewCondition, handleSaveNew, handleCancelNew, profiles]);
+    }, [columns, newConditions, handleNewConditionChange, handleRemoveNewCondition, handleSaveNew, handleCancelNew, profiles]);
 
     if (error) {
         return <ErrorDisplay onRetry={refetch} />;

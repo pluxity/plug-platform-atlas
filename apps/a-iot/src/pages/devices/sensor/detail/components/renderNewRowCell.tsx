@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from '@plug-atlas/ui';
-import { Trash2 } from 'lucide-react';
+import { Bell, BellOff, Mail, MailX } from 'lucide-react';
 import { DeviceProfile, EventCondition } from "../../../../../services/types";
 import { CreateConditionData } from "../handlers/EventConditionUtils";
 import {
@@ -26,7 +26,6 @@ interface RenderNewRowCellProps {
     isLastRow: boolean;
 }
 
-// CreateConditionData에서 EventCondition과 호환되는 형태로 변환하는 헬퍼 함수
 const createTempEventCondition = (condition: CreateConditionData, tempId: number): EventCondition => {
     return {
         id: tempId,
@@ -42,7 +41,7 @@ export function renderNewRowCell({
     profiles,
     isLastRow
 }: RenderNewRowCellProps): React.ReactNode {
-    const { onChange, onRemove, onSaveAll, onCancelAll } = handlers;
+    const { onChange, onSaveAll, onCancelAll } = handlers;
     
     console.log(`renderNewRowCell - columnKey: ${columnKey}, index: ${newRowIndex}`, newCondition);
 
@@ -70,7 +69,7 @@ export function renderNewRowCell({
         
         case 'conditionType':
             const handleConditionTypeChange = (value: EventCondition['conditionType'] | undefined) => {
-                if (value) {  // undefined가 아닌 경우에만 처리
+                if (value) {
                     onChange(newRowIndex, 'conditionType', value);
                 }
             };
@@ -85,13 +84,10 @@ export function renderNewRowCell({
                 />
             );
         
-        case 'condition':
-            // CreateConditionData를 EventCondition 형태로 변환 (임시 ID 사용)
+        case 'operator':
             const conditionRow = createTempEventCondition(newCondition, -(newRowIndex + 1));
             
-            // onChange 핸들러를 CreateConditionData 필드만 처리하도록 제한
             const handleConditionChange = (field: keyof EventCondition, value: any) => {
-                // id 필드는 무시하고, CreateConditionData에 있는 필드만 처리
                 if (field !== 'id' && field in newCondition) {
                     onChange(newRowIndex, field as keyof CreateConditionData, value);
                 }
@@ -106,48 +102,48 @@ export function renderNewRowCell({
                 />
             );
         
-        case 'notificationEnabled':
-            return (
-                <label className="flex items-center space-x-2">
-                    <input
-                        type="checkbox"
-                        checked={newCondition.notificationEnabled ?? true}
-                        onChange={(e) => onChange(newRowIndex, 'notificationEnabled', e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                </label>
-            );
-        
         case 'activate':
+            const activateValue = newCondition.activate ?? true;
             return (
-                <label className="flex items-center space-x-2">
-                    <input
-                        type="checkbox"
-                        checked={newCondition.activate ?? true}
-                        onChange={(e) => onChange(newRowIndex, 'activate', e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                </label>
+                <div className="flex justify-center">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onChange(newRowIndex, 'activate', !activateValue)}
+                        className={`p-1 h-8 w-8 ${activateValue ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-gray-500'}`}
+                        title={activateValue ? '활성화됨 (클릭하여 비활성화)' : '비활성화됨 (클릭하여 활성화)'}
+                    >
+                        {activateValue ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                    </Button>
+                </div>
             );
         
-        case 'actions':
+        case 'notificationEnabled':
+            const notificationValue = newCondition.notificationEnabled ?? true;
+            return (
+                <div className="flex justify-center">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onChange(newRowIndex, 'notificationEnabled', !notificationValue)}
+                        className={`p-1 h-8 w-8 ${notificationValue ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 hover:text-gray-500'}`}
+                        title={notificationValue ? '알림 활성화됨 (클릭하여 비활성화)' : '알림 비활성화됨 (클릭하여 활성화)'}
+                    >
+                        {notificationValue ? <Mail className="h-4 w-4" /> : <MailX className="h-4 w-4" />}
+                    </Button>
+                </div>
+            );
+        
+        case 'id':
             return (
                 <div className="flex items-center gap-2">
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onRemove(newRowIndex)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                    
                     {isLastRow && (
-                        <div className="flex gap-1 ml-2">
+                        <div className="flex gap-1">
                             <Button
                                 size="sm"
                                 onClick={onSaveAll}
                                 className="bg-green-600 hover:bg-green-700 text-white"
+                                title="새 조건 저장"
                             >
                                 저장
                             </Button>
@@ -155,6 +151,7 @@ export function renderNewRowCell({
                                 size="sm"
                                 variant="outline" 
                                 onClick={onCancelAll}
+                                title="새 조건 추가 취소"
                             >
                                 취소
                             </Button>

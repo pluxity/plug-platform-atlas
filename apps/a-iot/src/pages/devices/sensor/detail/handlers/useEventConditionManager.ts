@@ -32,20 +32,24 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             setOriginalData(originalDataMap);
             
             setEditingData(prev => {
-                const hasValidEditingData = Object.keys(prev).length === conditionsData.length &&
-                    conditionsData.every((_, index) => prev[index]?.id === conditionsData[index]?.id);
+                const newEditingData: { [key: number]: EventCondition } = {};
                 
-                if (!hasValidEditingData) {
-                    return { ...originalDataMap };
-                }
+                Object.keys(prev).forEach(indexStr => {
+                    const index = parseInt(indexStr);
+                    const originalCondition = originalDataMap[index];
+                    
+                    if (originalCondition && prev[index]?.id === originalCondition.id) {
+                        newEditingData[index] = <EventCondition>prev[index];
+                    }
+                });
                 
-                return prev;
+                return newEditingData;
             });
         } else {
             setOriginalData({});
             setEditingData({});
         }
-    }, [conditionsData.length > 0 ? conditionsData.map(c => c.id).join(',') : '']);
+    }, [conditionsData.map(c => c.id).join(',')]);
 
     const hasChanges = (index: number): boolean => {
         const original = originalData[index];
@@ -70,12 +74,20 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
     };
 
     const handleEditDataChange = (index: number, field: keyof EventCondition, value: any) => {
+        console.log(`handleEditDataChange - index: ${index}, field: ${field}, value:`, value);
+        
         setEditingData(prev => {
             const existingData = prev[index];
+            
             if (!existingData) {
                 const originalCondition = originalData[index] || conditionsData[index];
-                if (!originalCondition) return prev;
+                if (!originalCondition) {
+                    console.log(`No original condition found for index ${index}`);
+                    return prev;
+                }
 
+                console.log(`Starting edit mode for index ${index}:`, originalCondition);
+                
                 return {
                     ...prev,
                     [index]: {
@@ -110,6 +122,8 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                 }
             }
 
+            console.log(`Updated data for index ${index}:`, updatedData);
+            
             return {
                 ...prev,
                 [index]: updatedData
@@ -140,6 +154,12 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                 conditions: updatedConditions
             });
 
+            setEditingData(prev => {
+                const newData = { ...prev };
+                delete newData[index];
+                return newData;
+            });
+
             await refetch();
         } catch (error) {
             console.error('이벤트 컨디션 수정 실패:', error);
@@ -148,13 +168,13 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
     };
 
     const handleCancelRow = (index: number) => {
-        const original = originalData[index];
-        if (original) {
-            setEditingData(prev => ({
-                ...prev,
-                [index]: { ...original }
-            }));
-        }
+        console.log(`Canceling edit for index ${index}`);
+        
+        setEditingData(prev => {
+            const newData = { ...prev };
+            delete newData[index];
+            return newData;
+        });
     };
 
     const handleAddNew = () => {

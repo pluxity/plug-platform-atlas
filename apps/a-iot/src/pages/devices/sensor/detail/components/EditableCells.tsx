@@ -221,7 +221,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         value={row.leftValue ?? ''}
                         onChange={(e) => onChange('leftValue', parseFloat(e.target.value) || undefined)}
                         placeholder="최소값"
-                        className="w-16 text-sm"
+                        className="w-20 text-sm"
                     />
                     <span className="text-xs text-gray-500">≤ 값 ≤</span>
                     <Input
@@ -230,7 +230,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         value={row.rightValue ?? ''}
                         onChange={(e) => onChange('rightValue', parseFloat(e.target.value) || undefined)}
                         placeholder="최대값"
-                        className="w-16 text-sm"
+                        className="w-20 text-sm"
                     />
                     <span
                         className="text-xs text-gray-500">{getProfileByFieldKey(profiles, row.fieldKey)?.fieldUnit}</span>
@@ -241,7 +241,6 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
 
     return (
         <div className="space-y-2">
-            <div className="text-xs font-medium text-gray-700">단일 조건</div>
             <div className="flex items-center gap-2">
                 <Select 
                     value={row.operator || 'GE'} 
@@ -253,13 +252,11 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                     <SelectContent>
                         <SelectItem value="GE">
                             <div className="flex flex-col">
-                                <span>이상</span>
                                 <span className="text-xs text-gray-400">≥</span>
                             </div>
                         </SelectItem>
                         <SelectItem value="LE">
                             <div className="flex flex-col">
-                                <span>이하</span>
                                 <span className="text-xs text-gray-400">≤</span>
                             </div>
                         </SelectItem>
@@ -273,9 +270,6 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                     placeholder="기준값"
                     className="w-24 text-sm"
                 />
-            </div>
-            <div className="text-xs text-gray-500">
-                값이 {row.thresholdValue ?? '기준값'} {getOperatorLabel(row.operator || 'GE')}일 때 알림
             </div>
         </div>
     );

@@ -53,7 +53,7 @@ export default function DeviceTypeBasicInfo({deviceType,}: DeviceTypeBasicInfoPr
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">{deviceType.description}</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <Tag className="h-4 w-4 text-purple-600" />
                     <div className="flex justify-between items-center w-full">

@@ -26,25 +26,33 @@ export const createColumns = ({
     {
         key: 'fieldKey',
         header: 'Field Key',
-        cell: (value: string, _row: EventCondition, index: number) => (
-            <EditableFieldKey
-                value={editingData[index]?.fieldKey ?? value ?? ''}
-                onChange={(newValue: string) => handleEditDataChange(index, 'fieldKey', newValue)}
-                profiles={profiles}
-                isEditing={true}
-            />
-        ),
+        cell: (value: string, _row: EventCondition, index: number) => {
+            const isEditing = editingData[index] !== undefined;
+            const currentValue = editingData[index]?.fieldKey ?? value ?? '';
+            
+            return (
+                <EditableFieldKey
+                    value={currentValue}
+                    onChange={(newValue: string) => handleEditDataChange(index, 'fieldKey', newValue)}
+                    profiles={profiles}
+                    isEditing={isEditing}
+                />
+            );
+        },
     },
     {
         key: 'level',
         header: '레벨',
         cell: (value: EventCondition['level'], row: EventCondition, index: number) => {
+            const isEditing = editingData[index] !== undefined;
             const currentRow = editingData[index] || row;
+            const currentValue = currentRow.level ?? value ?? 'NORMAL';
+            
             return (
                 <EditableLevel
-                    value={currentRow.level ?? value ?? 'NORMAL'}
+                    value={currentValue}
                     onChange={(newValue: EventCondition['level']) => handleEditDataChange(index, 'level', newValue)}
-                    isEditing={true}
+                    isEditing={isEditing}
                     profiles={profiles}
                     fieldKey={currentRow.fieldKey ?? ''}
                 />
@@ -55,12 +63,15 @@ export const createColumns = ({
         key: 'conditionType',
         header: '타입',
         cell: (value: EventCondition['conditionType'], row: EventCondition, index: number) => {
+            const isEditing = editingData[index] !== undefined;
             const currentRow = editingData[index] || row;
+            const currentValue = currentRow.conditionType ?? value ?? 'SINGLE';
+            
             return (
                 <EditableConditionType
-                    value={currentRow.conditionType ?? value ?? 'SINGLE'}
+                    value={currentValue}
                     onChange={(newValue: EventCondition['conditionType']) => handleEditDataChange(index, 'conditionType', newValue)}
-                    isEditing={true}
+                    isEditing={isEditing}
                     profiles={profiles}
                     fieldKey={currentRow.fieldKey ?? ''}
                 />
@@ -71,13 +82,14 @@ export const createColumns = ({
         key: 'operator',
         header: '조건',
         cell: (_value: EventCondition['operator'], row: EventCondition, index: number) => {
+            const isEditing = editingData[index] !== undefined;
             const displayRow = editingData[index] || row;
 
             return (
                 <EditableCondition
                     row={displayRow}
                     onChange={(field: keyof EventCondition, newValue: any) => handleEditDataChange(index, field, newValue)}
-                    isEditing={true}
+                    isEditing={isEditing}
                     profiles={profiles}
                 />
             );
@@ -87,7 +99,18 @@ export const createColumns = ({
         key: 'activate',
         header: '알림',
         cell: (value: boolean, _row: EventCondition, index: number) => {
+            const isEditing = editingData[index] !== undefined;
             const currentValue = editingData[index]?.activate ?? value ?? true;
+
+            if (!isEditing) {
+                return (
+                    <div className="flex justify-center">
+                        <div className={`p-1 h-8 w-8 flex items-center justify-center ${currentValue ? 'text-green-600' : 'text-gray-400'}`}>
+                            {currentValue ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                        </div>
+                    </div>
+                );
+            }
 
             return (
                 <div className="flex justify-center">
@@ -108,7 +131,18 @@ export const createColumns = ({
         key: 'notificationEnabled',
         header: 'SMS',
         cell: (value: boolean, _row: EventCondition, index: number) => {
+            const isEditing = editingData[index] !== undefined;
             const currentValue = editingData[index]?.notificationEnabled ?? value ?? true;
+
+            if (!isEditing) {
+                return (
+                    <div className="flex justify-center">
+                        <div className={`p-1 h-8 w-8 flex items-center justify-center ${currentValue ? 'text-blue-600' : 'text-gray-400'}`}>
+                            {currentValue ? <Mail className="h-4 w-4" /> : <MailX className="h-4 w-4" />}
+                        </div>
+                    </div>
+                );
+            }
 
             return (
                 <div className="flex justify-center">
@@ -129,7 +163,37 @@ export const createColumns = ({
         key: 'id',
         header: '작업',
         cell: (_value: number | undefined, row: EventCondition, index: number) => {
+            const isEditing = editingData[index] !== undefined;
             const rowHasChanges = hasChanges(index);
+
+            if (!isEditing) {
+                return (
+                    <div className="flex gap-1">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                if (row.id) {
+                                    handleEditDataChange(index, 'id', row.id);
+                                }
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="이 행 편집하기"
+                        >
+                            편집
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => row.id && handleDelete(row.id)}
+                            className="text-red-600 hover:text-red-800"
+                            title="이 조건 삭제"
+                        >
+                            삭제
+                        </Button>
+                    </div>
+                );
+            }
 
             return (
                 <div className="flex gap-1">
@@ -158,11 +222,11 @@ export const createColumns = ({
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => row.id && handleDelete(row.id)}
-                            className="text-red-600 hover:text-red-800"
-                            title="이 조건 삭제"
+                            onClick={() => handleCancelRow(index)}
+                            className="text-gray-600 hover:text-gray-800"
+                            title="편집 모드 종료"
                         >
-                            삭제
+                            취소
                         </Button>
                     )}
                 </div>
