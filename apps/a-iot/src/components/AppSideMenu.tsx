@@ -6,6 +6,7 @@ import {
   SideMenuContent,
   SideMenuHeader,
   SideMenuNav,
+  SideMenuFooter,
   SideMenuSubMenu,
   SideMenuSubItem,
   Avatar,
@@ -104,64 +105,15 @@ export default function AppSideMenu() {
   }
 
   return (
-    <div className="fixed top-4 left-4 z-50">
-      <SideMenu defaultOpen={false} collapsible>
+    <div className="fixed top-0 left-0 h-screen z-50 flex flex-col">
+      <SideMenu defaultOpen={true} collapsible={false} className="flex flex-col h-full">
         {({ open }) => (
           <>
-            <SideMenuTrigger open={open}>
+            <SideMenuTrigger open={open} showChevron={false} className="m-4 mb-0">
               <Building2 className="size-5 text-blue-600" />
               <span className="font-semibold text-sm">시민안심공원 서비스</span>
             </SideMenuTrigger>
-            <SideMenuContent>
-              <SideMenuHeader>
-                <div className="flex items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-2 w-full hover:bg-gray-50 rounded-md p-2 transition-colors">
-                        <Avatar className="size-8 rounded-lg">
-                          <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                          <AvatarFallback className="rounded-lg bg-blue-600 text-white text-xs">
-                            {currentUser.name.slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col items-start text-left">
-                          <span className="text-sm font-semibold">{currentUser.name}</span>
-                          <span className="text-xs text-gray-500">{currentUser.email}</span>
-                        </div>
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56">
-                      <div className="flex items-center gap-2 p-2">
-                        <Avatar className="size-10 rounded-lg">
-                          <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                          <AvatarFallback className="rounded-lg bg-blue-600 text-white">
-                            {currentUser.name.slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm">{currentUser.name}</span>
-                          <span className="text-xs text-gray-500">{currentUser.email}</span>
-                        </div>
-                      </div>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <User className="mr-2 size-4" />
-                        <span>프로필</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <SettingsIcon className="mr-2 size-4" />
-                        <span>설정</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600" onClick={logout}>
-                        <LogOut className="mr-2 size-4" />
-                        <span>로그아웃</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </SideMenuHeader>
-
+            <SideMenuContent className="m-4 mt-2 flex-1 h-[calc(100vh-88px)]">
               <SideMenuNav>
                 <div className="space-y-1">
                   <div className="px-2 py-1.5 text-xs font-semibold text-gray-500">
@@ -194,6 +146,53 @@ export default function AppSideMenu() {
                   </button>
                 </div>
               </SideMenuNav>
+
+              <SideMenuFooter>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 w-full hover:bg-gray-50 rounded-md p-2 transition-colors">
+                      <Avatar className="size-8 rounded-lg">
+                        <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                        <AvatarFallback className="rounded-lg bg-blue-600 text-white text-xs">
+                          {currentUser.name.slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col items-start text-left">
+                        <span className="text-sm font-semibold">{currentUser.name}</span>
+                        <span className="text-xs text-gray-500">{currentUser.email}</span>
+                      </div>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    <div className="flex items-center gap-2 p-2">
+                      <Avatar className="size-10 rounded-lg">
+                        <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                        <AvatarFallback className="rounded-lg bg-blue-600 text-white">
+                          {currentUser.name.slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">{currentUser.name}</span>
+                        <span className="text-xs text-gray-500">{currentUser.email}</span>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <User className="mr-2 size-4" />
+                      <span>프로필</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <SettingsIcon className="mr-2 size-4" />
+                      <span>설정</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600" onClick={logout}>
+                      <LogOut className="mr-2 size-4" />
+                      <span>로그아웃</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SideMenuFooter>
             </SideMenuContent>
           </>
         )}
