@@ -15,7 +15,6 @@ import Users from './pages/users/Users'
 import Roles from './pages/users/Roles'
 import Permissions from './pages/users/Permissions'
 import Mobius from './pages/system/Mobius'
-import SensorCategoryDetailPage from "./pages/devices/sensor/detail/SensorCategoryDetailPage.tsx";
 
 function App() {
   return (
@@ -35,7 +34,6 @@ function App() {
                   <Route path="/sites/parks" element={<SitePage />} />
                   <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
                   <Route path="/devices/sensors" element={<SensorCategoriesPage />} />
-                  <Route path="/devices/sensors/:objectId" element={<SensorCategoryDetailPage />} />
                   <Route path="/sensors" element={<Sensors />} />
                   <Route path="/devices/cctv" element={<CCTV />} />
                   <Route path="/history/events" element={<Events />} />

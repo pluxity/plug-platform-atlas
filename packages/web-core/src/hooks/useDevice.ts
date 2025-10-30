@@ -1,7 +1,7 @@
 import useSWR, { type SWRConfiguration } from 'swr'
 import useSWRMutation, { type SWRMutationConfiguration } from 'swr/mutation'
 import { useApiClient } from '@plug-atlas/api-hooks'
-import type { DeviceTypeResponse, DeviceTypeRequest, DeviceProfileRequest } from '../types/device'
+import type { DeviceTypeResponse, DeviceTypeRequest, DeviceProfileRequest } from '../types'
 
 type DataResponse<T> = { data: T }
 

@@ -2,7 +2,7 @@ import { Button } from "@plug-atlas/ui";
 import { DeviceProfile, EventCondition } from "../../../../../services/types";
 import { Column } from "../handlers/EventConditionUtils.tsx";
 import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from "./EditableCells.tsx";
-import { Bell, BellOff, Eye, EyeOff, Save, RotateCcw, Trash2 } from "lucide-react";
+import {Bell, BellOff, Mail, MailX} from "lucide-react";
 
 interface CreateColumnsProps {
     profiles: DeviceProfile[];
@@ -36,7 +36,6 @@ export const createColumns = ({
         ),
     },
     {
-
         key: 'level',
         header: '레벨',
         cell: (value: EventCondition['level'], row: EventCondition, index: number) => {
@@ -86,7 +85,7 @@ export const createColumns = ({
     },
     {
         key: 'activate',
-        header: '활성화',
+        header: '알림',
         cell: (value: boolean, _row: EventCondition, index: number) => {
             const currentValue = editingData[index]?.activate ?? value ?? true;
 
@@ -99,7 +98,7 @@ export const createColumns = ({
                         className={`p-1 h-8 w-8 ${currentValue ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-gray-500'}`}
                         title={currentValue ? '활성화됨 (클릭하여 비활성화)' : '비활성화됨 (클릭하여 활성화)'}
                     >
-                        {currentValue ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        {currentValue ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
                     </Button>
                 </div>
             );
@@ -107,7 +106,7 @@ export const createColumns = ({
     },
     {
         key: 'notificationEnabled',
-        header: '알림',
+        header: 'SMS',
         cell: (value: boolean, _row: EventCondition, index: number) => {
             const currentValue = editingData[index]?.notificationEnabled ?? value ?? true;
 
@@ -120,7 +119,7 @@ export const createColumns = ({
                         className={`p-1 h-8 w-8 ${currentValue ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 hover:text-gray-500'}`}
                         title={currentValue ? '알림 활성화됨 (클릭하여 비활성화)' : '알림 비활성화됨 (클릭하여 활성화)'}
                     >
-                        {currentValue ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                        {currentValue ? <Mail className="h-4 w-4" /> : <MailX className="h-4 w-4" />}
                     </Button>
                 </div>
             );
@@ -143,7 +142,6 @@ export const createColumns = ({
                                 className="bg-green-600 hover:bg-green-700 text-white"
                                 title="이 행의 변경사항 저장"
                             >
-                                <Save className="h-4 w-4 mr-1" />
                                 저장
                             </Button>
                             <Button
@@ -153,7 +151,6 @@ export const createColumns = ({
                                 className="text-gray-600 hover:text-gray-800"
                                 title="이 행의 변경사항 취소"
                             >
-                                <RotateCcw className="h-4 w-4 mr-1" />
                                 취소
                             </Button>
                         </>
@@ -165,7 +162,6 @@ export const createColumns = ({
                             className="text-red-600 hover:text-red-800"
                             title="이 조건 삭제"
                         >
-                            <Trash2 className="h-4 w-4 mr-1" />
                             삭제
                         </Button>
                     )}

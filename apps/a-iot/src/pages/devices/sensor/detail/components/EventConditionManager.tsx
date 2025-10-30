@@ -73,13 +73,11 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
     }, [conditionsData, newConditions, isAddingMode]);
 
     const enhancedColumns = React.useMemo((): DataTableColumn<DisplayRowData>[] => {
-        console.log('Creating enhanced columns, isAddingMode:', isAddingMode);
-        
+
         if (!isAddingMode) {
-            console.log('Not in adding mode, returning normal columns');
             return columns.map(col => ({
                 ...col,
-                cell: (value: any, row: DisplayRowData) => col.cell(value, row, 0) // index 기본값 제공
+                cell: (value: any, row: DisplayRowData) => col.cell(value, row, 0)
             }));
         }
 
@@ -88,26 +86,20 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
             cell: (value: any, row: DisplayRowData) => {
                 console.log(`Enhanced column cell - key: ${col.key}, row:`, row);
                 
-                // 새 행인지 확인
                 const isNewRow = row.isNewRow === true;
                 
                 if (isNewRow) {
                     console.log(`This is a new row! id: ${row.id}`);
                     
-                    // null 체크 추가
                     if (row.id == null) {
                         console.log('Row ID is null or undefined');
                         return <div className="p-2 text-center text-gray-400">-</div>;
                     }
                     
-                    // 새 행의 실제 인덱스 계산 (음수 ID 기반)
                     const newRowIndex = Math.abs(row.id) - 1;
                     const newCondition = newConditions[newRowIndex];
-                    
-                    console.log(`New row index: ${newRowIndex}, condition:`, newCondition);
 
                     if (!newCondition) {
-                        console.log('No new condition found for this index');
                         return <div className="p-2 text-center text-gray-400">-</div>;
                     }
 
@@ -127,19 +119,19 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                 }
                 
                 console.log('Regular row, using original cell function');
-                return col.cell(value, row, 0); // index 기본값 제공
+                return col.cell(value, row, 0);
             }
         }));
-    }, [isAddingMode, columns, conditionsData.length, newConditions, handleNewConditionChange, handleRemoveNewCondition, handleSaveNew, handleCancelNew, profiles]);
+    }, [isAddingMode, columns, newConditions, handleNewConditionChange, handleRemoveNewCondition, handleSaveNew, handleCancelNew, profiles]);
 
     if (error) {
         return <ErrorDisplay onRetry={refetch} />;
     }
 
     return (
-        <div className="bg-white rounded-xl border shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
+        <div className="bg-white">
+            <div className="border-b border-gray-200 mb-2">
+                <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-orange-100 rounded-lg">
                             <AlertTriangle className="h-6 w-6 text-orange-600" />
@@ -189,7 +181,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                 )}
             </div>
 
-            <div className="p-6">
+            <div >
                 {isLoading ? (
                     <div className="text-center py-8">
                         <p className="text-gray-600">로딩 중...</p>

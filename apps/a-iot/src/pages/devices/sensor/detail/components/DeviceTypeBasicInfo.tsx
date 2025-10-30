@@ -1,5 +1,5 @@
 import { DataTable } from '@plug-atlas/ui';
-import { Package, Hash, Tag, FileText, Layers } from 'lucide-react';
+import { Tag, FileText, Layers } from 'lucide-react';
 import {DeviceType} from "../../../../../services/types";
 
 interface DeviceTypeBasicInfoProps {
@@ -45,41 +45,32 @@ export default function DeviceTypeBasicInfo({deviceType,}: DeviceTypeBasicInfoPr
 ];
 
     return (
-        <div className="bg-white rounded-xl border shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 rounded-lg">
-                            <Package className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <h2 className="text-xl font-bold text-gray-900">디바이스 정보 및 프로필</h2>
+        <div className="bg-white rounded-xl space-y-3">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                    <FileText className="h-6 w-6 text-yellow-600"/>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">{deviceType.description}</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Tag className="h-4 w-4 text-purple-600" />
+                    <div className="flex justify-between items-center w-full">
+                        <p className="text-xs text-gray-600">Object ID</p>
+                        <p className="font-mono text-sm font-semibold text-gray-900">{deviceType.objectId}</p>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Hash className="h-4 w-4 text-green-600" />
-                        <div className="flex justify-between items-center w-full">
-                            <p className="text-xs text-gray-600">디바이스 ID</p>
-                            <p className="font-semibold text-gray-900">{deviceType.id}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Tag className="h-4 w-4 text-purple-600" />
-                        <div className="flex justify-between items-center w-full">
-                            <p className="text-xs text-gray-600">Object ID</p>
-                            <p className="font-mono text-sm font-semibold text-gray-900">{deviceType.objectId}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <FileText className="h-4 w-4 text-orange-600" />
-                        <div className="flex justify-between items-center w-full">
-                            <p className="text-xs text-gray-600">버전</p>
-                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">{deviceType.version}</span>
-                        </div>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <FileText className="h-4 w-4 text-orange-600" />
+                    <div className="flex justify-between items-center w-full">
+                        <p className="text-xs text-gray-600">버전</p>
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">{deviceType.version}</span>
                     </div>
                 </div>
             </div>
-            <div className="p-6">
+            </div>
+            <div>
                 {deviceType.profiles && deviceType.profiles.length > 0 ? (
                     <DataTable
                         columns={profileColumns}

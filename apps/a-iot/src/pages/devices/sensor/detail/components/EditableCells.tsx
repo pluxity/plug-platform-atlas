@@ -1,12 +1,12 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input } from '@plug-atlas/ui';
 import { DeviceProfile, EventCondition } from '../../../../../services/types';
-import { 
-    getOperatorLabel, 
-    getLevelBadge, 
-    getAvailableLevelsByProfile, 
+import {
+    getOperatorLabel,
+    getLevelBadge,
+    getAvailableLevelsByProfile,
     isBooleanProfile,
-    getBooleanValueLabel
+    getBooleanValueLabel, getProfileByFieldKey
 } from '../handlers/EventConditionUtils';
 
 interface EditableFieldKeyProps {
@@ -32,7 +32,7 @@ export const EditableFieldKey: React.FC<EditableFieldKeyProps> = ({
 
     return (
         <Select value={value} onValueChange={onChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger>
                 <SelectValue placeholder="Field Key 선택" />
             </SelectTrigger>
             <SelectContent>
@@ -115,7 +115,6 @@ export const EditableConditionType: React.FC<EditableConditionTypeProps> = ({
     const isBoolean = isBooleanProfile(profiles, fieldKey);
     
     if (!isEditing || isBoolean) {
-        // Boolean 프로필이거나 편집 모드가 아닌 경우 고정 표시
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 {isBoolean ? 'Boolean' : (value === 'SINGLE' ? '단일' : '범위')}
@@ -182,7 +181,6 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
         );
     }
 
-    // Boolean 프로필인 경우 Boolean 값 선택
     if (isBoolean) {
         return (
             <div className="space-y-2">
@@ -213,11 +211,9 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
         );
     }
 
-    // Float 프로필인 경우 수치 조건
     if (row.conditionType === 'RANGE') {
         return (
             <div className="space-y-2">
-                <div className="text-xs font-medium text-gray-700">범위 조건</div>
                 <div className="flex items-center gap-2">
                     <Input
                         type="number"
@@ -225,7 +221,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         value={row.leftValue ?? ''}
                         onChange={(e) => onChange('leftValue', parseFloat(e.target.value) || undefined)}
                         placeholder="최소값"
-                        className="w-20 text-sm"
+                        className="w-16 text-sm"
                     />
                     <span className="text-xs text-gray-500">≤ 값 ≤</span>
                     <Input
@@ -234,17 +230,15 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         value={row.rightValue ?? ''}
                         onChange={(e) => onChange('rightValue', parseFloat(e.target.value) || undefined)}
                         placeholder="최대값"
-                        className="w-20 text-sm"
+                        className="w-16 text-sm"
                     />
-                </div>
-                <div className="text-xs text-gray-500">
-                    값이 {row.leftValue ?? '최소값'}와 {row.rightValue ?? '최대값'} 사이에 있을 때 알림
+                    <span
+                        className="text-xs text-gray-500">{getProfileByFieldKey(profiles, row.fieldKey)?.fieldUnit}</span>
                 </div>
             </div>
         );
     }
 
-    // 단일 조건 (SINGLE)
     return (
         <div className="space-y-2">
             <div className="text-xs font-medium text-gray-700">단일 조건</div>
