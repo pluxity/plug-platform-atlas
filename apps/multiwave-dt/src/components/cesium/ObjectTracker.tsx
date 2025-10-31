@@ -114,21 +114,19 @@ function updateOrCreateEntity(
   const pathColor = mode === 'night' ? NIGHT_COLOR.withAlpha(0.7) : (PATH_COLORS[obj.type as keyof typeof PATH_COLORS] || PATH_COLORS.person)
   const label = OBJECT_LABELS[obj.type as keyof typeof OBJECT_LABELS] || OBJECT_LABELS.person
 
-  // 경로 좌표 계산 (마지막 2개 포인트 제외하여 현재 위치와 겹치지 않도록)
+  // 경로 좌표 계산
   let pathPositions: Cartesian3[] | undefined
   if (path && path.positions.length >= 2) {
-    let positions = path.positions.slice(0, -2)
+    let positions = path.positions
 
     // 최대 포인트 수 제한
     if (positions.length > MAX_PATH_POINTS) {
       positions = positions.slice(-MAX_PATH_POINTS)
     }
 
-    if (positions.length >= 2) {
-      pathPositions = positions.map((pos: any) =>
-        Cartesian3.fromDegrees(pos.longitude, pos.latitude, pos.altitude ?? 0)
-      )
-    }
+    pathPositions = positions.map((pos: any) =>
+      Cartesian3.fromDegrees(pos.longitude, pos.latitude, pos.altitude ?? 0)
+    )
   }
 
   let entity = entityMap.get(obj.id)
