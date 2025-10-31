@@ -4,7 +4,7 @@ import { TrackingPage } from './pages/TrackingPage'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/multiwave-dt">
       <Routes>
         <Route path="/" element={<Navigate to="/tracking" replace />} />
         <Route path="/tracking" element={<TrackingPage />} />

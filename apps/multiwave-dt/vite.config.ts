@@ -4,19 +4,22 @@ import tailwindcss from '@tailwindcss/vite'
 import cesium from 'vite-plugin-cesium'
 import path from 'path'
 
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    cesium()
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    }
-  },
-  server: {
-    port: 4000, // multiwave-dt는 4000
-    host: true,
-  },
+export default defineConfig(({ mode }) => {
+  return {
+    base: '/',
+    plugins: [
+      react(),
+      tailwindcss(),
+      cesium()
+    ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      }
+    },
+    server: {
+      port: 4000, 
+      host: true,
+    },
+  }
 })

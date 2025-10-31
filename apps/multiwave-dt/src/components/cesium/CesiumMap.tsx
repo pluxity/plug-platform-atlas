@@ -24,7 +24,7 @@ export function CesiumMap() {
     if (!viewer) return
 
     viewer.camera.setView({
-      destination: Cartesian3.fromDegrees(128.6703, 37.6560, 2000),
+      destination: Cartesian3.fromDegrees(128.573323, 38.066044, 2000),
     })
   }, [viewer])
 
