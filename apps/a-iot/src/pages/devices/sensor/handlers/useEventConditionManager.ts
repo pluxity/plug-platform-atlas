@@ -50,7 +50,7 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             setOriginalData({});
             setEditingData({});
         }
-    }, [conditionsData.map(c => c.id).join(',')]);
+    }, [conditionsData]);
 
     const hasChanges = (index: number): boolean => {
         const original = originalData[index];
