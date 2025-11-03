@@ -1,5 +1,13 @@
 name: Archive Done Issues
 
+# 매주 일요일 자정(UTC)에 Done 상태로 2주 이상 유지된 이슈/PR을 Archive로 자동 이동
+#
+# 필요 사항:
+# 1. Repository Secret에 'PROJECT_PAT' 추가 필요
+#    - GitHub Settings > Developer settings > Personal access tokens (classic)
+#    - 필요한 권한: repo, read:org, project (read:project + write:project)
+# 2. Organization Project에 'Archive' 상태 필드 추가
+
 on:
   schedule:
     - cron: '0 0 * * 0'  # 매주 일요일 00:00 UTC (한국시간 09:00)
@@ -19,7 +27,7 @@ jobs:
 
       - name: Archive Done issues to Archive
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PROJECT_PAT }}
         run: |
           #!/bin/bash
           set -e
