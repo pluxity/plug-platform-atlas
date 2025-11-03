@@ -1,7 +1,7 @@
 import * as React from "react"
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
 
-export interface SideMenuProps extends React.ComponentPropsWithoutRef<typeof CollapsiblePrimitive.Root> {
+export interface SideMenuProps extends Omit<React.ComponentPropsWithoutRef<typeof CollapsiblePrimitive.Root>, 'children'> {
   defaultOpen?: boolean
   collapsible?: boolean
   children?: React.ReactNode | (({ open }: { open: boolean }) => React.ReactNode)
