@@ -1,10 +1,11 @@
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Column, DataTable, Input, Progress, Switch, Spinner, toast, Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
-import { useFeatures, useSyncFeatures, FeatureResponse } from '@plug-atlas/web-core';
+import { useFeatures, useSyncFeatures, FeatureResponse, useUpdateFeature } from '@plug-atlas/web-core';
 import { useState, useEffect } from 'react';
 
 export default function IoTSensor() {
   const { data, mutate, error, isLoading } = useFeatures();
   const { trigger: syncFeatures, isMutating: isSyncingFeatures } = useSyncFeatures();
+  const { trigger: updateFeature } = useUpdateFeature();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedSite, setSelectedSite] = useState<string>('all');
@@ -113,6 +114,16 @@ export default function IoTSensor() {
     }
     return pages;
   };
+
+  const handleToggleActive = async(featureId: number, active:boolean) => {
+    try{
+      await updateFeature({ id: featureId, data: { active } });
+      toast.success('활성화 상태가 변경되었습니다.');
+      mutate();
+    } catch (error) {
+      toast.error('활성화 상태 변경에 실패했습니다.');
+    } 
+  }
   
   const featureColumns: Column<FeatureResponse>[] = [
     {
@@ -132,7 +143,7 @@ export default function IoTSensor() {
       )
     },
     {
-      key: 'siteResponse',
+      key: 'name',
       header: '도면명',
       cell: (_,row) => (
         <>{row.siteResponse?.name}</>
@@ -166,10 +177,10 @@ export default function IoTSensor() {
       )
     },
     {
-      key: 'deviceTypeResponse',
-      header: '세부사항',
+      key: 'siteResponse',
+      header: '지도보기',
       cell: () => (
-        <Button variant="outline">세부사항</Button>
+        <Button variant="outline">지도보기</Button>
       )
     },
     {
@@ -178,8 +189,7 @@ export default function IoTSensor() {
       cell: (_,row) => (
           <Switch 
             checked={row.active ?? false} 
-            onCheckedChange={() => {}}
-           
+            onCheckedChange={(checked) => handleToggleActive(row.id, checked)}
           />
       )
     }
@@ -268,7 +278,13 @@ export default function IoTSensor() {
                 </div>
               </div>
               
-              <DataTable data={currentPageData} columns={featureColumns} onRowEdit={() => {}} />
+              {displayData.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  검색 결과가 없습니다.
+                </div>
+              ) : (
+                <DataTable data={currentPageData} columns={featureColumns} />
+              )}
               
               {totalPages >= 1 && (
                 <Pagination className="mt-5">
