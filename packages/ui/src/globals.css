@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: hsl(0 0% 100%);
+  --color-background: hsl(220 20% 97%);
   --color-foreground: hsl(0 0% 17%);
   --color-card: hsl(0 0% 100%);
   --color-card-foreground: hsl(0 0% 17%);
@@ -81,10 +81,12 @@
   --color-muted-foreground: hsl(0 0% 42%);
   --color-accent: hsl(223 100% 94%);
   --color-accent-foreground: hsl(223 72% 44%);
-  --color-border: hsl(0 0% 85%);
+  --color-border: hsl(0 0% 90%);
   --color-input: hsl(0 0% 85%);
   --color-ring: hsl(223 72% 44%);
-  --radius: 0.5rem;
+  --radius: 0.75rem;
+  --radius-card: 0.875rem;
+  --radius-button: 0.5rem;
 }
 
 .dark {

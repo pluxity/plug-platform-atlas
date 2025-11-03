@@ -15,7 +15,6 @@ import Users from './pages/users/Users'
 import Roles from './pages/users/Roles'
 import Permissions from './pages/users/Permissions'
 import Mobius from './pages/system/Mobius'
-import IoTSensor from './pages/IoTSensor'
 
 function App() {
   return (
@@ -33,7 +32,6 @@ function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/dashboard/map" element={<MapDashboard />} />
                   <Route path="/sites/parks" element={<SitePage />} />
-                  <Route path="/sensors" element={<IoTSensor />} />
                   <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
                   <Route path="/devices/sensor-categories" element={<SensorCategories />} />
                   <Route path="/devices/sensors" element={<Sensors />} />

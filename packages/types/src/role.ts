@@ -4,10 +4,8 @@ import { z } from 'zod'
  * Permission Response
  */
 export const PermissionResponseSchema = z.object({
-  id: z.number(),
   resourceType: z.string(),
-  action: z.string(),
-  description: z.string().optional(),
+  resourceIds: z.array(z.string()),
 })
 
 export type PermissionResponse = z.infer<typeof PermissionResponseSchema>
@@ -34,7 +32,7 @@ export type PermissionGroupResponse = z.infer<typeof PermissionGroupResponseSche
 export const PermissionGroupCreateRequestSchema = z.object({
   name: z.string().min(1, '권한 그룹 이름을 입력해주세요'),
   description: z.string().optional(),
-  permissionIds: z.array(z.number()),
+  permissions: z.array(PermissionResponseSchema),
 })
 
 export type PermissionGroupCreateRequest = z.infer<typeof PermissionGroupCreateRequestSchema>
@@ -45,7 +43,7 @@ export type PermissionGroupCreateRequest = z.infer<typeof PermissionGroupCreateR
 export const PermissionGroupUpdateRequestSchema = z.object({
   name: z.string().min(1, '권한 그룹 이름을 입력해주세요'),
   description: z.string().optional(),
-  permissionIds: z.array(z.number()),
+  permissions: z.array(PermissionResponseSchema),
 })
 
 export type PermissionGroupUpdateRequest = z.infer<typeof PermissionGroupUpdateRequestSchema>
@@ -89,6 +87,8 @@ export type RoleUpdateRequest = z.infer<typeof RoleUpdateRequestSchema>
  */
 export const ResourceTypeResponseSchema = z.object({
   name: z.string(),
+  key: z.string(),
+  endpoint: z.string(),
 })
 
 export type ResourceTypeResponse = z.infer<typeof ResourceTypeResponseSchema>
