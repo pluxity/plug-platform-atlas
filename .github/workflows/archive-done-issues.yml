@@ -2,26 +2,136 @@ name: Archive Done Issues
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # 매주 일요일 자정에 실행
-  workflow_dispatch:  
+    - cron: '0 0 * * 0'  # 매주 일요일 00:00 UTC (한국시간 09:00)
+  workflow_dispatch:  # 수동 실행 가능
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   archive_done_issues:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Install GitHub CLI via Chocolatey
-        run: choco install gh -y
-
-      - name: Archive issues labeled as Done
+      - name: Archive Done issues to Archive
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh auth login --with-token <<< %GITHUB_TOKEN%
-          
-          for /F "usebackq tokens=*" %%i in (`gh issue list --state closed --label "Done" --json number --jq ".[].number"`) do (
-              echo Archiving issue #%%i
-              gh issue edit %%i --add-label archived --remove-label "Done"
-          )
+          #!/bin/bash
+          set -e
+
+          echo "Starting archive process..."
+
+          # 2주 전 날짜 계산
+          TWO_WEEKS_AGO=$(date -d '14 days ago' --iso-8601=seconds)
+          echo "Archiving items in Done status since: $TWO_WEEKS_AGO"
+
+          # 프로젝트 정보 가져오기
+          PROJECT_DATA=$(gh api graphql -f query='
+            query {
+              organization(login: "pluxity") {
+                projectV2(number: 11) {
+                  id
+                  fields(first: 20) {
+                    nodes {
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                        options {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ')
+
+          PROJECT_ID=$(echo "$PROJECT_DATA" | jq -r '.data.organization.projectV2.id')
+          STATUS_FIELD_ID=$(echo "$PROJECT_DATA" | jq -r '.data.organization.projectV2.fields.nodes[] | select(.name == "Status") | .id')
+          DONE_OPTION_ID=$(echo "$PROJECT_DATA" | jq -r '.data.organization.projectV2.fields.nodes[] | select(.name == "Status") | .options[] | select(.name == "Done") | .id')
+          ARCHIVE_OPTION_ID=$(echo "$PROJECT_DATA" | jq -r '.data.organization.projectV2.fields.nodes[] | select(.name == "Status") | .options[] | select(.name == "Archive") | .id')
+
+          echo "Project ID: $PROJECT_ID"
+          echo "Status Field ID: $STATUS_FIELD_ID"
+          echo "Done Option ID: $DONE_OPTION_ID"
+          echo "Archive Option ID: $ARCHIVE_OPTION_ID"
+
+          if [ -z "$ARCHIVE_OPTION_ID" ] || [ "$ARCHIVE_OPTION_ID" == "null" ]; then
+            echo "Error: Archive status not found in project"
+            exit 1
+          fi
+
+          # Done 상태의 모든 아이템 가져오기
+          ITEMS_DATA=$(gh api graphql -f query='
+            query {
+              organization(login: "pluxity") {
+                projectV2(number: 11) {
+                  items(first: 100) {
+                    nodes {
+                      id
+                      content {
+                        ... on Issue {
+                          number
+                          title
+                        }
+                        ... on PullRequest {
+                          number
+                          title
+                        }
+                      }
+                      fieldValueByName(name: "Status") {
+                        ... on ProjectV2ItemFieldSingleSelectValue {
+                          name
+                          updatedAt
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ')
+
+          echo "Processing items..."
+
+          # Done 상태이고 2주 이상 지난 아이템들 처리
+          echo "$ITEMS_DATA" | jq -c '.data.organization.projectV2.items.nodes[] | select(.fieldValueByName.name == "Done")' | while IFS= read -r item; do
+            ITEM_ID=$(echo "$item" | jq -r '.id')
+            ISSUE_NUMBER=$(echo "$item" | jq -r '.content.number // "N/A"')
+            ISSUE_TITLE=$(echo "$item" | jq -r '.content.title // "N/A"')
+            UPDATED_AT=$(echo "$item" | jq -r '.fieldValueByName.updatedAt')
+
+            # 날짜 비교
+            if [[ "$UPDATED_AT" < "$TWO_WEEKS_AGO" ]]; then
+              echo "Archiving #$ISSUE_NUMBER: $ISSUE_TITLE (Done since: $UPDATED_AT)"
+
+              # Archive로 상태 변경
+              gh api graphql -f query='
+                mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $project
+                    itemId: $item
+                    fieldId: $field
+                    value: {singleSelectOptionId: $value}
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }
+              ' -f project="$PROJECT_ID" -f item="$ITEM_ID" -f field="$STATUS_FIELD_ID" -f value="$ARCHIVE_OPTION_ID"
+
+              echo "✓ Archived #$ISSUE_NUMBER"
+            else
+              echo "Skipping #$ISSUE_NUMBER: Done since $UPDATED_AT (less than 2 weeks)"
+            fi
+          done
+
+          echo "Archive process completed!"
