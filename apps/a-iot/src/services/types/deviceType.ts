@@ -1,5 +1,5 @@
 export interface DeviceProfile {
-    id: number;
+    id?: number;
     fieldKey: string;
     description: string;
     fieldUnit: string;
@@ -11,5 +11,5 @@ export interface DeviceType {
     objectId: string;
     description: string;
     version: string;
-    profiles: DeviceProfile[];
+    profiles?: DeviceProfile[];
 }
