@@ -1,6 +1,6 @@
 import React from 'react';
-import {DeviceProfile, EventCondition} from "../../../../../services/types";
-import {EventConditionOperator, EventLevel} from "../../../../../services/types/eventCondition.ts";
+import { DeviceProfile, EventCondition } from "../../../../../services/types";
+import { EventConditionOperator, EventLevel, CreateConditionData } from "../../../../../services/types/eventCondition";
 
 export interface Column<T> {
     key: keyof T;
@@ -8,7 +8,7 @@ export interface Column<T> {
     cell: (value: any, row: T, index?: number) => React.ReactNode;
 }
 
-export const createDefaultCondition = (objectId: string): EventCondition => ({
+export const createDefaultCondition = (objectId: string): CreateConditionData => ({
     objectId,
     fieldKey: '',
     level: 'NORMAL',
@@ -23,7 +23,7 @@ export const createDefaultCondition = (objectId: string): EventCondition => ({
     guideMessage: ''
 });
 
-export const toCreateConditionData = (condition: EventCondition): EventCondition => ({
+export const toCreateConditionData = (condition: EventCondition): CreateConditionData => ({
     objectId: condition.objectId,
     fieldKey: condition.fieldKey,
     level: condition.level,
@@ -38,7 +38,7 @@ export const toCreateConditionData = (condition: EventCondition): EventCondition
     guideMessage: condition.guideMessage || ''
 });
 
-export const toApiConditionData = (condition: EventCondition, profiles: DeviceProfile[]) => {
+export const toApiConditionData = (condition: CreateConditionData, profiles: DeviceProfile[]) => {
     const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
     
     const baseData = {
@@ -68,7 +68,7 @@ export const toApiConditionData = (condition: EventCondition, profiles: DevicePr
     }
 };
 
-export const validateConditionData = (condition: EventCondition, profiles: DeviceProfile[]): boolean => {
+export const validateConditionData = (condition: CreateConditionData, profiles: DeviceProfile[]): boolean => {
     if (!condition.fieldKey || !condition.level || !condition.conditionType || !condition.operator) {
         return false;
     }
@@ -94,7 +94,7 @@ export const isBooleanProfile = (profiles: DeviceProfile[], fieldKey: string): b
     return profile?.fieldType === 'BOOLEAN';
 };
 
-export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string): Partial<EventCondition> => {
+export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string): Partial<CreateConditionData> => {
     const profile = profiles.find(p => p.fieldKey === fieldKey);
     
     if (!profile) {
@@ -122,8 +122,8 @@ export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey:
     };
 };
 
-export const formatConditionSummary = (condition: EventCondition | EventCondition, profiles: DeviceProfile[]): string => {
-    if (!condition.fieldKey) return '';
+export const formatConditionSummary = (condition: CreateConditionData | EventCondition | undefined, profiles: DeviceProfile[]): string => {
+    if (!condition?.fieldKey) return '';
     
     const profile = profiles.find(p => p.fieldKey === condition.fieldKey);
     const fieldName = profile?.description || condition.fieldKey;

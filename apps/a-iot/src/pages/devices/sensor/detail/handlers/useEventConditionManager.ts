@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { EventCondition, DeviceProfile } from '../../../../../services/types';
 import {
-    CreateConditionData,
     createDefaultCondition,
     toCreateConditionData,
     toApiConditionData,
@@ -11,6 +10,7 @@ import {
     formatConditionSummary
 } from "./EventConditionUtils";
 import { useEventConditionMutations, useEventConditions } from "../../../../../services/hooks";
+import { CreateConditionData } from "../../../../../services/types/eventCondition";
 
 export const useEventConditionManager = (objectId: string, profiles: DeviceProfile[]) => {
     const [editingData, setEditingData] = useState<{ [key: number]: EventCondition }>({});
@@ -29,21 +29,21 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                 acc[index] = { ...condition };
                 return acc;
             }, {} as { [key: number]: EventCondition });
-            
+
             setOriginalData(originalDataMap);
-            
+
             setEditingData(prev => {
                 const newEditingData: { [key: number]: EventCondition } = {};
-                
+
                 Object.keys(prev).forEach(indexStr => {
                     const index = parseInt(indexStr);
                     const originalCondition = originalDataMap[index];
-                    
+
                     if (originalCondition && prev[index]?.id === originalCondition.id) {
                         newEditingData[index] = <EventCondition>prev[index];
                     }
                 });
-                
+
                 return newEditingData;
             });
         } else {
@@ -55,15 +55,15 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
     const hasChanges = (index: number): boolean => {
         const original = originalData[index];
         const current = editingData[index];
-        
+
         if (!original || !current) return false;
-        
+
         const fieldsToCompare: (keyof EventCondition)[] = [
-            'fieldKey', 'level', 'conditionType', 'operator', 
-            'thresholdValue', 'leftValue', 'rightValue', 
+            'fieldKey', 'level', 'conditionType', 'operator',
+            'thresholdValue', 'leftValue', 'rightValue',
             'notificationEnabled', 'activate', 'booleanValue', 'guideMessage'
         ];
-        
+
         return fieldsToCompare.some(field => {
             if (field === 'thresholdValue' || field === 'leftValue' || field === 'rightValue') {
                 const origVal = original[field] ?? undefined;
@@ -79,7 +79,7 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
         
         setEditingData(prev => {
             const existingData = prev[index];
-            
+
             if (!existingData) {
                 const originalCondition = originalData[index] || conditionsData[index];
                 if (!originalCondition) {
@@ -88,7 +88,7 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                 }
 
                 console.log(`Starting edit mode for index ${index}:`, originalCondition);
-                
+
                 return {
                     ...prev,
                     [index]: {
@@ -99,15 +99,15 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             }
 
             let updatedData = { ...existingData, [field]: value };
-            
+
             if (field === 'fieldKey') {
                 const conditionConfig = getConditionConfigByProfile(profiles, value);
                 updatedData = { ...updatedData, ...conditionConfig };
             }
-            
+
             if (field === 'conditionType') {
                 const isBoolean = isBooleanProfile(profiles, updatedData.fieldKey);
-                
+
                 if (isBoolean) {
                     updatedData.conditionType = 'SINGLE';
                     updatedData.operator = 'GE';
@@ -124,7 +124,7 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             }
 
             console.log(`Updated data for index ${index}:`, updatedData);
-            
+
             return {
                 ...prev,
                 [index]: updatedData
@@ -196,7 +196,7 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
 
         try {
             const apiConditions = newConditions.map(condition => toApiConditionData(condition, profiles));
-            
+
             console.log('Sending POST request with data:', {
                 objectId: objectId,
                 conditions: apiConditions
@@ -206,7 +206,7 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                 objectId: objectId,
                 conditions: apiConditions
             });
-            
+
             setIsAddingMode(false);
             setNewConditions([]);
             await refetch();
@@ -223,22 +223,22 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
 
     const handleNewConditionChange = (index: number, field: keyof CreateConditionData, value: any) => {
         console.log(`handleNewConditionChange - index: ${index}, field: ${field}, value:`, value);
-        
+
         setNewConditions(prev => {
             const updated = prev.map((condition, i) => {
                 if (i === index) {
                     let updatedCondition = { ...condition, [field]: value };
-                    
+
                     if (field === 'fieldKey') {
                         const conditionConfig = getConditionConfigByProfile(profiles, value);
                         updatedCondition = { ...updatedCondition, ...conditionConfig };
-                        
+
                         console.log(`FieldKey changed - isBoolean: ${isBooleanProfile(profiles, value)}`, conditionConfig);
                     }
-                    
+
                     if (field === 'conditionType') {
                         const isBoolean = isBooleanProfile(profiles, updatedCondition.fieldKey);
-                        
+
                         if (!isBoolean) {
                             if (value === 'SINGLE') {
                                 updatedCondition.operator = 'GE';
@@ -259,13 +259,13 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                             }
                         }
                     }
-                    
+
                     console.log(`Updated condition at index ${i}:`, updatedCondition);
                     return updatedCondition;
                 }
                 return condition;
             });
-            
+
             return updated;
         });
     };

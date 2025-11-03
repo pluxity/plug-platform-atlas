@@ -18,12 +18,9 @@ interface CreateColumnsProps {
 export const createColumns = ({
     profiles,
     editingData,
-    hasChanges,
     handleEditDataChange,
-    handleSaveRow,
     handleCancelRow,
     handleDelete,
-    getConditionSummary
 }: CreateColumnsProps): Column<EventCondition>[] => [
     {
         key: 'fieldKey',
@@ -173,81 +170,47 @@ export const createColumns = ({
         cell: (_value: number | undefined, row: EventCondition, index?: number) => {
             const currentIndex = index ?? 0;
             const isEditing = editingData[currentIndex] !== undefined;
-            const rowHasChanges = hasChanges(currentIndex);
 
             if (!isEditing) {
                 return (
-                    <div className="space-y-2">
-                        <div className="flex gap-1">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    if (row.id) {
-                                        handleEditDataChange(currentIndex, 'id', row.id);
-                                    }
-                                }}
-                                className="text-blue-600 hover:text-blue-800"
-                                title="이 행 편집하기"
-                            >
-                                편집
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => row.id && handleDelete(row.id)}
-                                className="text-red-600 hover:text-red-800"
-                                title="이 조건 삭제"
-                            >
-                                삭제
-                            </Button>
-                        </div>
-                        {row.guideMessage && (
-                            <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded max-w-xs">
-                                {row.guideMessage}
-                            </div>
-                        )}
-                        <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded max-w-xs">
-                            {getConditionSummary(row)}
-                        </div>
+                    <div className="flex gap-1">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                if (row.id) {
+                                    handleEditDataChange(currentIndex, 'id', row.id);
+                                }
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="이 행 편집하기"
+                        >
+                            편집
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => row.id && handleDelete(row.id)}
+                            className="text-red-600 hover:text-red-800"
+                            title="이 조건 삭제"
+                        >
+                            삭제
+                        </Button>
                     </div>
                 );
             }
 
             return (
                 <div className="flex gap-1">
-                    {rowHasChanges ? (
-                        <>
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleSaveRow(currentIndex)}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                title="이 행의 변경사항 저장"
-                            >
-                                저장
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleCancelRow(currentIndex)}
-                                className="text-gray-600 hover:text-gray-800"
-                                title="이 행의 변경사항 취소"
-                            >
-                                취소
-                            </Button>
-                        </>
-                    ) : (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCancelRow(currentIndex)}
-                            className="text-gray-600 hover:text-gray-800"
-                            title="편집 모드 종료"
-                        >
-                            취소
-                        </Button>
-                    )}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancelRow(currentIndex)}
+                        className="text-gray-600 hover:text-gray-800"
+                        title="편집 모드 종료"
+                    >
+                        취소
+                    </Button>
                 </div>
             );
         },

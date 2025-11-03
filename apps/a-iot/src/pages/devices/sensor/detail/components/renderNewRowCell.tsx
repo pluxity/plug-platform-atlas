@@ -2,8 +2,8 @@ import React from 'react';
 import { Button } from '@plug-atlas/ui';
 import { Trash2, Save, X, Bell, BellOff, Mail, MailX } from 'lucide-react';
 import { DeviceProfile, EventCondition } from '../../../../../services/types';
-import { CreateConditionData } from '../handlers/EventConditionUtils';
 import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from './EditableCells';
+import {CreateConditionData} from "../../../../../services/types/eventCondition.ts";
 
 interface RenderNewRowCellProps {
     columnKey: string;
