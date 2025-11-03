@@ -173,6 +173,12 @@ interface EditableConditionProps {
     profiles: DeviceProfile[];
 }
 
+const safeParseFloat = (value: string): number | undefined => {
+    if (!value.trim()) return undefined;
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? undefined : parsed;
+};
+
 export const EditableCondition: React.FC<EditableConditionProps> = ({
     row,
     onChange,
@@ -225,7 +231,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         type="number"
                         step="0.01"
                         value={row.leftValue ?? ''}
-                        onChange={(e) => onChange('leftValue', parseFloat(e.target.value) || undefined)}
+                        onChange={(e) => onChange('leftValue', safeParseFloat(e.target.value))}
                         placeholder="최소값"
                         className="w-20 text-sm"
                     />
@@ -234,7 +240,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         type="number"
                         step="0.01"
                         value={row.rightValue ?? ''}
-                        onChange={(e) => onChange('rightValue', parseFloat(e.target.value) || undefined)}
+                        onChange={(e) => onChange('rightValue', safeParseFloat(e.target.value))}
                         placeholder="최대값"
                         className="w-20 text-sm"
                     />
@@ -271,7 +277,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                     type="number"
                     step="0.01"
                     value={row.thresholdValue ?? ''}
-                    onChange={(e) => onChange('thresholdValue', parseFloat(e.target.value) || undefined)}
+                    onChange={(e) => onChange('thresholdValue', safeParseFloat(e.target.value))}
                     placeholder="기준값"
                     className="w-24 text-sm"
                 />

@@ -7,12 +7,9 @@ import { Bell, BellOff, Mail, MailX } from "lucide-react";
 interface CreateColumnsProps {
     profiles: DeviceProfile[];
     editingData: { [key: number]: EventCondition };
-    hasChanges: (index: number) => boolean;
     handleEditDataChange: (index: number, field: keyof EventCondition, value: any) => void;
-    handleSaveRow: (index: number) => Promise<void>;
     handleCancelRow: (index: number) => void;
     handleDelete: (conditionId: number) => Promise<void>;
-    getConditionSummary: (condition: EventCondition) => string;
 }
 
 export const createColumns = ({

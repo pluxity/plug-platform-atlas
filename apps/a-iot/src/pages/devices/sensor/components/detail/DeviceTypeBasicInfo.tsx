@@ -1,6 +1,6 @@
 import { DataTable } from '@plug-atlas/ui';
 import { Tag, FileText, Layers } from 'lucide-react';
-import {DeviceType} from "../../../../../services/types";
+import {DeviceProfile, DeviceType} from "../../../../../services/types";
 
 interface DeviceTypeBasicInfoProps {
     deviceType: DeviceType;
@@ -11,7 +11,7 @@ interface DeviceTypeBasicInfoProps {
 export default function DeviceTypeBasicInfo({deviceType,}: DeviceTypeBasicInfoProps) {
     const profileColumns = [
         {
-            key: 'fieldKey' as keyof typeof deviceType.profiles[0],
+            key: 'fieldKey' as keyof DeviceProfile,
             header: 'Field Key',
             cell: (value: any) => (
                 <div className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
@@ -20,12 +20,12 @@ export default function DeviceTypeBasicInfo({deviceType,}: DeviceTypeBasicInfoPr
             ),
         },
         {
-            key: 'description' as keyof typeof deviceType.profiles[0],
+            key: 'description' as keyof DeviceProfile,
             header: '설명',
             cell: (value: any) => <div className="font-medium">{value}</div>,
         },
         {
-            key: 'fieldType' as keyof typeof deviceType.profiles[0],
+            key: 'fieldType' as keyof DeviceProfile,
             header: '데이터 타입',
             cell: (value: any) => (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -34,15 +34,15 @@ export default function DeviceTypeBasicInfo({deviceType,}: DeviceTypeBasicInfoPr
             ),
         },
         {
-            key: 'fieldUnit' as keyof typeof deviceType.profiles[0],
+            key: 'fieldUnit' as keyof DeviceProfile,
             header: '단위',
             cell: (value: any) => (
                 <div className="text-sm text-gray-600">
                     {value || '—'}
                 </div>
-        ),
-    },
-];
+            ),
+        },
+    ];
 
     return (
         <div className="bg-white rounded-xl space-y-3">
