@@ -1,6 +1,6 @@
 import React from 'react';
-import { DeviceProfile, EventCondition } from "../../../../../services/types";
-import { EventConditionOperator, EventLevel, CreateConditionData } from "../../../../../services/types/eventCondition";
+import { DeviceProfile, EventCondition } from "../../../../services/types";
+import { EventConditionOperator, EventLevel, CreateConditionData } from "../../../../services/types/eventCondition.ts";
 
 export interface Column<T> {
     key: keyof T;
@@ -91,7 +91,7 @@ export const validateConditionData = (condition: CreateConditionData, profiles: 
 
 export const isBooleanProfile = (profiles: DeviceProfile[], fieldKey: string): boolean => {
     const profile = profiles.find(p => p.fieldKey === fieldKey);
-    return profile?.fieldType === 'BOOLEAN';
+    return profile?.fieldType === 'Boolean';
 };
 
 export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string): Partial<CreateConditionData> => {
@@ -101,7 +101,7 @@ export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey:
         return {};
     }
     
-    if (profile.fieldType === 'BOOLEAN') {
+    if (profile.fieldType === 'Boolean') {
         return {
             conditionType: 'SINGLE',
             operator: 'GE',
@@ -186,10 +186,10 @@ export const getAvailableLevelsByProfile = (profiles: DeviceProfile[], fieldKey:
     const isBoolean = isBooleanProfile(profiles, fieldKey);
     
     if (isBoolean) {
-        return ['NORMAL', 'DANGER']; // Boolean은 일반/위험만
+        return ['NORMAL', 'DANGER'];
     }
     
-    return ['NORMAL', 'WARNING', 'CAUTION', 'DANGER']; // 숫자형은 대부분의 레벨
+    return ['NORMAL', 'WARNING', 'CAUTION', 'DANGER'];
 };
 
 export const getBooleanValueLabel = (value: boolean): string => {

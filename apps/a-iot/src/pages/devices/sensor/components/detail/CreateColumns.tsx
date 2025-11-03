@@ -1,6 +1,6 @@
 import { Button } from "@plug-atlas/ui";
 import { DeviceProfile, EventCondition } from "../../../../../services/types";
-import { Column } from "../handlers/EventConditionUtils";
+import { Column, isBooleanProfile } from "../../handlers/EventConditionUtils";
 import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from "./EditableCells";
 import { Bell, BellOff, Mail, MailX } from "lucide-react";
 
@@ -29,7 +29,7 @@ export const createColumns = ({
             const currentIndex = index ?? 0;
             const isEditing = editingData[currentIndex] !== undefined;
             const currentValue = editingData[currentIndex]?.fieldKey ?? value ?? '';
-            
+
             return (
                 <EditableFieldKey
                     value={currentValue}
@@ -48,7 +48,7 @@ export const createColumns = ({
             const isEditing = editingData[currentIndex] !== undefined;
             const currentRow = editingData[currentIndex] || row;
             const currentValue = currentRow.level ?? value ?? 'NORMAL';
-            
+
             return (
                 <EditableLevel
                     value={currentValue}
@@ -68,14 +68,21 @@ export const createColumns = ({
             const isEditing = editingData[currentIndex] !== undefined;
             const currentRow = editingData[currentIndex] || row;
             const currentValue = currentRow.conditionType ?? value ?? 'SINGLE';
-            
+            const fieldKey = currentRow.fieldKey ?? '';
+
+            const isBoolean = isBooleanProfile(profiles, fieldKey);
+            if (isBoolean) {
+                return <div className="text-gray-400 text-sm text-center">-</div>;
+            }
+
             return (
                 <EditableConditionType
                     value={currentValue}
-                    onChange={(newValue: EventCondition['conditionType']) => handleEditDataChange(currentIndex, 'conditionType', newValue)}
+                    onChange={(field: keyof EventCondition, newValue: any) => handleEditDataChange(currentIndex, field, newValue)}
                     isEditing={isEditing}
                     profiles={profiles}
-                    fieldKey={currentRow.fieldKey ?? ''}
+                    fieldKey={fieldKey}
+                    row={currentRow}
                 />
             );
         },

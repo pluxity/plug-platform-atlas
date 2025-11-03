@@ -3,7 +3,8 @@ import { Button } from '@plug-atlas/ui';
 import { Trash2, Save, X, Bell, BellOff, Mail, MailX } from 'lucide-react';
 import { DeviceProfile, EventCondition } from '../../../../../services/types';
 import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from './EditableCells';
-import {CreateConditionData} from "../../../../../services/types/eventCondition.ts";
+import { CreateConditionData } from "../../../../../services/types/eventCondition";
+import { isBooleanProfile } from '../../handlers/EventConditionUtils';
 
 interface RenderNewRowCellProps {
     columnKey: string;
@@ -27,8 +28,26 @@ export const renderNewRowCell = ({
     handlers,
     profiles,
     isLastRow,
-    getConditionSummary
 }: RenderNewRowCellProps): React.ReactNode => {
+    
+    const conditionAsEvent: EventCondition = {
+        id: undefined,
+        objectId: newCondition.objectId,
+        fieldKey: newCondition.fieldKey,
+        level: newCondition.level,
+        conditionType: newCondition.conditionType,
+        operator: newCondition.operator,
+        thresholdValue: newCondition.thresholdValue,
+        leftValue: newCondition.leftValue,
+        rightValue: newCondition.rightValue,
+        booleanValue: newCondition.booleanValue,
+        notificationEnabled: newCondition.notificationEnabled,
+        guideMessage: newCondition.guideMessage,
+        activate: newCondition.activate
+    };
+
+    const isBoolean = isBooleanProfile(profiles, newCondition.fieldKey);
+
     switch (columnKey) {
         case 'fieldKey':
             return (
@@ -52,34 +71,25 @@ export const renderNewRowCell = ({
             );
 
         case 'conditionType':
+            // Boolean 타입의 경우 타입 컬럼 숨김
+            if (isBoolean) {
+                return <div className="text-gray-400 text-sm text-center">-</div>;
+            }
+            
             return (
                 <EditableConditionType
                     value={newCondition.conditionType}
-                    onChange={(value) => handlers.onChange(newRowIndex, 'conditionType', value)}
+                    onChange={(field: keyof EventCondition, value: any) => {
+                        handlers.onChange(newRowIndex, field as keyof CreateConditionData, value);
+                    }}
                     isEditing={true}
                     profiles={profiles}
                     fieldKey={newCondition.fieldKey}
+                    row={conditionAsEvent}
                 />
             );
 
         case 'operator':
-            // CreateConditionData를 EventCondition 타입으로 캐스팅
-            const conditionAsEvent: EventCondition = {
-                id: undefined,
-                objectId: newCondition.objectId,
-                fieldKey: newCondition.fieldKey,
-                level: newCondition.level,
-                conditionType: newCondition.conditionType,
-                operator: newCondition.operator,
-                thresholdValue: newCondition.thresholdValue,
-                leftValue: newCondition.leftValue,
-                rightValue: newCondition.rightValue,
-                booleanValue: newCondition.booleanValue,
-                notificationEnabled: newCondition.notificationEnabled,
-                guideMessage: newCondition.guideMessage,
-                activate: newCondition.activate
-            };
-
             return (
                 <EditableCondition
                     row={conditionAsEvent}
@@ -154,9 +164,6 @@ export const renderNewRowCell = ({
                                 </Button>
                             </>
                         )}
-                    </div>
-                    <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded max-w-xs">
-                        {getConditionSummary(newCondition)}
                     </div>
                 </div>
             );

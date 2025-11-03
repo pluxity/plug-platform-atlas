@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { EventCondition, DeviceProfile } from '../../../../../services/types';
+import { EventCondition, DeviceProfile } from '../../../../services/types';
 import {
     createDefaultCondition,
     toCreateConditionData,
@@ -8,9 +8,9 @@ import {
     isBooleanProfile,
     getConditionConfigByProfile,
     formatConditionSummary
-} from "./EventConditionUtils";
-import { useEventConditionMutations, useEventConditions } from "../../../../../services/hooks";
-import { CreateConditionData } from "../../../../../services/types/eventCondition";
+} from "./EventConditionUtils.tsx";
+import { useEventConditionMutations, useEventConditions } from "../../../../services/hooks";
+import { CreateConditionData } from "../../../../services/types/eventCondition.ts";
 
 export const useEventConditionManager = (objectId: string, profiles: DeviceProfile[]) => {
     const [editingData, setEditingData] = useState<{ [key: number]: EventCondition }>({});
@@ -75,19 +75,15 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
     };
 
     const handleEditDataChange = (index: number, field: keyof EventCondition, value: any) => {
-        console.log(`handleEditDataChange - index: ${index}, field: ${field}, value:`, value);
-        
+
         setEditingData(prev => {
             const existingData = prev[index];
 
             if (!existingData) {
                 const originalCondition = originalData[index] || conditionsData[index];
                 if (!originalCondition) {
-                    console.log(`No original condition found for index ${index}`);
                     return prev;
                 }
-
-                console.log(`Starting edit mode for index ${index}:`, originalCondition);
 
                 return {
                     ...prev,
@@ -122,8 +118,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                     }
                 }
             }
-
-            console.log(`Updated data for index ${index}:`, updatedData);
 
             return {
                 ...prev,
@@ -163,14 +157,11 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
 
             await refetch();
         } catch (error) {
-            console.error('이벤트 컨디션 수정 실패:', error);
             alert('이벤트 컨디션 수정에 실패했습니다.');
         }
     };
 
     const handleCancelRow = (index: number) => {
-        console.log(`Canceling edit for index ${index}`);
-        
         setEditingData(prev => {
             const newData = { ...prev };
             delete newData[index];
@@ -197,11 +188,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
         try {
             const apiConditions = newConditions.map(condition => toApiConditionData(condition, profiles));
 
-            console.log('Sending POST request with data:', {
-                objectId: objectId,
-                conditions: apiConditions
-            });
-
             await createEventConditions({
                 objectId: objectId,
                 conditions: apiConditions
@@ -211,7 +197,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             setNewConditions([]);
             await refetch();
         } catch (error) {
-            console.error('이벤트 컨디션 생성 실패:', error);
             alert('이벤트 컨디션 생성에 실패했습니다.');
         }
     };
@@ -222,7 +207,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
     };
 
     const handleNewConditionChange = (index: number, field: keyof CreateConditionData, value: any) => {
-        console.log(`handleNewConditionChange - index: ${index}, field: ${field}, value:`, value);
 
         setNewConditions(prev => {
             const updated = prev.map((condition, i) => {
@@ -233,7 +217,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                         const conditionConfig = getConditionConfigByProfile(profiles, value);
                         updatedCondition = { ...updatedCondition, ...conditionConfig };
 
-                        console.log(`FieldKey changed - isBoolean: ${isBooleanProfile(profiles, value)}`, conditionConfig);
                     }
 
                     if (field === 'conditionType') {
@@ -260,7 +243,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                         }
                     }
 
-                    console.log(`Updated condition at index ${i}:`, updatedCondition);
                     return updatedCondition;
                 }
                 return condition;
@@ -286,7 +268,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
                 await deleteEventCondition(conditionId, objectId);
                 await refetch();
             } catch (error) {
-                console.error('이벤트 컨디션 삭제 실패:', error);
                 alert('이벤트 컨디션 삭제에 실패했습니다.');
             }
         }

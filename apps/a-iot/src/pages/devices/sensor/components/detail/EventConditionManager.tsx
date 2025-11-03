@@ -2,10 +2,10 @@ import React from 'react';
 import { Button } from '@plug-atlas/ui';
 import { Plus, AlertTriangle, Info, Save, X, FileEdit } from 'lucide-react';
 import { DeviceProfile, EventCondition } from '../../../../../services/types';
-import { useEventConditionManager } from "../handlers/useEventConditionManager";
-import { createColumns } from "./CreateColumns";
-import { renderNewRowCell } from "./renderNewRowCell";
-import ErrorDisplay from '../../components/ErrorDisplay';
+import { useEventConditionManager } from "../../handlers/useEventConditionManager.ts";
+import { createColumns } from "./CreateColumns.tsx";
+import { renderNewRowCell } from "./renderNewRowCell.tsx";
+import ErrorDisplay from '../ErrorDisplay.tsx';
 
 interface EventConditionsManagerProps {
     objectId: string;
@@ -148,13 +148,12 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                                             </td>
                                         ))}
                                     </tr>
-                                    {/* 가이드 메시지 및 설정 요약을 별도 행으로 분리 */}
                                     {(condition?.guideMessage || isEditing) && (
                                         <tr className="bg-gray-50 border-t">
                                             <td colSpan={enhancedColumns.length} className="px-6 py-4">
-                                                <div className="space-y-3">
+                                                <div className="space-y-3 flex gap-4">
                                                     {isEditing ? (
-                                                        <div>
+                                                        <div className="flex-1">
                                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                                 안내 메시지
                                                             </label>
@@ -168,12 +167,12 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                                                                     }
                                                                 }}
                                                                 placeholder="이 이벤트 조건에 대한 안내 메시지를 입력하세요..."
-                                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                                                                className="w-full px-3 py-2 border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
                                                                 rows={2}
                                                             />
                                                         </div>
                                                     ) : condition?.guideMessage && (
-                                                        <div>
+                                                        <div className="flex-1">
                                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                                 안내 메시지
                                                             </label>
@@ -183,11 +182,9 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                                                         </div>
                                                     )}
                                                     
-                                                    <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex items-start justify-between gap-4 flex-1">
                                                         <div className="flex-1">
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                설정 요약
-                                                            </label>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">설정 결과</label>
                                                             <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
                                                                 {getConditionSummary(condition)}
                                                             </div>
