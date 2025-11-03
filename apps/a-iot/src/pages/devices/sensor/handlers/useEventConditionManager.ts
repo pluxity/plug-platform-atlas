@@ -139,9 +139,9 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
         try {
             const updatedConditions = conditionsData.map(condition => {
                 if (condition.id === updatedCondition.id) {
-                    return toCreateConditionData(updatedCondition);
+                    return updatedCondition;
                 }
-                return toCreateConditionData(condition);
+                return condition;
             });
 
             await updateEventConditions({
