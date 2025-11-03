@@ -1,18 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { CesiumMap } from '../components/cesium/CesiumMap'
 import { Header } from '../components/layout/Header'
 import { ObjectList } from '../components/tracking/ObjectList'
 import { EventLog } from '../components/tracking/EventLog'
 import { ObjectInfoPanel } from '../components/tracking/ObjectInfoPanel'
+import VideoSearchDialog from '../components/tracking/VideoSearchDialog'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useObjectTimeout } from '../hooks/useObjectTimeout'
 import { initDB, scheduleAutoCleanup, getStorageStats } from '../services/indexeddb.service'
-import { Film, X } from 'lucide-react'
+import { useVideoSearchStore } from '../stores/useVideoSearchStore'
+import { Film } from 'lucide-react'
 
 export function TrackingPage() {
   useWebSocket()
   useObjectTimeout()
-  const [showVideoSearch, setShowVideoSearch] = useState(false)
+  const openVideoSearch = useVideoSearchStore((state) => state.openDialog)
 
   useEffect(() => {
     initDB()
@@ -47,7 +49,7 @@ export function TrackingPage() {
 
       <div className="absolute right-4 bottom-4 z-40">
         <button
-          onClick={() => setShowVideoSearch(true)}
+          onClick={() => openVideoSearch()}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-lg transition-colors"
         >
           <Film className="h-4 w-4" />
@@ -55,25 +57,7 @@ export function TrackingPage() {
         </button>
       </div>
 
-      {showVideoSearch && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-800 rounded-lg shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border border-slate-700 max-w-4xl w-full max-h-[90vh] overflow-auto">
-            <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-              <h3 className="font-semibold text-white text-sm">영상기록 검색</h3>
-              <button
-                onClick={() => setShowVideoSearch(false)}
-                className="p-1 hover:bg-slate-700 rounded transition-colors"
-              >
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
-            </div>
-            <div className="p-8 text-center text-slate-400">
-              <Film className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">영상기록 검색 기능은 추후 구현 예정입니다.</p>
-            </div>
-          </div>
-        </div>
-      )}
+      <VideoSearchDialog />
     </div>
   )
 }
