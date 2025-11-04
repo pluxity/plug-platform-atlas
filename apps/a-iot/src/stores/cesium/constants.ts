@@ -1,22 +1,21 @@
-// Cesium Ion Asset IDs
 export const ION_ASSETS = {
-  TERRAIN: 3825983,
+  TERRAIN: Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID) || 3825983,
   GOOGLE_MAP_IMAGERY: Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID) || 2,
+  GOOGLE_PHOTOREALISTIC_3D_TILES: Number(import.meta.env.VITE_CESIUM_GOOGLE_3D_TILES_ASSET_ID) || 2275207,
   TILESETS: {
-    ASSET_4004889: 4004889,
-    ASSET_4005051: 4005051,
+    CENTER_PARK: Number(import.meta.env.VITE_CESIUM_CENTER_PARK_ASSET_ID) || 4004889,
+    YD_PARK: Number(import.meta.env.VITE_CESIUM_YD_PARK_ASSET_ID) || 4005051,
   },
 } as const
 
-// Localhost Tileset URLs
+const LOCAL_TILESET_BASE_URL = import.meta.env.VITE_LOCAL_TILESET_BASE_URL || 'http://localhost'
+
 export const LOCAL_TILESETS = {
-  SEONGNAM: 'http://localhost/seongnam/sn_3d_br/sn.br.2022.tileset.json',
-  SEONGNAM_UNCOMPRESSED: 'http://localhost/seongnam/sn_3d/seongnam.2022.cesium.tileset.json',
+  SEONGNAM: `${LOCAL_TILESET_BASE_URL}/seongnam/sn_3d/seongnam.2022.cesium.tileset.json`,
 } as const
 
-// Default height offsets (in meters)
 export const TILESET_HEIGHT_OFFSETS = {
-  ASSET_4004889: 60,
-  ASSET_4005051: 60,
-  SEONGNAM: 30,
+  CENTER_PARK: Number(import.meta.env.VITE_CESIUM_CENTER_PARK_HEIGHT_OFFSET) || 0,
+  YD_PARK: Number(import.meta.env.VITE_CESIUM_YD_PARK_HEIGHT_OFFSET) || 0,
+  SEONGNAM: Number(import.meta.env.VITE_CESIUM_SEONGNAM_HEIGHT_OFFSET) || 20,
 } as const

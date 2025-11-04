@@ -7,31 +7,43 @@ import {
   Matrix4,
   Cartographic,
 } from 'cesium'
+import { ION_ASSETS, TILESET_HEIGHT_OFFSETS } from './constants'
+
+interface TilesetLoadOptions {
+  maximumScreenSpaceError?: number
+  skipLevelOfDetail?: boolean
+  cullWithChildrenBounds?: boolean
+}
 
 interface TilesetStore {
-  // Load Ion Asset tileset
-  loadIonTileset: (viewer: CesiumViewer, assetId: number) => Promise<Cesium3DTileset | null>
-
-  // Load Seongnam tileset from localhost
+  loadIonTileset: (viewer: CesiumViewer, assetId: number, options?: TilesetLoadOptions) => Promise<Cesium3DTileset | null>
   loadSeongnamTileset: (viewer: CesiumViewer, url?: string) => Promise<Cesium3DTileset | null>
-
-  // Apply height offset to any tileset
   applyHeightOffset: (tileset: Cesium3DTileset, offset: number) => void
+  loadAllIonTilesets: (viewer: CesiumViewer) => Promise<Map<number, Cesium3DTileset>>
+  setupTilesetsAutoHide: (viewer: CesiumViewer, tilesets: Map<number, Cesium3DTileset>, threshold: number) => () => void
+  setupSeongnamAutoHide: (viewer: CesiumViewer, tileset: Cesium3DTileset, threshold: number) => () => void
 }
 
 export const useTilesetStore = create<TilesetStore>(() => ({
-  loadIonTileset: async (viewer: CesiumViewer, assetId: number) => {
+  loadIonTileset: async (viewer: CesiumViewer, assetId: number, options?: TilesetLoadOptions) => {
     if (viewer.isDestroyed()) return null
 
     try {
-      console.log(`Loading Ion Asset ${assetId}...`)
       const resource = await IonResource.fromAssetId(assetId)
-      const tileset = await Cesium3DTileset.fromUrl(resource)
+
+      const tileset = await Cesium3DTileset.fromUrl(resource, {
+        skipLevelOfDetail: options?.skipLevelOfDetail ?? true,
+        maximumScreenSpaceError: options?.maximumScreenSpaceError ?? 48,
+        cullWithChildrenBounds: options?.cullWithChildrenBounds ?? true,
+        dynamicScreenSpaceError: true,
+        dynamicScreenSpaceErrorDensity: 0.00278,
+        dynamicScreenSpaceErrorFactor: 4.0,
+        dynamicScreenSpaceErrorHeightFalloff: 0.25,
+      })
 
       if (viewer.isDestroyed()) return null
 
       viewer.scene.primitives.add(tileset)
-      console.log(`Ion Asset ${assetId} loaded successfully`)
 
       return tileset
     } catch (error) {
@@ -43,20 +55,22 @@ export const useTilesetStore = create<TilesetStore>(() => ({
   loadSeongnamTileset: async (viewer: CesiumViewer, url?: string) => {
     if (viewer.isDestroyed()) return null
 
-    // Default to Brotli compressed version
-    const tilesetUrl = url || 'http://localhost/seongnam/sn_3d_br/sn.br.2022.tileset.json'
+    const tilesetUrl = url || 'http://localhost/seongnam/sn_3d/seongnam.2022.cesium.tileset.json'
 
     try {
-      console.log(`Loading Seongnam tileset from ${tilesetUrl}...`)
-
-      const tileset = await Cesium3DTileset.fromUrl(tilesetUrl)
+      const tileset = await Cesium3DTileset.fromUrl(tilesetUrl, {
+        skipLevelOfDetail: true,
+        maximumScreenSpaceError: 48,
+        cullWithChildrenBounds: true,
+        dynamicScreenSpaceError: true,
+        dynamicScreenSpaceErrorDensity: 0.00278,
+        dynamicScreenSpaceErrorFactor: 4.0,
+        dynamicScreenSpaceErrorHeightFalloff: 0.25,
+      })
 
       if (viewer.isDestroyed()) return null
 
-      console.log('Seongnam tileset loaded, bounding sphere:', tileset.boundingSphere)
-
       viewer.scene.primitives.add(tileset)
-      console.log('Seongnam tileset added to scene successfully')
 
       return tileset
     } catch (error) {
@@ -75,18 +89,89 @@ export const useTilesetStore = create<TilesetStore>(() => ({
       offset
     )
 
-    // Get the offset translation
     const translation = Cartesian3.subtract(offsetSurface, surface, new Cartesian3())
-
-    // Get the current model matrix or create identity
     const currentMatrix = tileset.modelMatrix ? Matrix4.clone(tileset.modelMatrix, new Matrix4()) : Matrix4.IDENTITY
-
-    // Create translation matrix
     const translationMatrix = Matrix4.fromTranslation(translation, new Matrix4())
-
-    // Multiply to apply translation
     tileset.modelMatrix = Matrix4.multiply(translationMatrix, currentMatrix, new Matrix4())
+  },
 
-    console.log(`Height offset ${offset}m applied to tileset`)
+  loadAllIonTilesets: async (viewer: CesiumViewer) => {
+    const tilesets = new Map<number, Cesium3DTileset>()
+
+    for (const [tilesetName, assetId] of Object.entries(ION_ASSETS.TILESETS)) {
+      const tileset = await useTilesetStore.getState().loadIonTileset(viewer, assetId)
+      if (tileset && !viewer.isDestroyed()) {
+        tilesets.set(assetId, tileset)
+        const offsetKey = tilesetName as keyof typeof TILESET_HEIGHT_OFFSETS
+        const offset = TILESET_HEIGHT_OFFSETS[offsetKey]
+        if (offset !== undefined) {
+          useTilesetStore.getState().applyHeightOffset(tileset, offset)
+        }
+      }
+    }
+
+    return tilesets
+  },
+
+  setupTilesetsAutoHide: (viewer: CesiumViewer, tilesets: Map<number, Cesium3DTileset>, threshold: number) => {
+    if (viewer.isDestroyed() || tilesets.size === 0) {
+      return () => {}
+    }
+
+    const initialHeight = viewer.camera.positionCartographic.height
+    const initialShow = initialHeight < threshold
+    tilesets.forEach(tileset => {
+      tileset.show = initialShow
+    })
+
+    const handleCameraChange = () => {
+      if (viewer.isDestroyed()) return
+
+      const cameraHeight = viewer.camera.positionCartographic.height
+      const showTilesets = cameraHeight < threshold
+
+      tilesets.forEach(tileset => {
+        if (tileset.show !== showTilesets) {
+          tileset.show = showTilesets
+        }
+      })
+    }
+
+    viewer.camera.changed.addEventListener(handleCameraChange)
+
+    return () => {
+      if (!viewer.isDestroyed()) {
+        viewer.camera.changed.removeEventListener(handleCameraChange)
+      }
+    }
+  },
+
+  setupSeongnamAutoHide: (viewer: CesiumViewer, tileset: Cesium3DTileset, threshold: number) => {
+    if (viewer.isDestroyed()) {
+      return () => {}
+    }
+
+    const initialHeight = viewer.camera.positionCartographic.height
+    const initialShow = initialHeight < threshold
+    tileset.show = initialShow
+
+    const handleCameraChange = () => {
+      if (viewer.isDestroyed()) return
+
+      const cameraHeight = viewer.camera.positionCartographic.height
+      const showTileset = cameraHeight < threshold
+
+      if (tileset.show !== showTileset) {
+        tileset.show = showTileset
+      }
+    }
+
+    viewer.camera.changed.addEventListener(handleCameraChange)
+
+    return () => {
+      if (!viewer.isDestroyed()) {
+        viewer.camera.changed.removeEventListener(handleCameraChange)
+      }
+    }
   },
 }))

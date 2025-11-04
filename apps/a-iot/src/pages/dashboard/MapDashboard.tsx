@@ -1,107 +1,79 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@plug-atlas/ui'
 import { MapPin } from 'lucide-react'
-import { Viewer as CesiumViewer, Cesium3DTileset } from 'cesium'
-import { useViewerStore, useTilesetStore, ION_ASSETS, LOCAL_TILESETS, TILESET_HEIGHT_OFFSETS } from '../../stores/cesium'
+import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath } from 'cesium'
+import { useViewerStore, useTilesetStore, ION_ASSETS, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS } from '../../stores/cesium'
 
 export default function MapDashboard() {
   const cesiumContainerRef = useRef<HTMLDivElement>(null)
-  const viewerRef = useRef<CesiumViewer | null>(null)
-  const ionTileset4004889Ref = useRef<Cesium3DTileset | null>(null)
-  const ionTileset4005051Ref = useRef<Cesium3DTileset | null>(null)
-  const seongnamTilesetRef = useRef<Cesium3DTileset | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const { createViewer } = useViewerStore()
-  const { loadIonTileset, loadSeongnamTileset, applyHeightOffset } = useTilesetStore()
+  const { loadIonTileset, loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, setupSeongnamAutoHide, applyHeightOffset } = useTilesetStore()
 
   useEffect(() => {
     if (!cesiumContainerRef.current) return
 
-    let mounted = true
+    let viewerInstance: CesiumViewer | null = null
+    const cleanupFunctions: Array<() => void> = []
 
-    const initViewer = async () => {
+    const initializeViewer = async () => {
       try {
         setIsLoading(true)
-        setError(null)
 
-        // Create Cesium Viewer
-        const viewer = createViewer(cesiumContainerRef.current!, {
-          animation: false,
-          baseLayerPicker: false,
-          fullscreenButton: true,
-          geocoder: false,
-          homeButton: true,
-          infoBox: true,
-          sceneModePicker: false,
-          selectionIndicator: true,
-          timeline: false,
-          navigationHelpButton: true,
+        viewerInstance = createViewer(cesiumContainerRef.current!)
+
+        viewerInstance.scene.globe.depthTestAgainstTerrain = true
+        viewerInstance.scene.fog.enabled = true
+        viewerInstance.scene.fog.density = 0.0002
+        viewerInstance.scene.fog.screenSpaceErrorFactor = 2.0
+
+        const destination = Cartesian3.fromDegrees(
+          DEFAULT_CAMERA_POSITION.lon,
+          DEFAULT_CAMERA_POSITION.lat,
+          DEFAULT_CAMERA_POSITION.height
+        )
+        const orientation = {
+          heading: CesiumMath.toRadians(DEFAULT_CAMERA_POSITION.heading || 0),
+          pitch: CesiumMath.toRadians(DEFAULT_CAMERA_POSITION.pitch || -45),
+          roll: CesiumMath.toRadians(DEFAULT_CAMERA_POSITION.roll || 0),
+        }
+        viewerInstance.camera.setView({ destination, orientation })
+
+        await loadIonTileset(viewerInstance, ION_ASSETS.GOOGLE_PHOTOREALISTIC_3D_TILES, {
+          maximumScreenSpaceError: 64,
+          skipLevelOfDetail: true,
         })
 
-        if (!mounted) {
-          viewer.destroy()
-          return
-        }
+        const tilesets = await loadAllIonTilesets(viewerInstance)
+        const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, 2000)
+        cleanupFunctions.push(tilesetsCleanup)
 
-        viewerRef.current = viewer
-
-        // Setup imagery and terrain
-        await useViewerStore.getState().setupImagery(viewer)
-        await useViewerStore.getState().setupTerrain(viewer, ION_ASSETS.TERRAIN)
-
-        // Load Ion Asset 4004889
-        const ionTileset4004889 = await loadIonTileset(viewer, ION_ASSETS.TILESETS.ASSET_4004889)
-
-        if (ionTileset4004889 && !viewer.isDestroyed()) {
-          ionTileset4004889Ref.current = ionTileset4004889
-          applyHeightOffset(ionTileset4004889, TILESET_HEIGHT_OFFSETS.ASSET_4004889)
-        }
-
-        // Load Ion Asset 4005051
-        const ionTileset4005051 = await loadIonTileset(viewer, ION_ASSETS.TILESETS.ASSET_4005051)
-
-        if (ionTileset4005051 && !viewer.isDestroyed()) {
-          ionTileset4005051Ref.current = ionTileset4005051
-          applyHeightOffset(ionTileset4005051, TILESET_HEIGHT_OFFSETS.ASSET_4005051)
-        }
-
-        // Load Seongnam tileset from localhost (Brotli compressed version)
-        const seongnamTileset = await loadSeongnamTileset(viewer, LOCAL_TILESETS.SEONGNAM)
-
-        if (seongnamTileset && !viewer.isDestroyed()) {
-          seongnamTilesetRef.current = seongnamTileset
+        const seongnamTileset = await loadSeongnamTileset(viewerInstance)
+        if (seongnamTileset) {
           applyHeightOffset(seongnamTileset, TILESET_HEIGHT_OFFSETS.SEONGNAM)
+          const seongnamCleanup = setupSeongnamAutoHide(viewerInstance, seongnamTileset, 2000)
+          cleanupFunctions.push(seongnamCleanup)
         }
 
-        // Fly to the first Ion tileset if loaded
-        if (ionTileset4004889 && !viewer.isDestroyed()) {
-          await viewer.zoomTo(ionTileset4004889)
-        }
-
-        if (mounted) {
-          setIsLoading(false)
-        }
+        setIsLoading(false)
       } catch (err) {
-        console.error('Cesium 초기화 오류:', err)
-        if (mounted) {
-          setError('지도를 로드하는 중 오류가 발생했습니다.')
-          setIsLoading(false)
-        }
+        console.error('Failed to initialize viewer:', err)
+        setError('지도를 로드하는 중 오류가 발생했습니다.')
+        setIsLoading(false)
       }
     }
 
-    initViewer()
+    initializeViewer()
 
     return () => {
-      mounted = false
-      if (viewerRef.current && !viewerRef.current.isDestroyed()) {
-        viewerRef.current.destroy()
-        viewerRef.current = null
+      cleanupFunctions.forEach(cleanup => cleanup())
+      if (viewerInstance && !viewerInstance.isDestroyed()) {
+        viewerInstance.destroy()
       }
     }
-  }, [createViewer, loadIonTileset, loadSeongnamTileset, applyHeightOffset])
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -118,7 +90,6 @@ export default function MapDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Map Container */}
           <div className="relative w-full h-[600px] rounded-lg overflow-hidden">
             <div
               ref={cesiumContainerRef}
