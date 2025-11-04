@@ -45,22 +45,6 @@ export const EditableFieldKey: React.FC<EditableFieldKeyProps> = ({
                     ))}
                 </SelectContent>
             </Select>
-            
-            {/*{value && (() => {*/}
-            {/*    const profile = getProfileByFieldKey(profiles, value);*/}
-            {/*    return profile ? (*/}
-            {/*        <div className="text-xs text-gray-500 flex items-center gap-1">*/}
-            {/*            <span>{profile.description}</span>*/}
-            {/*            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${*/}
-            {/*                profile.fieldType === 'BOOLEAN' */}
-            {/*                    ? 'bg-purple-100 text-purple-800' */}
-            {/*                    : 'bg-blue-100 text-blue-800'*/}
-            {/*            }`}>*/}
-            {/*                {profile.fieldType}*/}
-            {/*            </span>*/}
-            {/*        </div>*/}
-            {/*    ) : null;*/}
-            {/*})()}*/}
         </div>
     );
 };
@@ -151,7 +135,47 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
     const isBoolean = isBooleanProfile(profiles, row.fieldKey || '');
 
     if (isBoolean) {
-        return <div className="text-gray-400 text-sm text-center">-</div>;
+        return (
+            <div className="space-y-2">
+                <Select 
+                    value={row.booleanValue !== undefined ? row.booleanValue.toString() : ''} 
+                    onValueChange={(value: string) => {
+                        const boolValue = value === 'true';
+                        onChange('booleanValue', boolValue);
+                        onChange('operator', 'GE');
+                        onChange('thresholdValue', boolValue ? 1 : 0);
+                    }}
+                >
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="값 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="true">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span>True (참)</span>
+                            </div>
+                        </SelectItem>
+                        <SelectItem value="false">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <span>False (거짓)</span>
+                            </div>
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                
+                {/* 선택된 값에 대한 안내 텍스트 */}
+                {row.booleanValue !== undefined && (
+                    <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                        {row.booleanValue 
+                            ? `값이 True일 때 ${getLevelText(row.level)} 이벤트 발생` 
+                            : `값이 False일 때 ${getLevelText(row.level)} 이벤트 발생`
+                        }
+                    </div>
+                )}
+            </div>
+        );
     }
 
     if (row.conditionType === 'RANGE') {
@@ -167,16 +191,16 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         value={row.leftValue ?? ''}
                         onChange={(e) => onChange('leftValue', safeParseFloat(e.target.value))}
                         placeholder="최소값"
-                        className="w-20 text-sm"
+                        className="w-24 text-sm"
                     />
-                    <span className="text-xs text-gray-500">≤ 값 ≤</span>
+                    <span className="text-xs text-gray-500 w-10">≤ 값 ≤</span>
                     <Input
                         type="number"
                         step="0.01"
                         value={row.rightValue ?? ''}
                         onChange={(e) => onChange('rightValue', safeParseFloat(e.target.value))}
                         placeholder="최대값"
-                        className="w-20 text-sm"
+                        className="w-24 text-sm"
                     />
                     {unit && (
                         <span className="text-xs text-gray-500 font-medium">
@@ -222,4 +246,15 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
             </div>
         </div>
     );
+};
+
+const getLevelText = (level: EventCondition['level']): string => {
+    switch (level) {
+        case 'NORMAL': return '정상';
+        case 'WARNING': return '경고';
+        case 'CAUTION': return '주의';
+        case 'DANGER': return '위험';
+        case 'DISCONNECTED': return '연결끊김';
+        default: return level;
+    }
 };

@@ -55,7 +55,6 @@ export const renderNewRowCell = ({
                     value={newCondition.fieldKey}
                     onChange={(value: string) => handlers.onChange(newRowIndex, 'fieldKey', value)}
                     profiles={profiles}
-                    isEditing={true}
                 />
             );
 
@@ -64,7 +63,6 @@ export const renderNewRowCell = ({
                 <EditableLevel
                     value={newCondition.level}
                     onChange={(value) => handlers.onChange(newRowIndex, 'level', value)}
-                    isEditing={true}
                     profiles={profiles}
                     fieldKey={newCondition.fieldKey}
                 />
@@ -82,7 +80,6 @@ export const renderNewRowCell = ({
                     onChange={(field: keyof EventCondition, value: any) => {
                         handlers.onChange(newRowIndex, field as keyof CreateConditionData, value);
                     }}
-                    isEditing={true}
                     profiles={profiles}
                     fieldKey={newCondition.fieldKey}
                     row={conditionAsEvent}
@@ -94,7 +91,6 @@ export const renderNewRowCell = ({
                 <EditableCondition
                     row={conditionAsEvent}
                     onChange={(field, value) => handlers.onChange(newRowIndex, field as keyof CreateConditionData, value)}
-                    isEditing={true}
                     profiles={profiles}
                 />
             );
@@ -103,13 +99,13 @@ export const renderNewRowCell = ({
             return (
                 <div className="flex justify-center">
                     <Button
-                        variant="ghost"
+                        variant={newCondition.activate ? "default" : "outline"}
                         size="sm"
                         onClick={() => handlers.onChange(newRowIndex, 'activate', !newCondition.activate)}
-                        className={`p-1 h-8 w-8 ${newCondition.activate ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-gray-500'}`}
+                        className={`${newCondition.activate ? 'bg-green-600 hover:bg-green-700 text-white' : 'border-gray-300 text-gray-500 hover:bg-gray-50'} h-8 transition-colors`}
                         title={newCondition.activate ? '활성화됨 (클릭하여 비활성화)' : '비활성화됨 (클릭하여 활성화)'}
                     >
-                        {newCondition.activate ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                        {newCondition.activate ? <Bell className="h-4 w-4"/> : <BellOff className="h-4 w-4"/>}
                     </Button>
                 </div>
             );
@@ -118,13 +114,13 @@ export const renderNewRowCell = ({
             return (
                 <div className="flex justify-center">
                     <Button
-                        variant="ghost"
+                        variant={newCondition.notificationEnabled ? "default" : "outline"}
                         size="sm"
                         onClick={() => handlers.onChange(newRowIndex, 'notificationEnabled', !newCondition.notificationEnabled)}
-                        className={`p-1 h-8 w-8 ${newCondition.notificationEnabled ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 hover:text-gray-500'}`}
+                        className={`${newCondition.notificationEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'border-gray-300 text-gray-500 hover:bg-gray-50'} h-8 transition-colors`}
                         title={newCondition.notificationEnabled ? '알림 활성화됨 (클릭하여 비활성화)' : '알림 비활성화됨 (클릭하여 활성화)'}
                     >
-                        {newCondition.notificationEnabled ? <Mail className="h-4 w-4" /> : <MailX className="h-4 w-4" />}
+                        {newCondition.notificationEnabled ? <Mail className="h-4 w-4"/> : <MailX className="h-4 w-4"/>}
                     </Button>
                 </div>
             );
