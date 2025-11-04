@@ -28,7 +28,7 @@ export interface ValidationResult {
     errors: string[];
 }
 
-export const validateConditionData = (condition: EventCondition, profiles: DeviceProfile[]): ValidationResult => {
+export const validateConditionData = (condition: EventCondition, profiles: DeviceProfile[], allConditions?: EventCondition[]): ValidationResult => {
     const errors: string[] = [];
 
     if (!condition.fieldKey) {
@@ -62,6 +62,31 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
             if (condition.rightValue === undefined || condition.rightValue === null) {
                 errors.push('최대값을 입력해주세요');
             }
+            
+            if (condition.leftValue !== undefined && condition.rightValue !== undefined) {
+                if (condition.leftValue >= condition.rightValue) {
+                    errors.push('최소값은 최대값보다 작아야 합니다');
+                }
+            }
+        }
+    }
+
+    if (allConditions && condition.fieldKey && condition.level) {
+        const duplicates = allConditions.filter(other => 
+            other !== condition &&
+            other.fieldKey === condition.fieldKey &&
+            other.level === condition.level
+        );
+
+        for (const duplicate of duplicates) {
+            if (isDuplicateCondition(condition, duplicate)) {
+                const profile = profiles.find(p => p.fieldKey === condition.fieldKey);
+                const fieldName = profile?.description || condition.fieldKey;
+                const levelName = getLevelDisplayName(condition.level);
+                
+                errors.push(`${fieldName}의 ${levelName} 레벨에 동일한 조건이 이미 존재합니다`);
+                break;
+            }
         }
     }
 
@@ -69,6 +94,43 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
         isValid: errors.length === 0,
         errors
     };
+};
+
+const isDuplicateCondition = (condition1: EventCondition, condition2: EventCondition): boolean => {
+    if (condition1.fieldKey !== condition2.fieldKey || condition1.level !== condition2.level) {
+        return false;
+    }
+
+    if (condition1.conditionType !== condition2.conditionType) {
+        return false;
+    }
+
+    if (condition1.booleanValue !== undefined && condition2.booleanValue !== undefined) {
+        return condition1.booleanValue === condition2.booleanValue;
+    }
+
+    if (condition1.conditionType === 'SINGLE') {
+        return condition1.operator === condition2.operator &&
+               condition1.thresholdValue === condition2.thresholdValue;
+    }
+
+    if (condition1.conditionType === 'RANGE') {
+        return condition1.leftValue === condition2.leftValue &&
+               condition1.rightValue === condition2.rightValue;
+    }
+
+    return false;
+};
+
+const getLevelDisplayName = (level: EventLevel): string => {
+    const levelMap: Record<EventLevel, string> = {
+        'NORMAL': '정상',
+        'WARNING': '경고',
+        'CAUTION': '주의',
+        'DANGER': '위험',
+        'DISCONNECTED': '연결끊김'
+    };
+    return levelMap[level] || level;
 };
 
 export const isBooleanProfile = (profiles: DeviceProfile[], fieldKey: string): boolean => {

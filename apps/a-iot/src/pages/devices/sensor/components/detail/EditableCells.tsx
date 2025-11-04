@@ -30,7 +30,7 @@ export const EditableFieldKey: React.FC<EditableFieldKeyProps> = ({
                         <SelectItem key={profile.fieldKey} value={profile.fieldKey}>
                             <div className="flex gap-2 items-center">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm">{profile.description}</span>
+                                    <span className="text-sm font-semibold text-gray-700">{profile.description}</span>
                                     <span className="text-xs text-gray-500">{profile.fieldKey}</span>
                                     {/*<span className={`px-1.5 py-0.5 rounded text-xs font-medium ${*/}
                                     {/*    profile.fieldType === 'BOOLEAN' */}
@@ -180,6 +180,9 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
     if (row.conditionType === 'RANGE') {
         const profile = getProfileByFieldKey(profiles, row.fieldKey || '');
         const unit = profile?.fieldUnit;
+        
+        const hasRangeError = row.leftValue !== undefined && row.rightValue !== undefined &&
+                             row.leftValue >= row.rightValue;
 
         return (
             <div className="space-y-2">
@@ -190,7 +193,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         value={row.leftValue ?? ''}
                         onChange={(e) => onChange('leftValue', safeParseFloat(e.target.value))}
                         placeholder="최소값"
-                        className="w-24 text-sm"
+                        className={`w-24 text-sm ${hasRangeError ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
                     <span className="text-xs text-gray-500 w-10">≤ 값 ≤</span>
                     <Input
@@ -199,7 +202,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         value={row.rightValue ?? ''}
                         onChange={(e) => onChange('rightValue', safeParseFloat(e.target.value))}
                         placeholder="최대값"
-                        className="w-24 text-sm"
+                        className={`w-24 text-sm ${hasRangeError ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
                     {unit && (
                         <span className="text-xs text-gray-500 font-medium">
@@ -207,6 +210,11 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         </span>
                     )}
                 </div>
+                {hasRangeError && (
+                    <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                        최소값은 최대값보다 작아야 합니다
+                    </div>
+                )}
             </div>
         );
     }

@@ -157,9 +157,9 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
     const handleSaveAll = async () => {
         try {
             for (const condition of editingData) {
-                const validation = validateConditionData(condition, profiles);
+                const validation = validateConditionData(condition, profiles, editingData);
                 if (!validation.isValid) {
-                    alert(`조건 유효성 검사 실패: ${validation.errors.join(', ')}`);
+                    alert(`조건 유효성 검사 실패:\n${validation.errors.join('\n')}`);
                     return;
                 }
             }
