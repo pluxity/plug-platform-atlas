@@ -7,12 +7,14 @@ import {Bell, BellOff, Mail, MailX, Trash2} from "lucide-react";
 interface CreateColumnsProps {
     profiles: DeviceProfile[];
     handleEditDataChange: (index: number, field: keyof EventCondition, value: any) => void;
+    handleRemoveCondition: (index: number) => void;
     handleDelete: (conditionId: number) => Promise<void>;
 }
 
 export const createColumns = ({
     profiles,
     handleEditDataChange,
+    handleRemoveCondition,
     handleDelete,
 }: CreateColumnsProps): Column<EventCondition>[] => [
     {
@@ -134,17 +136,25 @@ export const createColumns = ({
     {
         key: 'id',
         header: '작업',
-        cell: (_value: number | undefined, row: EventCondition, _index?: number) => {
+        cell: (_value: number | undefined, row: EventCondition, index?: number) => {
+            const currentIndex = index ?? 0;
+
             return (
                 <div className="flex gap-1">
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => row.id && handleDelete(row.id)}
+                        onClick={() => {
+                            if (row.id) {
+                                handleDelete(row.id);
+                            } else {
+                                handleRemoveCondition(currentIndex);
+                            }
+                        }}
                         className="text-red-600 hover:text-red-800"
                         title="이 조건 삭제"
                     >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                     </Button>
                 </div>
             );

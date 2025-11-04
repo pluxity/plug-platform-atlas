@@ -25,31 +25,6 @@ export const useEventConditions = (
 export const useEventConditionMutations = () => {
     const client = useApiClient();
 
-    const createEventConditions = async (request: {
-        conditions: Array<{
-            fieldKey: string;
-            level: "NORMAL" | "WARNING" | "CAUTION" | "DANGER" | "DISCONNECTED";
-            activate: boolean;
-            notificationEnabled: boolean;
-            booleanValue?: boolean;
-            conditionType?: "SINGLE" | "RANGE";
-            operator?: "GE" | "LE" | "BETWEEN";
-            thresholdValue?: number;
-            leftValue?: number;
-            rightValue?: number;
-        }>;
-        objectId: string;
-    }) => {
-        const response = await client.post<ApiResponse<EventCondition[]>>(
-            'event-conditions',
-            request
-        );
-
-        await mutate(`event-conditions-${request.objectId}`);
-
-        return response;
-    };
-
     const updateEventConditions = async (request: { conditions: EventCondition[]; objectId: string }) => {
         const response = await client.put<ApiResponse<EventCondition[]>>(
             'event-conditions',
@@ -63,12 +38,10 @@ export const useEventConditionMutations = () => {
 
     const deleteEventCondition = async (id: number) => {
         await client.delete(`event-conditions/${id}`);
-
         await mutate(`event-conditions`);
     };
 
     return {
-        createEventConditions,
         updateEventConditions,
         deleteEventCondition,
     };

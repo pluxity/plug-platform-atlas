@@ -1,10 +1,8 @@
-import React from 'react';
 import { Button } from '@plug-atlas/ui';
 import { Plus, AlertTriangle, Info, Save, X, FileEdit } from 'lucide-react';
-import { DeviceProfile, EventCondition } from '../../../../../services/types';
+import { DeviceProfile } from '../../../../../services/types';
 import { useEventConditionManager } from "../../handlers/useEventConditionManager.ts";
 import { createColumns } from "./CreateColumns.tsx";
-import { renderNewRowCell } from "./renderNewRowCell.tsx";
 import ErrorDisplay from '../ErrorDisplay.tsx';
 
 interface EventConditionsManagerProps {
@@ -12,164 +10,65 @@ interface EventConditionsManagerProps {
     profiles: DeviceProfile[];
 }
 
-type DisplayRowData = EventCondition & { isNewRow?: boolean; originalIndex?: number };
-
-interface DataTableColumn<T> {
-    key: keyof T;
-    header: string;
-    cell: (value: any, row: T) => React.ReactNode;
-}
-
 export default function EventConditionsManager({ objectId, profiles }: EventConditionsManagerProps) {
     const {
         conditionsData,
         isLoading,
         error,
-        newConditions,
         hasUnsavedChanges,
         handleEditDataChange,
         handleAddNew,
-        handleNewConditionChange,
-        handleRemoveNewCondition,
+        handleRemoveCondition,
         handleDelete,
         handleSaveAll,
         handleCancelAll,
-        getConditionSummary,
         refetch
     } = useEventConditionManager(objectId, profiles);
 
     const columns = createColumns({
         profiles,
         handleEditDataChange,
+        handleRemoveCondition,
         handleDelete,
     });
 
-    const displayData = React.useMemo((): DisplayRowData[] => {
-        const existingData = conditionsData.map((condition, index) => ({
-            ...condition,
-            originalIndex: index
-        }));
-        
-        if (newConditions.length > 0) {
-            const newRowsData = newConditions.map((condition, index) => ({
-                id: -(index + 1),
-                isNewRow: true,
-                originalIndex: -1,
-                ...condition
-            } as DisplayRowData));
-            return [...existingData, ...newRowsData];
-        }
-        return existingData;
-    }, [conditionsData, newConditions]);
-
-    const enhancedColumns = React.useMemo((): DataTableColumn<DisplayRowData>[] => {
-        return columns.map(col => ({
-            ...col,
-            cell: (value: any, row: DisplayRowData) => {
-                const isNewRow = row.isNewRow === true;
-                
-                if (isNewRow) {
-                    if (row.id == null) {
-                        return <div className="p-2 text-center text-gray-400">-</div>;
-                    }
-                    
-                    const newRowIndex = Math.abs(row.id) - 1;
-                    const newCondition = newConditions[newRowIndex];
-
-                    if (!newCondition) {
-                        return <div className="p-2 text-center text-gray-400">-</div>;
-                    }
-
-                    return renderNewRowCell({
-                        columnKey: String(col.key),
-                        newCondition,
-                        newRowIndex,
-                        handlers: {
-                            onChange: handleNewConditionChange,
-                            onRemove: handleRemoveNewCondition,
-                            onSaveAll: handleSaveAll,
-                            onCancelAll: handleCancelAll
-                        },
-                        profiles,
-                        isLastRow: newRowIndex === newConditions.length - 1,
-                        getConditionSummary
-                    });
-                }
-                
-                const originalIndex = row.originalIndex ?? 0;
-                return col.cell(value, row, originalIndex);
-            }
-        }));
-    }, [columns, newConditions, handleNewConditionChange, handleRemoveNewCondition, handleSaveAll, handleCancelAll, profiles, getConditionSummary]);
-
     if (error) {
         return <ErrorDisplay onRetry={refetch} />;
-    }
+    };
 
-    const renderExpandedTable = () => {
+    const renderTable = () => {
         return (
             <div className="overflow-hidden border border-gray-200 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            {enhancedColumns.map((column, index) => (
+                            {columns.map((column, index) => (
                                 <th 
                                     key={index}
                                     className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                                 >
                                     {column.header}
+                                    {column.header === 'Field Key' && (
+                                        <span className="ml-1 text-blue-500" title="필드키 순 정렬">↑</span>
+                                    )}
+                                    {column.header === '레벨' && (
+                                        <span className="ml-1 text-red-500" title="위험→경고→주의→정상 순 정렬">↑</span>
+                                    )}
                                 </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {displayData.map((rowData, rowIndex) => {
-                            // const condition = rowData.isNewRow
-                            //     ? newConditions[Math.abs(rowData.id!) - 1]
-                            //     : rowData;
-                            
-                            return (
-                                <React.Fragment key={rowData.id || rowIndex}>
-                                    <tr>
-                                        {enhancedColumns.map((column, colIndex) => (
-                                            <td key={colIndex}
-                                                className="px-6 py-4 whitespace-normal text-sm text-gray-900">
-                                                {column.cell(rowData[column.key], rowData)}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                    {/*<tr className="bg-gray-50 border-t">*/}
-                                    {/*    <td colSpan={enhancedColumns.length} className="px-6 py-4">*/}
-                                    {/*        <div className="space-y-3 flex gap-4">*/}
-                                    {/*            <div className="flex-1 flex items-center">*/}
-                                    {/*                <label className="block text-sm font-medium text-gray-700 mb-1 w-28">*/}
-                                    {/*                    안내 메시지*/}
-                                    {/*                </label>*/}
-                                    {/*                <Input*/}
-                                    {/*                    value={condition?.guideMessage || ''}*/}
-                                    {/*                    onChange={(e) => {*/}
-                                    {/*                        if (rowData.isNewRow) {*/}
-                                    {/*                            handleNewConditionChange(Math.abs(rowData.id!) - 1, 'guideMessage', e.target.value);*/}
-                                    {/*                        } else {*/}
-                                    {/*                            handleEditDataChange(rowData.originalIndex ?? -1, 'guideMessage', e.target.value);*/}
-                                    {/*                        }*/}
-                                    {/*                    }}*/}
-                                    {/*                    placeholder="이 이벤트 조건에 대한 안내 메시지를 입력하세요..."*/}
-                                    {/*                    className="w-full px-3 py-2 border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"*/}
-                                    {/*                />*/}
-                                    {/*            </div>*/}
-                                    {/*            /!*<div className="flex-1">*!/*/}
-                                    {/*            /!*    <label className="block text-sm font-medium text-gray-700 mb-1">설정 결과</label>*!/*/}
-                                    {/*            /!*    <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 min-h-[60px] flex items-center">*!/*/}
-                                    {/*            /!*        {getConditionSummary(condition)}*!/*/}
-                                    {/*            /!*    </div>*!/*/}
-                                    {/*            /!*</div>*!/*/}
-                                    {/*        </div>*/}
-                                    {/*    </td>*/}
-                                    {/*</tr>*/}
-                                </React.Fragment>
-                            );
-                        })}
+                        {conditionsData.map((condition, rowIndex) => (
+                            <tr key={condition.id || `new-${rowIndex}`}>
+                                {columns.map((column, colIndex) => (
+                                    <td key={colIndex}
+                                        className="px-6 py-4 whitespace-normal text-sm text-gray-900">
+                                        {column.cell(condition[column.key], condition, rowIndex)}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -188,6 +87,11 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                         {hasUnsavedChanges && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                 저장되지 않은 변경사항
+                            </span>
+                        )}
+                        {conditionsData.length > 0 && (
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                Field Key 순, 위험→경고→주의→정상 순 정렬
                             </span>
                         )}
                     </div>
@@ -233,8 +137,8 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                     <div className="text-center py-8">
                         <p className="text-gray-600">로딩 중...</p>
                     </div>
-                ) : displayData.length > 0 ? (
-                    renderExpandedTable()
+                ) : conditionsData.length > 0 ? (
+                    renderTable()
                 ) : (
                     <div className="text-center py-12">
                         <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">

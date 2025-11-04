@@ -1,6 +1,6 @@
 import React from 'react';
 import { DeviceProfile, EventCondition } from "../../../../services/types";
-import { EventConditionOperator, EventLevel, CreateConditionData } from "../../../../services/types/eventCondition.ts";
+import { EventConditionOperator, EventLevel } from "../../../../services/types/eventCondition.ts";
 
 export interface Column<T> {
     key: keyof T;
@@ -8,7 +8,7 @@ export interface Column<T> {
     cell: (value: any, row: T, index?: number) => React.ReactNode;
 }
 
-export const createDefaultCondition = (objectId: string): CreateConditionData => ({
+export const createDefaultCondition = (objectId: string): EventCondition => ({
     objectId,
     fieldKey: '',
     level: 'NORMAL',
@@ -23,70 +23,52 @@ export const createDefaultCondition = (objectId: string): CreateConditionData =>
     guideMessage: ''
 });
 
-export const toCreateConditionData = (condition: EventCondition): CreateConditionData => ({
-    objectId: condition.objectId,
-    fieldKey: condition.fieldKey,
-    level: condition.level,
-    conditionType: condition.conditionType || 'SINGLE',
-    operator: condition.operator || 'GE',
-    thresholdValue: condition.thresholdValue,
-    leftValue: condition.leftValue,
-    rightValue: condition.rightValue,
-    notificationEnabled: condition.notificationEnabled,
-    activate: condition.activate,
-    booleanValue: condition.booleanValue,
-    guideMessage: condition.guideMessage || ''
-});
+export interface ValidationResult {
+    isValid: boolean;
+    errors: string[];
+}
 
-export const toApiConditionData = (condition: CreateConditionData, profiles: DeviceProfile[]) => {
+export const validateConditionData = (condition: EventCondition, profiles: DeviceProfile[]): ValidationResult => {
+    const errors: string[] = [];
+
+    if (!condition.fieldKey) {
+        errors.push('Field Key를 선택해주세요');
+    }
+    if (!condition.level) {
+        errors.push('레벨을 선택해주세요');
+    }
+    if (!condition.conditionType) {
+        errors.push('조건 타입을 선택해주세요');
+    }
+    if (!condition.operator) {
+        errors.push('연산자를 선택해주세요');
+    }
+
     const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
     
-    const baseData = {
-        objectId: condition.objectId,
-        fieldKey: condition.fieldKey,
-        level: condition.level,
-        conditionType: condition.conditionType,
-        operator: condition.operator,
-        notificationEnabled: condition.notificationEnabled,
-        activate: condition.activate,
-        guideMessage: condition.guideMessage || undefined
-    };
-
     if (isBoolean) {
-        return {
-            ...baseData,
-            booleanValue: condition.booleanValue !== undefined ? condition.booleanValue : true
-        };
+        if (condition.booleanValue === undefined) {
+            errors.push('Boolean 값을 선택해주세요');
+        }
     } else {
-        return {
-            ...baseData,
-            ...(condition.conditionType === 'SINGLE' 
-                ? { thresholdValue: condition.thresholdValue }
-                : { leftValue: condition.leftValue, rightValue: condition.rightValue }
-            )
-        };
-    }
-};
-
-export const validateConditionData = (condition: CreateConditionData, profiles: DeviceProfile[]): boolean => {
-    if (!condition.fieldKey || !condition.level || !condition.conditionType || !condition.operator) {
-        return false;
-    }
-
-    const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
-    
-    if (isBoolean) {
-        return condition.booleanValue !== undefined;
+        if (condition.conditionType === 'SINGLE') {
+            if (condition.thresholdValue === undefined || condition.thresholdValue === null) {
+                errors.push('기준값을 입력해주세요');
+            }
+        } else if (condition.conditionType === 'RANGE') {
+            if (condition.leftValue === undefined || condition.leftValue === null) {
+                errors.push('최소값을 입력해주세요');
+            }
+            if (condition.rightValue === undefined || condition.rightValue === null) {
+                errors.push('최대값을 입력해주세요');
+            }
+        }
     }
 
-    if (condition.conditionType === 'SINGLE') {
-        return condition.thresholdValue !== undefined && condition.thresholdValue !== null;
-    } else if (condition.conditionType === 'RANGE') {
-        return condition.leftValue !== undefined && condition.leftValue !== null &&
-               condition.rightValue !== undefined && condition.rightValue !== null;
-    }
-
-    return false;
+    return {
+        isValid: errors.length === 0,
+        errors
+    };
 };
 
 export const isBooleanProfile = (profiles: DeviceProfile[], fieldKey: string): boolean => {
@@ -94,7 +76,7 @@ export const isBooleanProfile = (profiles: DeviceProfile[], fieldKey: string): b
     return profile?.fieldType === 'Boolean';
 };
 
-export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string): Partial<CreateConditionData> => {
+export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string): Partial<EventCondition> => {
     const profile = profiles.find(p => p.fieldKey === fieldKey);
     
     if (!profile) {
@@ -122,7 +104,7 @@ export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey:
     };
 };
 
-export const formatConditionSummary = (condition: CreateConditionData | EventCondition | undefined, profiles: DeviceProfile[]): string => {
+export const formatConditionSummary = (condition: EventCondition | undefined, profiles: DeviceProfile[]): string => {
     if (!condition?.fieldKey) return '';
     
     const profile = profiles.find(p => p.fieldKey === condition.fieldKey);
