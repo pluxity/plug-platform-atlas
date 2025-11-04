@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { EventCondition, DeviceProfile } from '../../../../services/types';
 import {
     createDefaultCondition,
@@ -40,6 +40,25 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             return getLevelPriority(a.level) - getLevelPriority(b.level);
         });
     };
+
+    const validationState = useMemo(() => {
+        const allErrors: string[] = [];
+        let hasErrors = false;
+
+        for (const condition of editingData) {
+            const validation = validateConditionData(condition, profiles, editingData);
+            if (!validation.isValid) {
+                hasErrors = true;
+                allErrors.push(...validation.errors);
+            }
+        }
+
+        return {
+            isValid: !hasErrors,
+            errors: allErrors,
+            hasConditions: editingData.length > 0
+        };
+    }, [editingData, profiles]);
 
     useEffect(() => {
         if (conditionsData.length > 0) {
@@ -156,14 +175,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
 
     const handleSaveAll = async () => {
         try {
-            for (const condition of editingData) {
-                const validation = validateConditionData(condition, profiles, editingData);
-                if (!validation.isValid) {
-                    alert(`조건 유효성 검사 실패:\n${validation.errors.join('\n')}`);
-                    return;
-                }
-            }
-
             await updateEventConditions({
                 conditions: editingData,
                 objectId
@@ -191,6 +202,7 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
         isLoading,
         error,
         hasUnsavedChanges,
+        validationState,
         handleEditDataChange,
         handleAddNew,
         handleRemoveCondition,
