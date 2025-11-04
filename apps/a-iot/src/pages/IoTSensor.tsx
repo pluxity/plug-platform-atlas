@@ -1,73 +1,78 @@
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Column, DataTable, Input, Progress, Switch, Spinner, toast, Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
 import { useFeatures, useSyncFeatures, FeatureResponse, useUpdateFeature } from '@plug-atlas/web-core';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import DeviceMapViewer from '../components/devices/DeviceMapViewer';
 
 export default function IoTSensor() {
   const { data, mutate, error, isLoading } = useFeatures();
   const { trigger: syncFeatures, isMutating: isSyncingFeatures } = useSyncFeatures();
   const { trigger: updateFeature } = useUpdateFeature();
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [selectedSite, setSelectedSite] = useState<string>('all');
-  const [selectedDeviceType, setSelectedDeviceType] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedSite, setSelectedSite] = useState('all');
+  const [selectedDeviceType, setSelectedDeviceType] = useState('all');
+  const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<FeatureResponse | null>(null);
 
   const itemsPerPage = 5;
 
-  // 공원 목록 추출
-  const sites = Array.from(new Set((data || []).map(f => f.siteResponse?.name).filter(Boolean))) as string[];
+  const sites = useMemo(() => 
+    Array.from(new Set(
+      (data || [])
+      .map(f => f.siteResponse?.name)
+      .filter(Boolean)
+    )).sort() as string[],
+    [data]
+  );
   
-  // 선택된 공원에 따른 디바이스 타입 목록 추출
-  const getDeviceTypesForSite = () => {
-    if (!data) return [];
-    
-    const filteredData = selectedSite === 'all' 
-      ? data 
-      : data.filter(f => f.siteResponse?.name === selectedSite);
-    
-    return Array.from(new Set(filteredData.map(f => f.deviceTypeResponse?.description).filter(Boolean))) as string[];
-  };
-
-  const deviceTypes = getDeviceTypesForSite();
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [data]);
-
-  // 공원 변경 시 디바이스 타입 초기화
-  useEffect(() => {
-    setSelectedDeviceType('all');
-    setCurrentPage(1);
-  }, [selectedSite]);
-
-  // Select 박스 필터링된 데이터
-  const getSelectFilteredData = () => {
+  const deviceTypes = useMemo(() => {
     if (!data) return [];
 
+    const filteredData = (() => {
+      if(selectedSite === 'all'){
+        return data;
+      } else{
+        return data.filter(f => f.siteResponse?.name === selectedSite);
+      }
+    })();
+
+    return Array.from(new Set(
+      filteredData
+      .map(f => f.deviceTypeResponse?.description)
+      .filter(Boolean)
+    )).sort() as string[];
+
+  }, [data, selectedSite]);
+
+  const displayData = useMemo(() => {
+    if (!data) return [];
+  
     let filtered = data;
-
-    if (selectedSite !== 'all') {filtered = filtered.filter(f => f.siteResponse?.name === selectedSite);}
-    if (selectedDeviceType !== 'all') {filtered = filtered.filter(f => f.deviceTypeResponse?.description === selectedDeviceType);}
-
-    return filtered;
-  };
-
-  const getSearchFilteredData = () => {
-    const selectFiltered = getSelectFilteredData();
-    
-    if (!searchTerm.trim()) {
-      return selectFiltered;
+  
+    if (selectedSite !== 'all') {
+      filtered = filtered.filter(f => f.siteResponse?.name === selectedSite);
     }
+    if (selectedDeviceType !== 'all') {
+      filtered = filtered.filter(f => f.deviceTypeResponse?.description === selectedDeviceType);
+    }
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(f => 
+        f.deviceId.toLowerCase().includes(search) ||
+        f.name.toLowerCase().includes(search) ||
+        f.objectId.toLowerCase().includes(search)
+      );
+    }
+  
+    return filtered.sort((a, b) => a.id - b.id);
+  }, [data, selectedSite, selectedDeviceType, searchTerm]);
 
-    return selectFiltered.filter((feature) => {
-      return feature.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        feature.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        feature.objectId.toLowerCase().includes(searchTerm.toLowerCase());
-    });
-  };
-
-  const displayData = getSearchFilteredData().sort((a, b) => a.id - b.id);
   const totalPages = Math.ceil(displayData.length / itemsPerPage);
   const currentPageData = displayData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [data, searchTerm, selectedSite, selectedDeviceType]);
 
   const handleSyncFeatures = async () => {
     try {
@@ -79,23 +84,13 @@ export default function IoTSensor() {
     } 
   };
 
-  const handleSearch = () => {
-    setCurrentPage(1);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
   const handleSiteChange = (value: string) => {
     setSelectedSite(value);
+    setSelectedDeviceType('all');
   };
 
   const handleDeviceTypeChange = (value: string) => {
     setSelectedDeviceType(value);
-    setCurrentPage(1);
   };
 
   const getVisiblePages = () => {
@@ -115,16 +110,21 @@ export default function IoTSensor() {
     return pages;
   };
 
-  const handleToggleActive = async(featureId: number, active:boolean) => {
-    try{
+  const handleToggleActive = async (featureId: number, active: boolean) => {
+    try {
       await updateFeature({ id: featureId, data: { active } });
       toast.success('활성화 상태가 변경되었습니다.');
       mutate();
     } catch (error) {
       toast.error('활성화 상태 변경에 실패했습니다.');
     } 
-  }
-  
+  };
+
+  const handleOpenMap = (device: FeatureResponse) => {
+    setSelectedDevice(device);
+    setIsMapDialogOpen(true);
+  };
+
   const featureColumns: Column<FeatureResponse>[] = [
     {
       key: 'id',
@@ -177,13 +177,6 @@ export default function IoTSensor() {
       )
     },
     {
-      key: 'siteResponse',
-      header: '지도보기',
-      cell: () => (
-        <Button variant="outline">지도보기</Button>
-      )
-    },
-    {
       key: 'active',
       header: '활성화',
       cell: (_,row) => (
@@ -191,6 +184,15 @@ export default function IoTSensor() {
             checked={row.active ?? false} 
             onCheckedChange={(checked) => handleToggleActive(row.id, checked)}
           />
+      )
+    },
+    {
+      key: 'siteResponse',
+      header: '지도보기',
+      cell: (_, row) => (
+        <Button variant="outline" size="sm" onClick={() => handleOpenMap(row)}>
+          지도보기
+        </Button>
       )
     }
   ]
@@ -232,7 +234,7 @@ export default function IoTSensor() {
                       {sites.map((site) => (
                         <SelectItem key={site} value={site}>
                           {site}
-                        </SelectItem>
+                        </SelectItem> 
                       ))}
                     </SelectContent>
                   </Select>
@@ -260,22 +262,17 @@ export default function IoTSensor() {
                     className="w-64" 
                     value={searchTerm} 
                     onChange={(e) => setSearchTerm(e.target.value)} 
-                    onKeyDown={handleKeyDown}
                   />
-  
-                  <Button variant="outline" onClick={handleSearch}>검색</Button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button onClick={handleSyncFeatures} disabled={isSyncingFeatures}>
-                    {isSyncingFeatures ? (
-                      <>
-                        디바이스 동기화 중... <Spinner size="sm" />
-                      </>
-                    ) : (
-                      '디바이스 동기화'
-                    )}
-                  </Button>
-                </div>
+                <Button onClick={handleSyncFeatures} disabled={isSyncingFeatures}>
+                  {isSyncingFeatures ? (
+                    <>
+                      디바이스 동기화 중... <Spinner size="sm" />
+                    </>
+                  ) : (
+                    '디바이스 동기화'
+                  )}
+                </Button>
               </div>
               
               {displayData.length === 0 ? (
@@ -318,6 +315,12 @@ export default function IoTSensor() {
           )}
         </CardContent>
       </Card>
+
+      <DeviceMapViewer
+        open={isMapDialogOpen}
+        onOpenChange={setIsMapDialogOpen}
+        device={selectedDevice}
+      />
     </div>
   );
 }
