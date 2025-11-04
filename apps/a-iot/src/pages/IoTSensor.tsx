@@ -20,7 +20,7 @@ export default function IoTSensor() {
     Array.from(new Set(
       (data || [])
       .map(f => f.siteResponse?.name)
-      .filter(Boolean)
+      .filter((name): name is string => !!name)
     )).sort() as string[],
     [data]
   );
@@ -28,13 +28,9 @@ export default function IoTSensor() {
   const deviceTypes = useMemo(() => {
     if (!data) return [];
 
-    const filteredData = (() => {
-      if(selectedSite === 'all'){
-        return data;
-      } else{
-        return data.filter(f => f.siteResponse?.name === selectedSite);
-      }
-    })();
+    const filteredData = selectedSite === 'all'
+      ? data
+      : data.filter(f => f.siteResponse?.name === selectedSite);
 
     return Array.from(new Set(
       filteredData
@@ -144,7 +140,7 @@ export default function IoTSensor() {
     },
     {
       key: 'name',
-      header: '도면명',
+      header: '공원명',
       cell: (_,row) => (
         <>{row.siteResponse?.name}</>
       )

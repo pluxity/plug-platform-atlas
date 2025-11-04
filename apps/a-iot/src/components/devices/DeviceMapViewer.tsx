@@ -33,8 +33,6 @@ const MapContent = ({ device }: { device: FeatureResponse }) => {
 
         const initViewer = async () => {
             try {                
-                setIsLoading(true);
-
                 const viewer = createViewer(cesiumContainerRef.current!)
                 
                 if (!mounted) {
