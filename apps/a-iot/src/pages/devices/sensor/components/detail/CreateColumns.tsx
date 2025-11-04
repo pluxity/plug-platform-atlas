@@ -2,7 +2,7 @@ import { Button } from "@plug-atlas/ui";
 import { DeviceProfile, EventCondition } from "../../../../../services/types";
 import { Column, isBooleanProfile } from "../../handlers/EventConditionUtils";
 import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from "./EditableCells";
-import { Bell, BellOff, Mail, MailX } from "lucide-react";
+import {Bell, BellOff, Mail, MailX, Trash2} from "lucide-react";
 
 interface CreateColumnsProps {
     profiles: DeviceProfile[];
@@ -144,7 +144,7 @@ export const createColumns = ({
                         className="text-red-600 hover:text-red-800"
                         title="이 조건 삭제"
                     >
-                        삭제
+                        <Trash2 className="h-4 w-4" />
                     </Button>
                 </div>
             );

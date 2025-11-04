@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Input } from '@plug-atlas/ui';
+import { Button } from '@plug-atlas/ui';
 import { Plus, AlertTriangle, Info, Save, X, FileEdit } from 'lucide-react';
 import { DeviceProfile, EventCondition } from '../../../../../services/types';
 import { useEventConditionManager } from "../../handlers/useEventConditionManager.ts";
@@ -124,9 +124,9 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {displayData.map((rowData, rowIndex) => {
-                            const condition = rowData.isNewRow
-                                ? newConditions[Math.abs(rowData.id!) - 1] 
-                                : rowData;
+                            // const condition = rowData.isNewRow
+                            //     ? newConditions[Math.abs(rowData.id!) - 1]
+                            //     : rowData;
                             
                             return (
                                 <React.Fragment key={rowData.id || rowIndex}>
@@ -138,35 +138,35 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                                             </td>
                                         ))}
                                     </tr>
-                                    <tr className="bg-gray-50 border-t">
-                                        <td colSpan={enhancedColumns.length} className="px-6 py-4">
-                                            <div className="space-y-3 flex gap-4">
-                                                <div className="flex-1 flex items-center">
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1 w-28">
-                                                        안내 메시지
-                                                    </label>
-                                                    <Input
-                                                        value={condition?.guideMessage || ''}
-                                                        onChange={(e) => {
-                                                            if (rowData.isNewRow) {
-                                                                handleNewConditionChange(Math.abs(rowData.id!) - 1, 'guideMessage', e.target.value);
-                                                            } else {
-                                                                handleEditDataChange(rowData.originalIndex ?? -1, 'guideMessage', e.target.value);
-                                                            }
-                                                        }}
-                                                        placeholder="이 이벤트 조건에 대한 안내 메시지를 입력하세요..."
-                                                        className="w-full px-3 py-2 border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
-                                                    />
-                                                </div>
-                                                {/*<div className="flex-1">*/}
-                                                {/*    <label className="block text-sm font-medium text-gray-700 mb-1">설정 결과</label>*/}
-                                                {/*    <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 min-h-[60px] flex items-center">*/}
-                                                {/*        {getConditionSummary(condition)}*/}
-                                                {/*    </div>*/}
-                                                {/*</div>*/}
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    {/*<tr className="bg-gray-50 border-t">*/}
+                                    {/*    <td colSpan={enhancedColumns.length} className="px-6 py-4">*/}
+                                    {/*        <div className="space-y-3 flex gap-4">*/}
+                                    {/*            <div className="flex-1 flex items-center">*/}
+                                    {/*                <label className="block text-sm font-medium text-gray-700 mb-1 w-28">*/}
+                                    {/*                    안내 메시지*/}
+                                    {/*                </label>*/}
+                                    {/*                <Input*/}
+                                    {/*                    value={condition?.guideMessage || ''}*/}
+                                    {/*                    onChange={(e) => {*/}
+                                    {/*                        if (rowData.isNewRow) {*/}
+                                    {/*                            handleNewConditionChange(Math.abs(rowData.id!) - 1, 'guideMessage', e.target.value);*/}
+                                    {/*                        } else {*/}
+                                    {/*                            handleEditDataChange(rowData.originalIndex ?? -1, 'guideMessage', e.target.value);*/}
+                                    {/*                        }*/}
+                                    {/*                    }}*/}
+                                    {/*                    placeholder="이 이벤트 조건에 대한 안내 메시지를 입력하세요..."*/}
+                                    {/*                    className="w-full px-3 py-2 border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"*/}
+                                    {/*                />*/}
+                                    {/*            </div>*/}
+                                    {/*            /!*<div className="flex-1">*!/*/}
+                                    {/*            /!*    <label className="block text-sm font-medium text-gray-700 mb-1">설정 결과</label>*!/*/}
+                                    {/*            /!*    <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 min-h-[60px] flex items-center">*!/*/}
+                                    {/*            /!*        {getConditionSummary(condition)}*!/*/}
+                                    {/*            /!*    </div>*!/*/}
+                                    {/*            /!*</div>*!/*/}
+                                    {/*        </div>*/}
+                                    {/*    </td>*/}
+                                    {/*</tr>*/}
                                 </React.Fragment>
                             );
                         })}

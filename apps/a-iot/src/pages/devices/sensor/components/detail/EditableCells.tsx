@@ -30,15 +30,15 @@ export const EditableFieldKey: React.FC<EditableFieldKeyProps> = ({
                         <SelectItem key={profile.fieldKey} value={profile.fieldKey}>
                             <div className="flex gap-2 items-center">
                                 <div className="flex items-center gap-2">
-                                    <span className="font-mono text-sm">{profile.fieldKey}</span>
-                                    <span className="text-xs text-gray-500">{profile.description}</span>
-                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                                        profile.fieldType === 'BOOLEAN' 
-                                            ? 'bg-purple-100 text-purple-800' 
-                                            : 'bg-blue-100 text-blue-800'
-                                    }`}>
-                                        {profile.fieldType}
-                                    </span>
+                                    <span className="text-sm">{profile.description}</span>
+                                    <span className="text-xs text-gray-500">{profile.fieldKey}</span>
+                                    {/*<span className={`px-1.5 py-0.5 rounded text-xs font-medium ${*/}
+                                    {/*    profile.fieldType === 'BOOLEAN' */}
+                                    {/*        ? 'bg-purple-100 text-purple-800' */}
+                                    {/*        : 'bg-blue-100 text-blue-800'*/}
+                                    {/*}`}>*/}
+                                    {/*    {profile.fieldType}*/}
+                                    {/*</span>*/}
                                 </div>
                             </div>
                         </SelectItem>
@@ -165,7 +165,6 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                     </SelectContent>
                 </Select>
                 
-                {/* 선택된 값에 대한 안내 텍스트 */}
                 {row.booleanValue !== undefined && (
                     <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
                         {row.booleanValue 
@@ -218,18 +217,6 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
     return (
         <div className="space-y-2">
             <div className="flex items-center gap-2">
-                <Select 
-                    value={row.operator || 'GE'} 
-                    onValueChange={(value: string) => onChange('operator', value as EventCondition['operator'])}
-                >
-                    <SelectTrigger className="w-24">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="GE">≥ (이상)</SelectItem>
-                        <SelectItem value="LE">≤ (이하)</SelectItem>
-                    </SelectContent>
-                </Select>
                 <Input
                     type="number"
                     step="0.01"
@@ -243,6 +230,18 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         {unit}
                     </span>
                 )}
+                <Select
+                    value={row.operator || 'GE'}
+                    onValueChange={(value: string) => onChange('operator', value as EventCondition['operator'])}
+                >
+                    <SelectTrigger className="w-20">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="GE">이상</SelectItem>
+                        <SelectItem value="LE">이하</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
         </div>
     );

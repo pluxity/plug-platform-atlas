@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@plug-atlas/ui';
-import { Trash2, Save, X, Bell, BellOff, Mail, MailX } from 'lucide-react';
+import { X, Bell, BellOff, Mail, MailX } from 'lucide-react';
 import { DeviceProfile, EventCondition } from '../../../../../services/types';
 import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from './EditableCells';
 import { CreateConditionData } from "../../../../../services/types/eventCondition";
@@ -27,7 +27,6 @@ export const renderNewRowCell = ({
     newRowIndex,
     handlers,
     profiles,
-    isLastRow,
 }: RenderNewRowCellProps): React.ReactNode => {
     
     const conditionAsEvent: EventCondition = {
@@ -69,7 +68,6 @@ export const renderNewRowCell = ({
             );
 
         case 'conditionType':
-            // Boolean 타입의 경우 타입 컬럼 숨김
             if (isBoolean) {
                 return <div className="text-gray-400 text-sm text-center">-</div>;
             }
@@ -132,34 +130,12 @@ export const renderNewRowCell = ({
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handlers.onRemove(newRowIndex)}
-                            className="text-red-600 hover:text-red-800"
-                            title="이 새 조건 행 제거"
+                            onClick={handlers.onCancelAll}
+                            className="text-gray-600 hover:text-gray-800"
+                            title="새 조건 추가 취소"
                         >
-                            <Trash2 className="h-3 w-3" />
+                            <X className="h-3 w-3" />
                         </Button>
-                        {isLastRow && (
-                            <>
-                                <Button
-                                    variant="default" 
-                                    size="sm"
-                                    onClick={handlers.onSaveAll}
-                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                    title="모든 새 조건 저장"
-                                >
-                                    <Save className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handlers.onCancelAll}
-                                    className="text-gray-600 hover:text-gray-800"
-                                    title="새 조건 추가 취소"
-                                >
-                                    <X className="h-3 w-3" />
-                                </Button>
-                            </>
-                        )}
                     </div>
                 </div>
             );
