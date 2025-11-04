@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@plug-atlas/ui';
+import { Button, Input } from '@plug-atlas/ui';
 import { Plus, AlertTriangle, Info, Save, X, FileEdit } from 'lucide-react';
 import { DeviceProfile, EventCondition } from '../../../../../services/types';
 import { useEventConditionManager } from "../../handlers/useEventConditionManager.ts";
@@ -25,32 +25,23 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
         conditionsData,
         isLoading,
         error,
-        editingData,
         newConditions,
-        isAddingMode,
-        hasChanges,
+        hasUnsavedChanges,
         handleEditDataChange,
-        handleSaveRow,
-        handleCancelRow,
         handleAddNew,
-        handleSaveNew,
-        handleCancelNew,
         handleNewConditionChange,
         handleRemoveNewCondition,
         handleDelete,
+        handleSaveAll,
+        handleCancelAll,
         getConditionSummary,
         refetch
     } = useEventConditionManager(objectId, profiles);
 
     const columns = createColumns({
         profiles,
-        editingData,
-        hasChanges,
         handleEditDataChange,
-        handleSaveRow,
-        handleCancelRow,
         handleDelete,
-        getConditionSummary
     });
 
     const displayData = React.useMemo((): DisplayRowData[] => {
@@ -59,7 +50,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
             originalIndex: index
         }));
         
-        if (isAddingMode && newConditions.length > 0) {
+        if (newConditions.length > 0) {
             const newRowsData = newConditions.map((condition, index) => ({
                 id: -(index + 1),
                 isNewRow: true,
@@ -69,7 +60,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
             return [...existingData, ...newRowsData];
         }
         return existingData;
-    }, [conditionsData, newConditions, isAddingMode]);
+    }, [conditionsData, newConditions]);
 
     const enhancedColumns = React.useMemo((): DataTableColumn<DisplayRowData>[] => {
         return columns.map(col => ({
@@ -96,8 +87,8 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                         handlers: {
                             onChange: handleNewConditionChange,
                             onRemove: handleRemoveNewCondition,
-                            onSaveAll: handleSaveNew,
-                            onCancelAll: handleCancelNew
+                            onSaveAll: handleSaveAll,
+                            onCancelAll: handleCancelAll
                         },
                         profiles,
                         isLastRow: newRowIndex === newConditions.length - 1,
@@ -109,7 +100,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                 return col.cell(value, row, originalIndex);
             }
         }));
-    }, [columns, newConditions, handleNewConditionChange, handleRemoveNewCondition, handleSaveNew, handleCancelNew, profiles, getConditionSummary]);
+    }, [columns, newConditions, handleNewConditionChange, handleRemoveNewCondition, handleSaveAll, handleCancelAll, profiles, getConditionSummary]);
 
     if (error) {
         return <ErrorDisplay onRetry={refetch} />;
@@ -124,7 +115,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                             {enhancedColumns.map((column, index) => (
                                 <th 
                                     key={index}
-                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                                 >
                                     {column.header}
                                 </th>
@@ -133,14 +124,13 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {displayData.map((rowData, rowIndex) => {
-                            const isEditing = rowData.isNewRow || editingData[rowData.originalIndex ?? -1] !== undefined;
-                            const condition = rowData.isNewRow 
+                            const condition = rowData.isNewRow
                                 ? newConditions[Math.abs(rowData.id!) - 1] 
-                                : editingData[rowData.originalIndex ?? -1] || rowData;
+                                : rowData;
                             
                             return (
                                 <React.Fragment key={rowData.id || rowIndex}>
-                                    <tr className="hover:bg-gray-50">
+                                    <tr>
                                         {enhancedColumns.map((column, colIndex) => (
                                             <td key={colIndex}
                                                 className="px-6 py-4 whitespace-normal text-sm text-gray-900">
@@ -148,92 +138,35 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                                             </td>
                                         ))}
                                     </tr>
-                                    {(condition?.guideMessage || isEditing) && (
-                                        <tr className="bg-gray-50 border-t">
-                                            <td colSpan={enhancedColumns.length} className="px-6 py-4">
-                                                <div className="space-y-3 flex gap-4">
-                                                    {isEditing ? (
-                                                        <div className="flex-1">
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                안내 메시지
-                                                            </label>
-                                                            <textarea
-                                                                value={condition?.guideMessage || ''}
-                                                                onChange={(e) => {
-                                                                    if (rowData.isNewRow) {
-                                                                        handleNewConditionChange(Math.abs(rowData.id!) - 1, 'guideMessage', e.target.value);
-                                                                    } else {
-                                                                        handleEditDataChange(rowData.originalIndex ?? -1, 'guideMessage', e.target.value);
-                                                                    }
-                                                                }}
-                                                                placeholder="이 이벤트 조건에 대한 안내 메시지를 입력하세요..."
-                                                                className="w-full px-3 py-2 border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
-                                                                rows={2}
-                                                            />
-                                                        </div>
-                                                    ) : condition?.guideMessage && (
-                                                        <div className="flex-1">
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                안내 메시지
-                                                            </label>
-                                                            <div className="px-3 py-2 bg-gray-100 border border-gray-200 rounded-md text-sm text-gray-700">
-                                                                {condition.guideMessage}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    <div className="flex items-start justify-between gap-4 flex-1">
-                                                        <div className="flex-1">
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">설정 결과</label>
-                                                            <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
-                                                                {getConditionSummary(condition)}
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        {isEditing && !rowData.isNewRow && (
-                                                            <div className="flex gap-2 mt-6">
-                                                                {hasChanges(rowData.originalIndex ?? -1) ? (
-                                                                    <>
-                                                                        <Button
-                                                                            variant="default"
-                                                                            size="sm"
-                                                                            onClick={() => handleSaveRow(rowData.originalIndex ?? -1)}
-                                                                            className="bg-green-600 hover:bg-green-700 text-white"
-                                                                            title="변경사항 저장"
-                                                                        >
-                                                                            <Save className="h-4 w-4 mr-1" />
-                                                                            저장
-                                                                        </Button>
-                                                                        <Button
-                                                                            variant="outline"
-                                                                            size="sm"
-                                                                            onClick={() => handleCancelRow(rowData.originalIndex ?? -1)}
-                                                                            className="text-gray-600 hover:text-gray-800"
-                                                                            title="변경사항 취소"
-                                                                        >
-                                                                            <X className="h-4 w-4 mr-1" />
-                                                                            취소
-                                                                        </Button>
-                                                                    </>
-                                                                ) : (
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        onClick={() => handleCancelRow(rowData.originalIndex ?? -1)}
-                                                                        className="text-gray-600 hover:text-gray-800"
-                                                                        title="편집 모드 종료"
-                                                                    >
-                                                                        <X className="h-4 w-4 mr-1" />
-                                                                        취소
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                    <tr className="bg-gray-50 border-t">
+                                        <td colSpan={enhancedColumns.length} className="px-6 py-4">
+                                            <div className="space-y-3 flex gap-4">
+                                                <div className="flex-1 flex items-center">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1 w-28">
+                                                        안내 메시지
+                                                    </label>
+                                                    <Input
+                                                        value={condition?.guideMessage || ''}
+                                                        onChange={(e) => {
+                                                            if (rowData.isNewRow) {
+                                                                handleNewConditionChange(Math.abs(rowData.id!) - 1, 'guideMessage', e.target.value);
+                                                            } else {
+                                                                handleEditDataChange(rowData.originalIndex ?? -1, 'guideMessage', e.target.value);
+                                                            }
+                                                        }}
+                                                        placeholder="이 이벤트 조건에 대한 안내 메시지를 입력하세요..."
+                                                        className="w-full px-3 py-2 border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                                                    />
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    )}
+                                                {/*<div className="flex-1">*/}
+                                                {/*    <label className="block text-sm font-medium text-gray-700 mb-1">설정 결과</label>*/}
+                                                {/*    <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 min-h-[60px] flex items-center">*/}
+                                                {/*        {getConditionSummary(condition)}*/}
+                                                {/*    </div>*/}
+                                                {/*</div>*/}
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </React.Fragment>
                             );
                         })}
@@ -252,35 +185,34 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                             <AlertTriangle className="h-6 w-6 text-orange-600" />
                         </div>
                         <h2 className="text-xl font-bold text-gray-900">이벤트 조건 관리</h2>
+                        {hasUnsavedChanges && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                저장되지 않은 변경사항
+                            </span>
+                        )}
                     </div>
 
                     <div className="flex gap-2">
-                        {isAddingMode ? (
+                        {hasUnsavedChanges && (
                             <>
                                 <Button
                                     variant="default"
-                                    onClick={handleSaveNew}
+                                    onClick={handleSaveAll}
                                     className="bg-green-600 hover:bg-green-700"
-                                    disabled={newConditions.length === 0}
                                 >
                                     <Save className="h-4 w-4 mr-2" />
-                                    새 조건 저장
+                                    전체 저장
                                 </Button>
-                                <Button variant="outline" onClick={handleCancelNew}>
+                                <Button variant="outline" onClick={handleCancelAll}>
                                     <X className="h-4 w-4 mr-2" />
-                                    취소
-                                </Button>
-                                <Button variant="outline" onClick={handleAddNew}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    추가 행
+                                    전체 취소
                                 </Button>
                             </>
-                        ) : (
-                            <Button variant="default" onClick={handleAddNew}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                새 조건 추가
-                            </Button>
                         )}
+                        <Button variant="default" onClick={handleAddNew}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            새 조건 추가
+                        </Button>
                     </div>
                 </div>
 
@@ -310,7 +242,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                         </div>
                         <h3 className="font-medium text-gray-900 mb-1">이벤트 조건이 없습니다</h3>
                         <p className="text-sm text-gray-600 mb-4">새 조건을 추가하여 센서 데이터 모니터링을 시작하세요.</p>
-                        {!isAddingMode && profiles.length > 0 && (
+                        {profiles.length > 0 && (
                             <Button variant="default" onClick={handleAddNew}>
                                 <Plus className="h-4 w-4 mr-2" />
                                 첫 조건 추가
