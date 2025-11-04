@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@plug-atlas/ui'
 import { MapPin } from 'lucide-react'
 import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath } from 'cesium'
-import { useViewerStore, useTilesetStore, ION_ASSETS, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS } from '../../stores/cesium'
+import { useViewerStore, useTilesetStore, ION_ASSETS, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD } from '../../stores/cesium'
 
 export default function MapDashboard() {
   const cesiumContainerRef = useRef<HTMLDivElement>(null)
@@ -47,13 +47,13 @@ export default function MapDashboard() {
         })
 
         const tilesets = await loadAllIonTilesets(viewerInstance)
-        const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, 2000)
+        const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, TILESET_AUTO_HIDE_THRESHOLD)
         cleanupFunctions.push(tilesetsCleanup)
 
         const seongnamTileset = await loadSeongnamTileset(viewerInstance)
         if (seongnamTileset) {
           applyHeightOffset(seongnamTileset, TILESET_HEIGHT_OFFSETS.SEONGNAM)
-          const seongnamCleanup = setupSeongnamAutoHide(viewerInstance, seongnamTileset, 2000)
+          const seongnamCleanup = setupSeongnamAutoHide(viewerInstance, seongnamTileset, TILESET_AUTO_HIDE_THRESHOLD)
           cleanupFunctions.push(seongnamCleanup)
         }
 

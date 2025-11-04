@@ -19,3 +19,5 @@ export const TILESET_HEIGHT_OFFSETS = {
   YD_PARK: Number(import.meta.env.VITE_CESIUM_YD_PARK_HEIGHT_OFFSET) || 0,
   SEONGNAM: Number(import.meta.env.VITE_CESIUM_SEONGNAM_HEIGHT_OFFSET) || 20,
 } as const
+
+export const TILESET_AUTO_HIDE_THRESHOLD = 2000

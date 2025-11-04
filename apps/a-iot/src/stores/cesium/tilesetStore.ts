@@ -7,13 +7,23 @@ import {
   Matrix4,
   Cartographic,
 } from 'cesium'
-import { ION_ASSETS, TILESET_HEIGHT_OFFSETS } from './constants'
+import { ION_ASSETS, TILESET_HEIGHT_OFFSETS, LOCAL_TILESETS } from './constants'
 
 interface TilesetLoadOptions {
   maximumScreenSpaceError?: number
   skipLevelOfDetail?: boolean
   cullWithChildrenBounds?: boolean
 }
+
+const DEFAULT_TILESET_OPTIONS = {
+  skipLevelOfDetail: true,
+  maximumScreenSpaceError: 48,
+  cullWithChildrenBounds: true,
+  dynamicScreenSpaceError: true,
+  dynamicScreenSpaceErrorDensity: 0.00278,
+  dynamicScreenSpaceErrorFactor: 4.0,
+  dynamicScreenSpaceErrorHeightFalloff: 0.25,
+} as const
 
 interface TilesetStore {
   loadIonTileset: (viewer: CesiumViewer, assetId: number, options?: TilesetLoadOptions) => Promise<Cesium3DTileset | null>
@@ -32,13 +42,10 @@ export const useTilesetStore = create<TilesetStore>(() => ({
       const resource = await IonResource.fromAssetId(assetId)
 
       const tileset = await Cesium3DTileset.fromUrl(resource, {
-        skipLevelOfDetail: options?.skipLevelOfDetail ?? true,
-        maximumScreenSpaceError: options?.maximumScreenSpaceError ?? 48,
-        cullWithChildrenBounds: options?.cullWithChildrenBounds ?? true,
-        dynamicScreenSpaceError: true,
-        dynamicScreenSpaceErrorDensity: 0.00278,
-        dynamicScreenSpaceErrorFactor: 4.0,
-        dynamicScreenSpaceErrorHeightFalloff: 0.25,
+        ...DEFAULT_TILESET_OPTIONS,
+        skipLevelOfDetail: options?.skipLevelOfDetail ?? DEFAULT_TILESET_OPTIONS.skipLevelOfDetail,
+        maximumScreenSpaceError: options?.maximumScreenSpaceError ?? DEFAULT_TILESET_OPTIONS.maximumScreenSpaceError,
+        cullWithChildrenBounds: options?.cullWithChildrenBounds ?? DEFAULT_TILESET_OPTIONS.cullWithChildrenBounds,
       })
 
       if (viewer.isDestroyed()) return null
@@ -55,18 +62,10 @@ export const useTilesetStore = create<TilesetStore>(() => ({
   loadSeongnamTileset: async (viewer: CesiumViewer, url?: string) => {
     if (viewer.isDestroyed()) return null
 
-    const tilesetUrl = url || 'http://localhost/seongnam/sn_3d/seongnam.2022.cesium.tileset.json'
+    const tilesetUrl = url || LOCAL_TILESETS.SEONGNAM
 
     try {
-      const tileset = await Cesium3DTileset.fromUrl(tilesetUrl, {
-        skipLevelOfDetail: true,
-        maximumScreenSpaceError: 48,
-        cullWithChildrenBounds: true,
-        dynamicScreenSpaceError: true,
-        dynamicScreenSpaceErrorDensity: 0.00278,
-        dynamicScreenSpaceErrorFactor: 4.0,
-        dynamicScreenSpaceErrorHeightFalloff: 0.25,
-      })
+      const tileset = await Cesium3DTileset.fromUrl(tilesetUrl, DEFAULT_TILESET_OPTIONS)
 
       if (viewer.isDestroyed()) return null
 

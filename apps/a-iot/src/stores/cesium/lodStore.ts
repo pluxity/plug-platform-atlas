@@ -24,7 +24,7 @@ export const useLODStore = create<LODStore>(() => ({
     }
 
     let currentLevel: number | null = null
-    let debounceTimer: NodeJS.Timeout | null = null
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
     const handleCameraChange = () => {
       if (viewer.isDestroyed()) return
