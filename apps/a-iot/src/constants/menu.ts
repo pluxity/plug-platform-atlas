@@ -2,7 +2,6 @@ import {
   AlertCircle,
   BellRing,
   Building2,
-  CheckCircle,
   History,
   Home,
   KeyRound,
@@ -50,12 +49,7 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
       {
         title: '알람 이력',
         icon: History,
-        path: '/events/alarm-history',
-      },
-      {
-        title: '조치 이력',
-        icon: CheckCircle,
-        path: '/events/action-history',
+        path: '/events',
       },
     ],
   },

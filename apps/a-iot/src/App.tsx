@@ -36,7 +36,7 @@ function App() {
                   <Route path="/devices/sensor-categories" element={<SensorCategories />} />
                   <Route path="/devices/sensors" element={<Sensors />} />
                   <Route path="/devices/cctv" element={<CCTV />} />
-                  <Route path="/history/events" element={<Events />} />
+                  <Route path="/events" element={<Events />} />
                   <Route path="/users" element={<Users />} />
                   <Route path="/users/roles" element={<Roles />} />
                   <Route path="/users/permissions" element={<Permissions />} />
