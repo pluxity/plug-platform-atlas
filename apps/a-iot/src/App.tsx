@@ -10,7 +10,7 @@ import VirtualPatrol from './pages/sites/VirtualPatrol'
 import SensorCategories from './pages/devices/SensorCategories'
 import Sensors from './pages/devices/Sensors'
 import CCTV from './pages/devices/CCTV'
-import Events from './pages/history/Events'
+import EventsHistoryPage from './pages/history/EventsHistoryPage.tsx'
 import Users from './pages/users/Users'
 import Roles from './pages/users/Roles'
 import Permissions from './pages/users/Permissions'
@@ -36,7 +36,7 @@ function App() {
                   <Route path="/devices/sensor-categories" element={<SensorCategories />} />
                   <Route path="/devices/sensors" element={<Sensors />} />
                   <Route path="/devices/cctv" element={<CCTV />} />
-                  <Route path="/events" element={<Events />} />
+                  <Route path="/events" element={<EventsHistoryPage />} />
                   <Route path="/users" element={<Users />} />
                   <Route path="/users/roles" element={<Roles />} />
                   <Route path="/users/permissions" element={<Permissions />} />
