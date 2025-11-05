@@ -5,7 +5,7 @@ export interface Event {
     occurredAt: string,
     minValue: number,
     maxValue: number,
-    actionResult: string,
+    status: string,
     eventName: string,
     fieldKey: string,
     guideMessage: string
@@ -15,11 +15,11 @@ export interface EventsQueryParams {
     from?: string;
     to?: string;
     siteId?: number;
-    status?: 'PENDING' | 'COMPLETED' | 'FAILED';
+    status?: EventStatus;
 }
 
 export interface TimeSeriesQueryParams {
-    interval: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
+    interval: EventCollectInterval;
     from: string;
     to: string;
 }
@@ -43,6 +43,8 @@ export interface TimeSeriesData {
     }
 }
 
-export interface EventStatusUpdateRequest {
-    result: 'PENDING' | 'COMPLETED' | 'FAILED';
+export interface EventStatusRequest {
+    result: EventStatus;
 }
+export type EventStatus = 'PENDING' | 'WORKING' | 'COMPLETED'
+export type EventCollectInterval = 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';

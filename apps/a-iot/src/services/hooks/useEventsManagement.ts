@@ -4,10 +4,10 @@ import { useApiClient } from '@plug-atlas/api-hooks';
 import {
     Event,
     EventsQueryParams,
-    EventStatusUpdateRequest,
+    EventStatusRequest,
     TimeSeriesData,
     TimeSeriesQueryParams
-} from '../types/eventManagement';
+} from '../types';
 
 type ApiResponse<T> = { data: T };
 
@@ -60,12 +60,12 @@ export const useEventsTimeSeries = (
     );
 };
 
-export const useUpdateEventStatus = (options?: SWRMutationConfiguration<void, Error, string, { eventId: number; status: EventStatusUpdateRequest }>) => {
+export const useUpdateEventStatus = (options?: SWRMutationConfiguration<void, Error, string, { eventId: number; status: EventStatusRequest }>) => {
     const client = useApiClient();
 
     return useSWRMutation(
         'events-update-status',
-        async (_key: string, { arg }: { arg: { eventId: number; status: EventStatusUpdateRequest } }) => {
+        async (_key: string, { arg }: { arg: { eventId: number; status: EventStatusRequest } }) => {
             const queryString = new URLSearchParams({
                 result: arg.status.result
             }).toString();

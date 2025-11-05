@@ -13,6 +13,21 @@ export {
   cctvUpdateRequestSchema,
 } from './cctv'
 
+export type {
+  ActionHistory,
+  ActionHistoryRequest,
+} from './eventHistory'
+
+export type {
+    Event,
+    EventStatusRequest,
+    EventsQueryParams,
+    TimeSeriesData,
+    TimeSeriesQueryParams,
+    EventStatus,
+    EventCollectInterval
+} from './eventManagement'
+
 // Site types
 export type {
   Site,

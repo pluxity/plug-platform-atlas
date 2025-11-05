@@ -7,6 +7,19 @@ export {
   useDeleteCctv,
 } from './useCctv'
 
+export {
+  useEventActionHistories,
+  useCreateActionHistory,
+  useUpdateActionHistory,
+  useDeleteActionHistory,
+} from './useEventsHistory.ts'
+
+export {
+  useEvents,
+  useUpdateEventStatus,
+  useEventsTimeSeries
+} from './useEventsManagement.ts'
+
 // Site hooks
 export {
   useSites,
