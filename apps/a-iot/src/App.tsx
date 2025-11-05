@@ -7,8 +7,8 @@ import Dashboard from './pages/Dashboard'
 import MapDashboard from './pages/dashboard/MapDashboard'
 import SitePage from './pages/sites/parks/SitePage.tsx'
 import VirtualPatrol from './pages/sites/VirtualPatrol'
-import SensorCategories from './pages/devices/SensorCategories'
-import Sensors from './pages/devices/Sensors'
+import SensorCategoriesPage from './pages/devices/SensorCategoriesPage.tsx'
+import Sensors from './pages/devices/Sensors.tsx'
 import CCTV from './pages/devices/CCTV'
 import Events from './pages/history/Events'
 import Users from './pages/users/Users'
@@ -33,8 +33,8 @@ function App() {
                   <Route path="/dashboard/map" element={<MapDashboard />} />
                   <Route path="/sites/parks" element={<SitePage />} />
                   <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
-                  <Route path="/devices/sensor-categories" element={<SensorCategories />} />
-                  <Route path="/devices/sensors" element={<Sensors />} />
+                  <Route path="/devices/sensor-categories" element={<SensorCategoriesPage />} />
+                  <Route path="/sensors" element={<Sensors />} />
                   <Route path="/devices/cctv" element={<CCTV />} />
                   <Route path="/history/events" element={<Events />} />
                   <Route path="/users" element={<Users />} />
