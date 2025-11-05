@@ -1,7 +1,7 @@
 import useSWR, { SWRConfiguration } from 'swr';
 import useSWRMutation, { SWRMutationConfiguration } from 'swr/mutation';
 import { useApiClient } from "@plug-atlas/api-hooks";
-import type { Site, SiteCreateRequest, SiteUpdateRequest } from '../types/site.ts';
+import type { Site, SiteCreateRequest, SiteUpdateRequest } from '../types';
 
 type ApiResponse<T> = { data: T }
 
