@@ -7,6 +7,14 @@ export {
   useDeleteCctv,
 } from './useCctv'
 
+export {
+  useDeviceTypes,
+} from './useDeviceType.ts'
+
+export {
+  useEventConditions,
+  useEventConditionMutations,
+} from './useEventCondition.ts'
 // Site hooks
 export {
   useSites,

@@ -66,6 +66,36 @@ export const useViewerStore = create<ViewerFactory>(() => ({
     controller.inertiaZoom = 0.3
     controller.zoomEventTypes = [CameraEventType.WHEEL, CameraEventType.PINCH]
 
+    // Pitch/Roll 제한 이벤트 리스너
+    viewer.camera.changed.addEventListener(() => {
+      const cameraHeight = viewer.camera.positionCartographic.height
+      const maximumPitch = -0.1 // 약 -5.7도 (거의 수평)
+
+      // 높이에 따라 최대 pitch 조정
+      let adjustedMaxPitch = maximumPitch
+      if (cameraHeight < 1000) {
+        // 낮은 고도에서는 더 많이 기울일 수 있음
+        adjustedMaxPitch = -0.3 // 약 -17도
+      } else if (cameraHeight < 5000) {
+        // 중간 고도
+        adjustedMaxPitch = -0.2 // 약 -11도
+      }
+
+      const pitch = viewer.camera.pitch
+      const roll = viewer.camera.roll
+
+      // Pitch가 너무 수평이거나 Roll이 0이 아니면 조정
+      if (pitch > adjustedMaxPitch || Math.abs(roll) > 0.01) {
+        viewer.camera.setView({
+          orientation: {
+            heading: viewer.camera.heading,
+            pitch: pitch > adjustedMaxPitch ? adjustedMaxPitch : pitch,
+            roll: 0, // Roll은 항상 0으로 유지
+          },
+        })
+      }
+    })
+
     return viewer
   },
 

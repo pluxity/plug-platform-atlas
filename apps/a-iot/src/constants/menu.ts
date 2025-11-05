@@ -91,7 +91,7 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
       {
         title: 'IoT 센서 관리',
         icon: Radio,
-        path: '/devices/sensors',
+        path: '/devices/sensor-categories',
       },
       {
         title: 'CCTV 관리',
