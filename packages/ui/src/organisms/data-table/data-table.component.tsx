@@ -57,12 +57,12 @@ function DataTable<T>({
 
   return (
     <div className={className}>
-      <div className="rounded-md border">
+      <div className="rounded-md border border-[#bbbecf]">
         <table className="w-full">
           <thead>
-            <tr className="border-b bg-muted/50">
+            <tr className="border-b border-[#bbbecf] bg-[#dfe4eb]">
               {selectable && (
-                <th className="h-12 px-4 text-left align-middle font-medium w-12">
+                <th className="h-12 px-4 text-center align-middle font-medium w-12">
                   <input
                     type="checkbox"
                     checked={selectedRows.length === data.length && data.length > 0}
@@ -74,13 +74,13 @@ function DataTable<T>({
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
+                  className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
                 >
                   {column.header}
                 </th>
               ))}
               {hasActions && (
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                   액션
                 </th>
               )}
@@ -95,14 +95,14 @@ function DataTable<T>({
                 <tr
                   key={rowId}
                   className={cn(
-                    "border-b transition-colors",
+                    "border-b border-[#bbbecf] transition-colors",
                     onRowClick && "cursor-pointer hover:bg-muted/50",
                     isSelected && "bg-primary-50"
                   )}
                   onClick={() => onRowClick?.(row, index)}
                 >
                   {selectable && (
-                    <td className="p-4 align-middle">
+                    <td className="p-4 text-center align-middle">
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -116,7 +116,7 @@ function DataTable<T>({
                     </td>
                   )}
                   {columns.map((column) => (
-                    <td key={String(column.key)} className="p-4 align-middle">
+                    <td key={String(column.key)} className="p-4 text-center align-middle">
                       {column.cell
                         ? column.cell(row[column.key], row)
                         : String(row[column.key])}

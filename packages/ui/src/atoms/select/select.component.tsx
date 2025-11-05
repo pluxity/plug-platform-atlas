@@ -18,7 +18,7 @@ import {
 
 // Variant definitions
 const selectTriggerVariants = cva(
-  "flex w-full items-center justify-between rounded-md text-sm ring-offset-background transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+  "flex w-full items-center justify-between rounded-[7px] text-sm ring-offset-background transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
   {
     variants: {
       variant: {
@@ -29,7 +29,7 @@ const selectTriggerVariants = cva(
       },
       size: {
         sm: "h-8 px-3 py-1 text-xs",
-        default: "h-10 px-3 py-2",
+        default: "h-9 px-3 py-2",
         lg: "h-12 px-4 py-3 text-base"
       },
       state: {

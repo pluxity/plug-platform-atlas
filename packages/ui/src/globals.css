@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./font.css";
 
 @theme {
   --color-background: hsl(220 20% 97%);
@@ -84,6 +85,8 @@
   --color-border: hsl(0 0% 90%);
   --color-input: hsl(0 0% 85%);
   --color-ring: hsl(223 72% 44%);
+  --color-table-border: #bbbecf;
+  --color-table-header-bg: #dfe4eb;
   --radius: 0.75rem;
   --radius-card: 0.875rem;
   --radius-button: 0.5rem;
@@ -173,6 +176,8 @@
   --color-border: hsl(0 0% 25%);
   --color-input: hsl(0 0% 25%);
   --color-ring: hsl(223 75% 53%);
+  --color-table-border: #bbbecf;
+  --color-table-header-bg: #dfe4eb;
 }
 
 * {
@@ -182,6 +187,7 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
+  font-family: 'SUIT', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* Custom Utilities */
@@ -430,6 +436,7 @@ body {
   .border-gray-700 { border-color: var(--color-gray-700); }
   .border-gray-800 { border-color: var(--color-gray-800); }
   .border-gray-900 { border-color: var(--color-gray-900); }
+  .border-table { border-color: var(--color-table-border); }
 
   /* Ring Colors */
   .ring-primary-50 { --tw-ring-color: var(--color-primary-50); }
@@ -486,3 +493,4 @@ body {
   .ring-gray-800 { --tw-ring-color: var(--color-gray-800); }
   .ring-gray-900 { --tw-ring-color: var(--color-gray-900); }
 }
+
