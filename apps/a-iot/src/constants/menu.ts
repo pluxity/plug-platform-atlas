@@ -62,7 +62,7 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
   {
     title: 'IoT 센서',
     icon: Radio,
-    path: '/sensors',
+    path: '/devices/iot-sensors',
   },
   {
     title: '안내방송',
