@@ -4,7 +4,6 @@ import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import ForbiddenPage from './pages/ForbiddenPage'
 import Dashboard from './pages/Dashboard'
-import MapDashboard from './pages/dashboard/MapDashboard'
 import SitePage from './pages/sites/parks/SitePage.tsx'
 import VirtualPatrol from './pages/sites/VirtualPatrol'
 import SensorCategoriesPage from './pages/devices/SensorCategoriesPage.tsx'
@@ -31,10 +30,9 @@ function App() {
               <AdminLayout>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
-                  <Route path="/dashboard/map" element={<MapDashboard />} />
                   <Route path="/sites/parks" element={<SitePage />} />
                   <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
-                  <Route path="/devices/sensor-categories" element={<SensorCategories />} />
+                  <Route path="/devices/sensor-categories" element={<SensorCategoriesPage />} />
                   <Route path="/devices/iot-sensors" element={<IoTSensor />} />
                   <Route path="/devices/sensors" element={<Sensors />} />
                   <Route path="/devices/cctv" element={<CCTV />} />

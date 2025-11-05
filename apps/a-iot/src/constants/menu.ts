@@ -6,8 +6,6 @@ import {
   History,
   Home,
   KeyRound,
-  LayoutGrid,
-  Map,
   PlugZap,
   Radio,
   Settings,
@@ -30,18 +28,7 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
   {
     title: '대시보드',
     icon: Home,
-    children: [
-      {
-        title: '카드형',
-        icon: LayoutGrid,
-        path: '/',
-      },
-      {
-        title: '지도형',
-        icon: Map,
-        path: '/dashboard/map',
-      },
-    ],
+    path: '/',
   },
   {
     title: '이벤트',

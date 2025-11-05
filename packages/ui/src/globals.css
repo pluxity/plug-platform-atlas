@@ -1,29 +1,26 @@
 @import "tailwindcss";
-@import "./font.css";
 
 @theme {
-  --color-background: hsl(220 20% 97%);
+  --color-background: hsl(0 0% 100%);
   --color-foreground: hsl(0 0% 17%);
   --color-card: hsl(0 0% 100%);
   --color-card-foreground: hsl(0 0% 17%);
   --color-popover: hsl(0 0% 100%);
   --color-popover-foreground: hsl(0 0% 17%);
 
-  /* Primary Blue Scale */
-  --color-primary-50: hsl(223 100% 97%);
-  --color-primary-100: hsl(223 100% 94%);
-  --color-primary-200: hsl(224 100% 85%);
-  --color-primary-300: hsl(224 100% 75%);
-  --color-primary-400: hsl(224 100% 65%);
-  --color-primary-500: hsl(223 75% 53%);
-  --color-primary-600: hsl(223 72% 44%);
-  --color-primary-700: hsl(223 69% 35%);
-  --color-primary-800: hsl(223 67% 26%);
-  --color-primary-900: hsl(223 65% 17%);
-  --color-primary: hsl(223 72% 44%);
+  --color-primary-50: hsl(217 100% 97%);
+  --color-primary-100: hsl(217 100% 93%);
+  --color-primary-200: hsl(217 100% 85%);
+  --color-primary-300: hsl(217 100% 73%);
+  --color-primary-400: hsl(217 100% 60%);
+  --color-primary-500: hsl(217 100% 45%);
+  --color-primary-600: hsl(217 100% 38%);
+  --color-primary-700: hsl(217 100% 30%);
+  --color-primary-800: hsl(217 100% 23%);
+  --color-primary-900: hsl(217 100% 15%);
+  --color-primary: hsl(217 100% 45%);
   --color-primary-foreground: hsl(0 0% 100%);
 
-  /* Success Green Scale */
   --color-success-50: hsl(147 55% 96%);
   --color-success-100: hsl(147 57% 90%);
   --color-success-200: hsl(147 60% 80%);
@@ -37,7 +34,6 @@
   --color-success: hsl(147 63% 38%);
   --color-success-foreground: hsl(0 0% 100%);
 
-  /* Warning Orange Scale */
   --color-warning-50: hsl(30 100% 97%);
   --color-warning-100: hsl(30 100% 94%);
   --color-warning-200: hsl(30 100% 84%);
@@ -51,7 +47,6 @@
   --color-warning: hsl(30 79% 44%);
   --color-warning-foreground: hsl(0 0% 100%);
 
-  /* Error Red Scale */
   --color-error-50: hsl(0 100% 97%);
   --color-error-100: hsl(0 100% 94%);
   --color-error-200: hsl(0 100% 85%);
@@ -65,7 +60,6 @@
   --color-destructive: hsl(0 66% 48%);
   --color-destructive-foreground: hsl(0 0% 100%);
 
-  /* Gray Scale */
   --color-gray-100: hsl(0 0% 95%);
   --color-gray-200: hsl(0 0% 85%);
   --color-gray-300: hsl(0 0% 75%);
@@ -82,11 +76,9 @@
   --color-muted-foreground: hsl(0 0% 42%);
   --color-accent: hsl(223 100% 94%);
   --color-accent-foreground: hsl(223 72% 44%);
-  --color-border: hsl(0 0% 90%);
-  --color-input: hsl(0 0% 85%);
+  --color-border: hsl(228 17% 77%);
+  --color-input: hsl(228 17% 77%);
   --color-ring: hsl(223 72% 44%);
-  --color-table-border: #bbbecf;
-  --color-table-header-bg: #dfe4eb;
   --radius: 0.75rem;
   --radius-card: 0.875rem;
   --radius-button: 0.5rem;
@@ -100,21 +92,19 @@
   --color-popover: hsl(0 0% 12%);
   --color-popover-foreground: hsl(0 0% 95%);
 
-  /* Primary Blue Scale - Dark Mode */
-  --color-primary-50: hsl(223 65% 12%);
-  --color-primary-100: hsl(223 65% 17%);
-  --color-primary-200: hsl(223 67% 26%);
-  --color-primary-300: hsl(223 69% 35%);
-  --color-primary-400: hsl(223 72% 44%);
-  --color-primary-500: hsl(223 75% 53%);
-  --color-primary-600: hsl(224 100% 65%);
-  --color-primary-700: hsl(224 100% 75%);
-  --color-primary-800: hsl(224 100% 85%);
-  --color-primary-900: hsl(223 100% 94%);
-  --color-primary: hsl(223 75% 53%);
+  --color-primary-50: hsl(217 100% 15%);
+  --color-primary-100: hsl(217 100% 23%);
+  --color-primary-200: hsl(217 100% 30%);
+  --color-primary-300: hsl(217 100% 38%);
+  --color-primary-400: hsl(217 100% 45%);
+  --color-primary-500: hsl(217 100% 60%);
+  --color-primary-600: hsl(217 100% 73%);
+  --color-primary-700: hsl(217 100% 85%);
+  --color-primary-800: hsl(217 100% 93%);
+  --color-primary-900: hsl(217 100% 97%);
+  --color-primary: hsl(217 100% 60%);
   --color-primary-foreground: hsl(0 0% 100%);
 
-  /* Success Green Scale - Dark Mode */
   --color-success-50: hsl(147 55% 8%);
   --color-success-100: hsl(147 57% 12%);
   --color-success-200: hsl(147 59% 18%);
@@ -128,7 +118,6 @@
   --color-success: hsl(147 65% 48%);
   --color-success-foreground: hsl(0 0% 100%);
 
-  /* Warning Orange Scale - Dark Mode */
   --color-warning-50: hsl(30 70% 10%);
   --color-warning-100: hsl(30 70% 14%);
   --color-warning-200: hsl(30 73% 24%);
@@ -142,7 +131,6 @@
   --color-warning: hsl(30 100% 55%);
   --color-warning-foreground: hsl(0 0% 100%);
 
-  /* Error Red Scale - Dark Mode */
   --color-error-50: hsl(0 60% 10%);
   --color-error-100: hsl(0 60% 15%);
   --color-error-200: hsl(0 62% 28%);
@@ -156,7 +144,6 @@
   --color-destructive: hsl(0 100% 60%);
   --color-destructive-foreground: hsl(0 0% 100%);
 
-  /* Gray Scale - Dark Mode */
   --color-gray-100: hsl(0 0% 17%);
   --color-gray-200: hsl(0 0% 26%);
   --color-gray-300: hsl(0 0% 35%);
@@ -176,8 +163,6 @@
   --color-border: hsl(0 0% 25%);
   --color-input: hsl(0 0% 25%);
   --color-ring: hsl(223 75% 53%);
-  --color-table-border: #bbbecf;
-  --color-table-header-bg: #dfe4eb;
 }
 
 * {
@@ -190,9 +175,7 @@ body {
   font-family: 'SUIT', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Custom Utilities */
 @layer utilities {
-  /* Gradient Backgrounds */
   .gradient-primary {
     background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-400) 100%);
   }
@@ -213,7 +196,6 @@ body {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   }
 
-  /* Shadow Utilities */
   .shadow-primary {
     box-shadow: 0 8px 24px -4px rgba(64, 97, 217, 0.3);
   }
@@ -242,7 +224,6 @@ body {
     box-shadow: 0 0 24px rgba(64, 97, 217, 0.2);
   }
 
-  /* Background Utilities */
   .bg-size-200 {
     background-size: 200%;
   }
@@ -255,7 +236,6 @@ body {
     background-position: 100%;
   }
 
-  /* Animation Utilities */
   @keyframes shimmer {
     0% {
       background-position: -200% center;
@@ -270,9 +250,7 @@ body {
   }
 }
 
-/* Tailwind v4 Custom Color Utilities */
 @layer utilities {
-  /* Text Colors */
   .text-primary-50 { color: var(--color-primary-50); }
   .text-success-50 { color: var(--color-success-50); }
   .text-warning-50 { color: var(--color-warning-50); }
@@ -327,7 +305,6 @@ body {
   .text-gray-800 { color: var(--color-gray-800); }
   .text-gray-900 { color: var(--color-gray-900); }
 
-  /* Background Colors */
   .bg-primary-50 { background-color: var(--color-primary-50); }
   .bg-success-50 { background-color: var(--color-success-50); }
   .bg-warning-50 { background-color: var(--color-warning-50); }
@@ -382,7 +359,6 @@ body {
   .bg-gray-800 { background-color: var(--color-gray-800); }
   .bg-gray-900 { background-color: var(--color-gray-900); }
 
-  /* Border Colors */
   .border-primary-50 { border-color: var(--color-primary-50); }
   .border-success-50 { border-color: var(--color-success-50); }
   .border-warning-50 { border-color: var(--color-warning-50); }
@@ -436,9 +412,7 @@ body {
   .border-gray-700 { border-color: var(--color-gray-700); }
   .border-gray-800 { border-color: var(--color-gray-800); }
   .border-gray-900 { border-color: var(--color-gray-900); }
-  .border-table { border-color: var(--color-table-border); }
 
-  /* Ring Colors */
   .ring-primary-50 { --tw-ring-color: var(--color-primary-50); }
   .ring-success-50 { --tw-ring-color: var(--color-success-50); }
   .ring-warning-50 { --tw-ring-color: var(--color-warning-50); }
@@ -493,4 +467,3 @@ body {
   .ring-gray-800 { --tw-ring-color: var(--color-gray-800); }
   .ring-gray-900 { --tw-ring-color: var(--color-gray-900); }
 }
-

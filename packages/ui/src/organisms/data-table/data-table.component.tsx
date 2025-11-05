@@ -57,12 +57,12 @@ function DataTable<T>({
 
   return (
     <div className={className}>
-      <div className="rounded-md border border-[#bbbecf]">
+      <div className="border-y border-[#bbbecf]">
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#bbbecf] bg-[#dfe4eb]">
               {selectable && (
-                <th className="h-12 px-4 text-center align-middle font-medium w-12">
+                <th className="h-[34px] px-4 py-2 text-center align-middle font-medium w-12 border-r border-[#bbbecf]">
                   <input
                     type="checkbox"
                     checked={selectedRows.length === data.length && data.length > 0}
@@ -71,16 +71,19 @@ function DataTable<T>({
                   />
                 </th>
               )}
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 <th
                   key={String(column.key)}
-                  className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
+                  className={cn(
+                    "h-[34px] px-4 py-2 text-center align-middle font-medium text-muted-foreground",
+                    index < columns.length - 1 && "border-r border-[#bbbecf]"
+                  )}
                 >
                   {column.header}
                 </th>
               ))}
               {hasActions && (
-                <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
+                <th className="h-[34px] px-4 py-2 text-center align-middle font-medium text-muted-foreground border-l border-[#bbbecf]">
                   액션
                 </th>
               )}
@@ -95,14 +98,14 @@ function DataTable<T>({
                 <tr
                   key={rowId}
                   className={cn(
-                    "border-b border-[#bbbecf] transition-colors",
+                    "border-b border-[#bbbecf] h-[34px] transition-colors",
                     onRowClick && "cursor-pointer hover:bg-muted/50",
                     isSelected && "bg-primary-50"
                   )}
                   onClick={() => onRowClick?.(row, index)}
                 >
                   {selectable && (
-                    <td className="p-4 text-center align-middle">
+                    <td className="px-4 py-2 text-center align-middle border-r border-[#bbbecf]">
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -115,16 +118,22 @@ function DataTable<T>({
                       />
                     </td>
                   )}
-                  {columns.map((column) => (
-                    <td key={String(column.key)} className="p-4 text-center align-middle">
+                  {columns.map((column, colIndex) => (
+                    <td
+                      key={String(column.key)}
+                      className={cn(
+                        "px-4 py-2 text-center align-middle",
+                        colIndex < columns.length - 1 && "border-r border-[#bbbecf]"
+                      )}
+                    >
                       {column.cell
                         ? column.cell(row[column.key], row)
                         : String(row[column.key])}
                     </td>
                   ))}
                   {hasActions && (
-                    <td className="p-4 align-middle">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-2 text-center align-middle border-l border-[#bbbecf]">
+                      <div className="flex items-center justify-center gap-2">
                         {onRowEdit && (
                           <button
                             onClick={(e) => {

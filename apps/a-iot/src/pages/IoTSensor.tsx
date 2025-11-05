@@ -166,9 +166,11 @@ export default function IoTSensor() {
       key: 'batteryLevel',
       header: '배터리 잔량',
       cell: (_,row) => (
-        <div className="flex flex-col">
-          <Progress value={row.batteryLevel} />
-          <span className="text-xs text-gray-500">{row.batteryLevel ?? 0}</span>
+        <div className="relative">
+          <Progress className={"h-4"} value={row.batteryLevel} />
+          <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-gray-300">
+            {row.batteryLevel ?? 0}%
+          </span>
         </div>
       )
     },

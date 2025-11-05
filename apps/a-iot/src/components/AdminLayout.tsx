@@ -1,18 +1,18 @@
 import React from 'react'
-import AppSidebar from './AppSidebar'
-import { SidebarProvider, SidebarInset, Toaster } from '@plug-atlas/ui'
+import AppSideMenu from './AppSideMenu'
+import { Toaster } from '@plug-atlas/ui'
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">
+    <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <AppSideMenu />
+      <main className="ml-[20rem] min-h-screen p-4 overflow-auto">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 min-h-full">
           {children}
-        </main>
-      </SidebarInset>
+        </div>
+      </main>
       <Toaster />
-    </SidebarProvider>
+    </div>
   )
 }
 
