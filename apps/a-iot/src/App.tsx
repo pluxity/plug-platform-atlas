@@ -9,7 +9,7 @@ import VirtualPatrol from './pages/sites/VirtualPatrol'
 import SensorCategoriesPage from './pages/devices/SensorCategoriesPage.tsx'
 import Sensors from './pages/devices/Sensors.tsx'
 import CCTV from './pages/devices/CCTV'
-import Events from './pages/history/Events'
+import Events from './pages/Events'
 import Users from './pages/users/Users'
 import Roles from './pages/users/Roles'
 import Permissions from './pages/users/Permissions'
@@ -30,16 +30,20 @@ function App() {
               <AdminLayout>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/iot-sensors" element={<IoTSensor />} />
+
                   <Route path="/sites/parks" element={<SitePage />} />
                   <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
+
                   <Route path="/devices/sensor-categories" element={<SensorCategoriesPage />} />
-                  <Route path="/devices/iot-sensors" element={<IoTSensor />} />
                   <Route path="/devices/sensors" element={<Sensors />} />
                   <Route path="/devices/cctv" element={<CCTV />} />
-                  <Route path="/history/events" element={<Events />} />
+
                   <Route path="/users" element={<Users />} />
                   <Route path="/users/roles" element={<Roles />} />
                   <Route path="/users/permissions" element={<Permissions />} />
+                  
                   <Route path="/system/mobius" element={<Mobius />} />
                 </Routes>
               </AdminLayout>

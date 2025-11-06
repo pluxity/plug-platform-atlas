@@ -68,11 +68,6 @@ export default function SensorCategoryManagementPage() {
 
     return (
         <div className="p-6 h-full">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold mb-2">IoT 센서 분류 관리</h1>
-                <p className="text-gray-600">IoT 센서의 분류를 등록하고 관리합니다.</p>
-            </div>
-
             <TwoColumnLayout leftWidth="20%" rightWidth="80%" gap={24} className="h-[calc(100vh-200px)]">
                 <TwoColumnLayout.Left className="p-0">
                     <div className="p-4 space-y-3 overflow-y-auto flex-1">
