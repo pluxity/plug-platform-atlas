@@ -93,38 +93,36 @@ export default function Roles() {
   }
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>역할 관리 목록</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-4 gap-2">
-            <SearchBar
-              value={searchTerm}
-              onChange={handleSearch}
-              placeholder="역할 이름, 설명으로 검색"
-            />
-            <Button onClick={handleCreateRole}>역할 추가하기</Button>
-          </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-xl font-bold mb-1">역할 관리</h1>
+        <p className="text-sm text-gray-600">역할 목록을 관리합니다.</p>
+      </div>
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <SearchBar
+          value={searchTerm}
+          onChange={handleSearch}
+          placeholder="역할 이름, 설명으로 검색"
+        />
+        <Button onClick={handleCreateRole}>역할 추가하기</Button>
+      </div>
+      <div className="flex flex-col gap-4">
+        <DataTable
+          data={currentPageData}
+          columns={roleColumns}
+          onRowEdit={handleEditRole}
+          onRowDelete={handleDeleteRole}
+        />
 
-          <DataTable
-            data={currentPageData}
-            columns={roleColumns}
-            onRowEdit={handleEditRole}
-            onRowDelete={handleDeleteRole}
-          />
-
-          <TablePagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={goToPage}
-            onPrev={prevPage}
-            onNext={nextPage}
-          />
-        </CardContent>
-      </Card>
-
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+          onPrev={prevPage}
+          onNext={nextPage}
+        />
+      </div>
+      
       <RoleCreateDialog 
         isOpen={isCreateDialogOpen} 
         onClose={() => setIsCreateDialogOpen(false)} 
@@ -160,6 +158,6 @@ export default function Roles() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }

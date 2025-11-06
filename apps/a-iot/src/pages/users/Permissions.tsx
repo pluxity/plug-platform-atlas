@@ -167,18 +167,17 @@ export default function Permissions() {
   }
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>권한 관리 목록</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="space-y-8">
+       <div>
+        <h1 className="text-xl font-bold mb-1">권한 관리</h1>
+        <p className="text-sm text-gray-600">권한 목록을 관리합니다.</p>
+      </div>
+      <div className="flex flex-col gap-4">
           <Tabs
             value={selectedCategory}
             onValueChange={setSelectedCategory}
             variant="pills"
             size="sm"
-            className="mb-4"
           >
             <TabsList className="justify-start">
               <TabsTrigger value="all">
@@ -198,7 +197,7 @@ export default function Permissions() {
             </TabsList>
           </Tabs>
 
-          <div className="flex items-center justify-between mb-4 gap-2">
+          <div className="flex items-center justify-between gap-2">
             <SearchBar
               value={searchTerm}
               onChange={handleSearch}
@@ -221,10 +220,9 @@ export default function Permissions() {
             totalPages={totalPages}
             onPageChange={goToPage}
             onPrev={prevPage}
-            onNext={nextPage}
-          />
-        </CardContent>
-      </Card>
+          onNext={nextPage}
+        />
+      </div>
 
       <PermissionCreateDialog
         isOpen={isCreateDialogOpen}
@@ -259,6 +257,6 @@ export default function Permissions() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }

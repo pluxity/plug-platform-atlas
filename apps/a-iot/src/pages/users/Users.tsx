@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@plug-atlas/ui';
+import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, CardDescription } from '@plug-atlas/ui';
 import { useState, useEffect } from 'react';
 import UserCreateDialog from './dialogs/UsersCreateDialog';
 import UserEditDialog from './dialogs/UserEditDialog';
@@ -145,21 +145,20 @@ export default function Users() {
   }
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>사용자 관리 목록</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-4 gap-2">
-            <SearchBar
-              value={searchTerm}
-              onChange={handleSearch}
-              placeholder="이름, 아이디, 부서, 전화번호로 검색"
-            />
-            <Button onClick={handleCreateUser}>사용자 추가하기</Button>
-          </div>
-
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-xl font-bold mb-1">사용자 관리</h1>
+        <p className="text-sm text-gray-600">사용자 목록을 관리합니다.</p>
+      </div>
+      <div className="flex items-center justify-between mb-4 gap-2">
+          <SearchBar
+            value={searchTerm}
+            onChange={handleSearch}
+            placeholder="이름, 아이디, 부서, 전화번호로 검색"
+          />
+          <Button onClick={handleCreateUser}>사용자 추가하기</Button>
+      </div>
+      <div className="flex flex-col gap-4">
           <DataTable
             data={currentPageData}
             columns={userColumns}
@@ -174,8 +173,7 @@ export default function Users() {
             onPrev={prevPage}
             onNext={nextPage}
           />
-        </CardContent>
-      </Card>
+      </div>
 
       <UserCreateDialog 
         isOpen={isCreateDialogOpen} 
@@ -226,6 +224,6 @@ export default function Users() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }
