@@ -9,7 +9,10 @@ export interface Event {
     eventName: string,
     fieldKey: string,
     guideMessage: string,
-    audit: string,
+    longitude: number,
+    latitude: number,
+    updatedAt: string,
+    updatedBy: string,
 }
 
 export interface EventsQueryParams {

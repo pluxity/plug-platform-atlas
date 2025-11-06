@@ -32,21 +32,18 @@ export default function EventsHistoryPage() {
 
   if (eventsError) {
     return (
-      <div className="p-6">
         <div className="text-center text-red-600">
           <p>데이터를 불러오는 중 오류가 발생했습니다.</p>
           <p className="text-sm mt-2">{eventsError.message}</p>
         </div>
-      </div>
+
     );
   }
 
   return (
-    <div className="p-6">
       <div className="flex flex-col gap-8">
         <EventStatisticsSection eventStats={eventStats} />
         <EventListSection  />
       </div>
-    </div>
   );
 }

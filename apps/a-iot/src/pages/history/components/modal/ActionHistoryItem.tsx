@@ -240,7 +240,6 @@ export default function ActionHistorySection({ eventId }: ActionHistorySectionPr
 
   return (
     <div className="space-y-4">
-      {/* Header matching event info style */}
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <div className="h-1 w-1 rounded-full bg-gray-400" />
@@ -253,7 +252,6 @@ export default function ActionHistorySection({ eventId }: ActionHistorySectionPr
         </h4>
       </div>
 
-      {/* History list - matching event info card style */}
       <div className="bg-gray-50/50 p-4 rounded-lg border border-gray-100">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -279,7 +277,6 @@ export default function ActionHistorySection({ eventId }: ActionHistorySectionPr
         )}
       </div>
 
-      {/* Add new action form */}
       <AddActionHistoryForm eventId={eventId} onSuccess={handleRefresh} />
     </div>
   );
