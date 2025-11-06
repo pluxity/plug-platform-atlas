@@ -40,6 +40,8 @@ export default function Permissions() {
                     const resourceList = resourceData[permission.resourceType];
                     const resourceMap = resourceList ? new Map(resourceList.map(r => [r.id, r.name])) : new Map();
                     const validResourceIds = permission.resourceIds.filter(id => resourceMap.has(id));
+
+                    if(validResourceIds.length === 0) return null;
                     
                     return (
                       <div key={`${permission.resourceType}-${index}`} className="flex flex-col gap-1 justify-center items-center">

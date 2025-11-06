@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 
 export const useSearchBar = <T extends Record<string, any>>(
   data: T[],
@@ -24,9 +24,9 @@ export const useSearchBar = <T extends Record<string, any>>(
     );
   }, [data, searchTerm, searchFields]);
 
-  const handleSearch = (value: string) => {
+  const handleSearch = useCallback((value: string) => {
     setSearchTerm(value);
-  };
+  }, []);
 
   return {
     searchTerm,
