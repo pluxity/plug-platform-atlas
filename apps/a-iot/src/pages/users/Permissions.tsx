@@ -1,12 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui';
+import { DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui';
 import { useState, useEffect } from 'react';
 import { usePermissions, useDeletePermission, useRoles } from '@plug-atlas/api-hooks';
 import { usePermissionResources } from '../../services/hooks';
 import { PermissionGroupResponse } from '@plug-atlas/types';
 import PermissionCreateDialog from './dialogs/PermissionCreateDialog';
 import PermissionEditDialog from './dialogs/PermissionEditDialog';
-import { useSearchBar, usePagination } from './hooks';
-import { SearchBar, TablePagination } from './components';
+import { useSearchBar, usePagination } from '../hooks';
+import { SearchBar, TablePagination } from '../components';
 
 export default function Permissions() {
   const { data, mutate: mutatePermissions } = usePermissions();
