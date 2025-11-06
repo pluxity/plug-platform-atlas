@@ -150,7 +150,7 @@ export default function PermissionCreateDialog({ isOpen, onClose, onSuccess }: P
                             취소
                         </Button>
                         <Button type="submit" variant="default" className="flex-1" disabled={isCreating || !createPermissionForm.formState.isValid}>
-                            {isCreating ? <Spinner size="sm" /> : '저장'}
+                            {isCreating ? (<> 저장중... <Spinner size="sm" /> </>) : '저장'}
                         </Button>
                     </div>
                 </Form>

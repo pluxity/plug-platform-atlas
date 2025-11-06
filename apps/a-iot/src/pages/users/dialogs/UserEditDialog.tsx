@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle } from '@plug-atlas/ui';
+import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from '@plug-atlas/ui';
 import { useUpdateAdminUser, useRoles } from '@plug-atlas/api-hooks';
 import { UserUpdateRequest, UserUpdateRequestSchema, UserResponse } from '@plug-atlas/types';
 
@@ -24,7 +24,7 @@ export default function UserEditDialog({ isOpen, user, onClose, onSuccess }: Use
     useEffect(() => {
         if (user) {
             editUserForm.reset({
-                name: user.name || '',
+                name: user.name,
                 phoneNumber: user.phoneNumber || '',
                 department: user.department || '',
                 roleIds: user.roles?.map(r => r.id) || []
@@ -62,8 +62,12 @@ export default function UserEditDialog({ isOpen, user, onClose, onSuccess }: Use
     if (!user) return null;
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            if (!open) {
+                resetEditUserForm();
+            }
+        }}>
+            <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>사용자 정보 수정</DialogTitle>
                 </DialogHeader>
@@ -136,35 +140,40 @@ export default function UserEditDialog({ isOpen, user, onClose, onSuccess }: Use
 
                     <FormField>
                         <FormItem>
-                            <FormLabel htmlFor="roleIds">역할</FormLabel>
+                            <FormLabel>역할</FormLabel>
                             <Controller
                                 name="roleIds"
                                 control={editUserForm.control}
-                                render={({ field }) => (
-                                    <FormControl className="flex gap-4">
-                                        {roles?.map(role => {
-                                            const isChecked = field.value?.includes(role.id) ?? false;
-                                            
-                                            return (
-                                                <div key={role.id} className="flex items-center gap-2">
-                                                    <Checkbox 
-                                                        id={`edit-${role.id.toString()}`}
-                                                        checked={isChecked}
-                                                        onCheckedChange={(checked) => {
-                                                            const currentValue = field.value || [];
-                                                            if (checked) {
-                                                                field.onChange([...currentValue, role.id]);
-                                                            } else {
-                                                                field.onChange(currentValue.filter(id => id !== role.id));
-                                                            }
-                                                        }}
-                                                    />
-                                                    <Label htmlFor={`edit-${role.id.toString()}`}>{role.name}</Label>
-                                                </div>
-                                            );
-                                        })}
-                                    </FormControl>
-                                )}
+                                render={({ field }) => {
+                                    return (
+                                        <FormControl>
+                                            <div className="flex flex-wrap gap-x-6 gap-y-2 max-h-96 overflow-y-auto border rounded-lg p-4">
+                                                {roles?.map(role => {
+                                                    const checkboxId = `edit-role-${role.id}`;
+                                                    const checked = field.value?.includes(role.id) ?? false;
+                                                    
+                                                    return (
+                                                        <div key={role.id} className="flex items-center gap-2">
+                                                            <Checkbox 
+                                                                id={checkboxId}
+                                                                checked={checked}
+                                                                onCheckedChange={(isChecked) => {
+                                                                    const currentValue = field.value || [];
+                                                                    if (isChecked) {
+                                                                        field.onChange([...currentValue, role.id]);
+                                                                    } else {
+                                                                        field.onChange(currentValue.filter(id => id !== role.id));
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <Label htmlFor={checkboxId}>{role.name}</Label>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </FormControl>
+                                    );
+                                }}
                             />
                             <FormMessage className="text-sm text-error-600">
                                 {editUserForm.formState.errors.roleIds?.message}
@@ -175,7 +184,7 @@ export default function UserEditDialog({ isOpen, user, onClose, onSuccess }: Use
                     <div className="flex gap-3">
                         <Button type="button" variant="outline" className="flex-1" onClick={resetEditUserForm}>취소</Button>
                         <Button type="submit" variant="default" className="flex-1" disabled={isUpdateUser || !editUserForm.formState.isValid}>
-                            {isUpdateUser ? '수정중...' : '수정'}
+                            {isUpdateUser ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}
                         </Button>
                     </div>
                 </Form>
