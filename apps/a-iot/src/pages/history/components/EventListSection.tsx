@@ -14,7 +14,7 @@ export default function EventListSection() {
 
     const { from, to } = useMemo(() => getTimeRange(listTimeRange), [listTimeRange]);
 
-    const { data: events, isLoading: eventsLoading } = useEvents({
+    const { data: events, isLoading: eventsLoading, mutate } = useEvents({
         from,
         to,
         ...(listStatusFilter !== 'all' && { status: listStatusFilter as EventStatus }),
@@ -71,6 +71,7 @@ export default function EventListSection() {
             <EventList
                 events={events || []}
                 isLoading={eventsLoading}
+                onRefresh={() => mutate()}
             />
         </div>
     );

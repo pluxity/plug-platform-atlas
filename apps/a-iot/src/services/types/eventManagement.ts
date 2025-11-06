@@ -8,7 +8,8 @@ export interface Event {
     status: string,
     eventName: string,
     fieldKey: string,
-    guideMessage: string
+    guideMessage: string,
+    audit: string,
 }
 
 export interface EventsQueryParams {

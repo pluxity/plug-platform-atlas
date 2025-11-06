@@ -12,7 +12,7 @@ export const useEventActionHistories = (
     const client = useApiClient();
 
     return useSWR<ActionHistory[]>(
-        eventId ? `events/${eventId}/action-histories` : null,
+        eventId ? `events/action-histories` : null,
         async () => {
             const response = await client.get<ApiResponse<ActionHistory[]>>(`events/${eventId}/action-histories`);
             return response.data || [];
@@ -68,23 +68,6 @@ export const useDeleteActionHistory = (
         `events/${eventId}/action-histories`,
         async (_key: string, { arg }: { arg: number }) => {
             await client.delete(`events/${eventId}/action-histories/${arg}`);
-        },
-        options
-    );
-};
-
-export const useActionHistory = (
-    eventId: number,
-    historyId: number,
-    options?: SWRConfiguration<ActionHistory, Error>
-) => {
-    const client = useApiClient();
-
-    return useSWR<ActionHistory>(
-        eventId && historyId ? [`events/${eventId}/action-histories`, historyId] : null,
-        async () => {
-            const response = await client.get<ApiResponse<ActionHistory>>(`events/${eventId}/action-histories/${historyId}`);
-            return response.data;
         },
         options
     );
