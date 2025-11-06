@@ -2,8 +2,6 @@ import {
   AlertCircle,
   BellRing,
   Building2,
-  CheckCircle,
-  History,
   Home,
   KeyRound,
   PlugZap,
@@ -12,7 +10,6 @@ import {
   Shield,
   TreePine,
   Users,
-  Volume2,
   Video,
 } from 'lucide-react'
 
@@ -23,7 +20,6 @@ export interface MenuItem {
   children?: MenuItem[]
 }
 
-// 모든 사용자가 접근 가능한 메인 메뉴
 export const MAIN_MENU_ITEMS: MenuItem[] = [
   {
     title: '대시보드',
@@ -33,38 +29,20 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
   {
     title: '이벤트',
     icon: AlertCircle,
-    children: [
-      {
-        title: '알람 이력',
-        icon: History,
-        path: '/events/alarm-history',
-      },
-      {
-        title: '조치 이력',
-        icon: CheckCircle,
-        path: '/events/action-history',
-      },
-    ],
+    path: '/events',
   },
   {
     title: 'IoT 센서',
     icon: Radio,
-    path: '/devices/iot-sensors',
-  },
-  {
-    title: '안내방송',
-    icon: Volume2,
-    path: '/broadcast',
+    path: '/iot-sensors',
   },
 ]
 
-// 실시간 알람 메뉴 (단일 메뉴, 뱃지 표시, Sheet로 표시)
 export const REALTIME_ALARM_MENU: MenuItem = {
   title: '실시간 알람',
   icon: BellRing,
 }
 
-// 관리자만 접근 가능한 관리 메뉴
 export const ADMIN_MENU_ITEMS: MenuItem[] = [
   {
     title: '시설 관리',
@@ -121,7 +99,6 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
   },
 ]
 
-// 하위 호환성을 위한 기존 export (deprecated)
 export const MENU_ITEMS: MenuItem[] = [
   ...MAIN_MENU_ITEMS,
   REALTIME_ALARM_MENU,

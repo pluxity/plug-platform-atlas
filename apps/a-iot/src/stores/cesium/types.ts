@@ -20,9 +20,10 @@ export interface MarkerOptions {
 }
 
 export const DEFAULT_CAMERA_POSITION: CameraPosition = {
-  lon: 127.1114,
-  lat: 37.3948,
-  height: 3000,
-  pitch: -35,
-  heading: 0,
+  lon: 127.114416,
+  lat: 37.294320,
+  height: 13139,
+  pitch: -52.6,
+  heading: 3.2,
+  roll: 0.0,
 }

@@ -42,7 +42,7 @@ export default function Dashboard() {
         viewerInstance.camera.setView({ destination, orientation })
 
         await loadIonTileset(viewerInstance, ION_ASSETS.GOOGLE_PHOTOREALISTIC_3D_TILES, {
-          maximumScreenSpaceError: 64,
+          maximumScreenSpaceError: 24,
           skipLevelOfDetail: true,
         })
 
@@ -126,11 +126,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">대시보드</h1>
-        <p className="text-gray-600">시민안심공원 서비스 현황</p>
-      </div>
-
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => {
@@ -162,34 +157,6 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* 최근 알림 */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">최근 알림</CardTitle>
-          <CardDescription className="text-xs">최근 발생한 이벤트 및 알림</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2.5">
-            {recentAlerts.map((alert) => {
-              const Icon = alert.icon
-              return (
-                <div key={alert.id} className={`flex items-center justify-between p-3 rounded-lg ${alert.bgColor}`}>
-                  <div className="flex items-center gap-2.5">
-                    <div className={`p-1.5 rounded-full ${alert.bgColor.replace('50', '100')}`}>
-                      <Icon className={`size-4 ${alert.textColor}`} />
-                    </div>
-                    <div>
-                      <p className={`text-sm font-medium ${alert.textColor}`}>{alert.type}</p>
-                      <p className={`text-xs ${alert.textColor}`}>{alert.message}</p>
-                    </div>
-                  </div>
-                  <span className={`text-xs ${alert.textColor}`}>{alert.time}</span>
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* 공원 위치 지도 */}
       <Card className="shadow-sm">
@@ -219,6 +186,35 @@ export default function Dashboard() {
                 <p className="text-red-500">{error}</p>
               </div>
             )}
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* 최근 알림 */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">최근 알림</CardTitle>
+          <CardDescription className="text-xs">최근 발생한 이벤트 및 알림</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2.5">
+            {recentAlerts.map((alert) => {
+              const Icon = alert.icon
+              return (
+                <div key={alert.id} className={`flex items-center justify-between p-3 rounded-lg ${alert.bgColor}`}>
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-full ${alert.bgColor.replace('50', '100')}`}>
+                      <Icon className={`size-4 ${alert.textColor}`} />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-medium ${alert.textColor}`}>{alert.type}</p>
+                      <p className={`text-xs ${alert.textColor}`}>{alert.message}</p>
+                    </div>
+                  </div>
+                  <span className={`text-xs ${alert.textColor}`}>{alert.time}</span>
+                </div>
+              )
+            })}
           </div>
         </CardContent>
       </Card>
