@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle } from '@plug-atlas/ui';
+import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from '@plug-atlas/ui';
 import { useCreateAdminUser, useRoles } from '@plug-atlas/api-hooks';
 import { UserCreateRequest, UserCreateRequestSchema } from '@plug-atlas/types';
 
@@ -46,8 +46,12 @@ export default function UserCreateDialog({ isOpen, onClose, onSuccess }: UsersCr
     }, [createUser, onSuccess, resetCreateUserForm]);
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            if (!open) {
+                resetCreateUserForm();
+            }
+        }}>
+            <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>사용자 생성</DialogTitle>
                 </DialogHeader>
@@ -139,33 +143,40 @@ export default function UserCreateDialog({ isOpen, onClose, onSuccess }: UsersCr
 
                     <FormField>
                         <FormItem>
-                            <FormLabel htmlFor="roleIds">역할</FormLabel>
+                            <FormLabel>역할</FormLabel>
                             <Controller
                                 name="roleIds"
                                 control={createUserForm.control}
                                 render={({ field }) => (
-                                    <FormControl className="flex gap-4">
-                                        {roles?.map(role => {
-                                            const isChecked = field.value?.includes(role.id) ?? false;
-                                            
-                                            return (
-                                                <div key={role.id} className="flex items-center gap-2">
-                                                    <Checkbox 
-                                                        id={`create-${role.id.toString()}`}
-                                                        checked={isChecked}
-                                                        onCheckedChange={(checked) => {
-                                                            const currentValue = field.value || [];
-                                                            if (checked) {
-                                                                field.onChange([...currentValue, role.id]);
-                                                            } else {
-                                                                field.onChange(currentValue.filter(id => id !== role.id));
-                                                            }
-                                                        }}
-                                                    />
-                                                    <Label htmlFor={`create-${role.id.toString()}`}>{role.name}</Label>
-                                                </div>
-                                            );
-                                        })}
+                                    <FormControl>
+                                        <div className="flex flex-wrap gap-x-6 gap-y-2 max-h-96 overflow-y-auto border rounded-lg p-4">
+                                            {roles && roles.length > 0 ? (
+                                                roles.map(role => {
+                                                    const checkboxId = `create-role-${role.id.toString()}`;
+                                                    const isChecked = field.value?.includes(role.id) ?? false;
+                                                    
+                                                    return (
+                                                        <div key={role.id} className="flex items-center gap-2">
+                                                            <Checkbox 
+                                                                id={checkboxId}
+                                                                checked={isChecked}
+                                                                onCheckedChange={(checked) => {
+                                                                    const currentValue = field.value || [];
+                                                                    if (checked) {
+                                                                        field.onChange([...currentValue, role.id]);
+                                                                    } else {
+                                                                        field.onChange(currentValue.filter(id => id !== role.id));
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <Label htmlFor={checkboxId}>{role.name}</Label>
+                                                        </div>
+                                                    );
+                                                })
+                                            ) : (
+                                                <div className="text-gray-500 text-sm">사용 가능한 역할이 없습니다.</div>
+                                            )}
+                                        </div>
                                     </FormControl>
                                 )}
                             />
@@ -177,10 +188,10 @@ export default function UserCreateDialog({ isOpen, onClose, onSuccess }: UsersCr
 
                     <div className="flex gap-3">
                         <Button type="button" variant="outline" className="flex-1" onClick={resetCreateUserForm}>취소</Button>
-                        <Button type="submit" variant="default" className="flex-1" disabled={isCreateUser || !createUserForm.formState.isValid}>{isCreateUser ? '저장중...' : '저장'}</Button>
+                        <Button type="submit" variant="default" className="flex-1" disabled={isCreateUser || !createUserForm.formState.isValid}>{isCreateUser ? (<> 저장중... <Spinner size="sm" /> </>) : '저장'}</Button>
                     </div>
                 </Form>
             </DialogContent>
         </Dialog>
-    );
+    )
 }

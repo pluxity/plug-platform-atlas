@@ -92,12 +92,12 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: Users,
     children: [
       {
-        title: '사용자',
+        title: '사용자 관리',
         icon: Users,
         path: '/users',
       },
       {
-        title: '역할',
+        title: '역할 관리',
         icon: Shield,
         path: '/users/roles',
       },

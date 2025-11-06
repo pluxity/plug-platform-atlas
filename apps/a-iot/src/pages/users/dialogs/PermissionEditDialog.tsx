@@ -31,7 +31,7 @@ export default function PermissionEditDialog({ isOpen, permission, onClose, onSu
         if (permission) {
             editPermissionForm.reset({
                 name: permission.name,
-                description: permission.description,
+                description: permission.description || '',
                 permissions: permission.permissions || []
             });
         }
@@ -164,7 +164,7 @@ export default function PermissionEditDialog({ isOpen, permission, onClose, onSu
                             취소
                         </Button>
                         <Button type="submit" variant="default" className="flex-1" disabled={isUpdating || !editPermissionForm.formState.isValid}>
-                            {isUpdating ? <Spinner size="sm" /> : '수정'}
+                            {isUpdating ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}
                         </Button>
                     </div>
                 </Form>
