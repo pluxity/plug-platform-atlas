@@ -4,8 +4,9 @@ import UserCreateDialog from './dialogs/UsersCreateDialog';
 import UserEditDialog from './dialogs/UserEditDialog';
 import { useAdminUsers, useDeleteAdminUser, useInitAdminUserPassword, useRoles } from '@plug-atlas/api-hooks'; 
 import { UserResponse } from '@plug-atlas/types';
-import { useSearchBar, usePagination } from '../hooks';
-import { SearchBar, TablePagination } from '../components';
+import { useSearchBar, usePagination } from '../../services/hooks';
+import { SearchBar } from '../../components/SearchBar';
+import { TablePagination } from '../../components/Pagination';
 
 export default function Users() {
   const { data, mutate: mutateUsers } = useAdminUsers();

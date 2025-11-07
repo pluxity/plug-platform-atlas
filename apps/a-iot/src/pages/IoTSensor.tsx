@@ -1,9 +1,10 @@
 import { Badge, Button, Column, DataTable, Progress, Switch, Spinner, toast, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
 import { useFeatures, useSyncFeatures, FeatureResponse, useUpdateFeature } from '@plug-atlas/web-core';
 import { useState, useEffect, useMemo } from 'react';
-import DeviceMapViewer from './components/DeviceMapViewer';
-import { useSearchBar, usePagination } from './hooks';
-import { SearchBar, TablePagination } from './components';
+import DeviceMapViewer from './DeviceMapViewer';
+import { useSearchBar, usePagination } from '../services/hooks';
+import { SearchBar } from '../components/SearchBar';
+import { TablePagination } from '../components/Pagination';
 import { XIcon } from 'lucide-react';
 
 export default function IoTSensor() {

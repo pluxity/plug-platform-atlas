@@ -5,7 +5,7 @@ import {
     useCameraStore,
     usePolygonStore,
     useMarkerStore,
-} from '../../stores/cesium'
+} from '../stores/cesium'
 import { Viewer as CesiumViewer, Color } from 'cesium'
 import type { FeatureResponse } from '@plug-atlas/web-core'
 
