@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { DialogContent, DialogHeader, DialogTitle, Button } from '@plug-atlas/ui';
 import { AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
-import { getStatusInfo } from '../../utils/timeUtils';
+import { getStatusInfo } from '../../utils/timeUtils.ts';
 import type { Event } from '../../../../services/types';
 import { useUpdateEventStatus } from '../../../../services/hooks';
 import ActionHistorySection from "./ActionHistoryItem.tsx";
-import EventLocationMap from './EventLocationMap';
+import EventLocationMap from './EventLocationMap.tsx';
 
 interface EventDetailModalProps {
   event: Event;

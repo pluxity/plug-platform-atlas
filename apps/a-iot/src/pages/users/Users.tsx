@@ -1,14 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Input, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from '@plug-atlas/ui';
+import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, CardDescription } from '@plug-atlas/ui';
 import { useState, useEffect } from 'react';
 import UserCreateDialog from './dialogs/UsersCreateDialog';
 import UserEditDialog from './dialogs/UserEditDialog';
-import { useAdminUsers, useDeleteAdminUser, useInitAdminUserPassword } from '@plug-atlas/api-hooks'; 
+import { useAdminUsers, useDeleteAdminUser, useInitAdminUserPassword, useRoles } from '@plug-atlas/api-hooks'; 
 import { UserResponse } from '@plug-atlas/types';
+import { useSearchBar, usePagination } from './hooks';
+import { SearchBar, TablePagination } from './components';
 
 export default function Users() {
-  const { data , mutate } = useAdminUsers();
+  const { data, mutate: mutateUsers } = useAdminUsers();
   const { trigger: deleteAdminUser } = useDeleteAdminUser(); 
   const { trigger: initAdminUserPassword } = useInitAdminUserPassword();
+  const { mutate: mutateRoles } = useRoles();
 
   const userColumns: Column<UserResponse>[] = [
     { key: 'username', header: '아이디' },
@@ -20,14 +23,18 @@ export default function Users() {
         const roles = (value as UserResponse['roles']) || [];
         
         return (
-          <div className="flex gap-1 flex-wrap">
-            {roles
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((role) => (
-                <Badge key={role.id} variant="secondary">
-                  {role.name}
-                </Badge>
-              ))}
+          <div className="flex gap-1 flex-wrap justify-center">
+            {roles.length > 0 ? (
+              <>
+                {roles
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((role) => (
+                    <Badge key={role.id} variant="secondary">
+                      {role.name}
+                    </Badge>
+                ))}
+              </>
+            ) : '-'}
           </div>
         );
       },
@@ -73,9 +80,14 @@ export default function Users() {
     },
   ]
 
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filteredData, setFilteredData] = useState<UserResponse[]>(data || []);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const { searchTerm, filteredData: searchFilteredData, handleSearch } = useSearchBar<UserResponse>(data || [], ['name', 'username', 'department', 'phoneNumber']);
+
+  const { currentPage, totalPages, currentPageData, goToPage, nextPage, prevPage, resetPage } = usePagination<UserResponse>(searchFilteredData, 5);
+
+  useEffect(() => {
+    resetPage();
+  }, [searchFilteredData.length]);
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
@@ -83,44 +95,6 @@ export default function Users() {
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState<boolean>(false);
   const [userPassword, setUserPassword] = useState<UserResponse | null>(null);
   const [userDelete, setUserDelete] = useState<UserResponse | null>(null);
-
-  const itemsPerPage = 5;
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentPageData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  useEffect(() => {
-    mutate();
-  }, []);
-
-  useEffect(() => {
-    setFilteredData(data || []);
-    setCurrentPage(1);
-  }, [data]);
-
-  const handleSearch = () => {
-    if (!searchTerm.trim()) {
-      setFilteredData(data || []);
-      setCurrentPage(1);
-      return;
-    }
-
-    const filtered = (data || []).filter((user) => {
-      return user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.roles?.some(role => role.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        user.department?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        user.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase());
-    });
-
-    setFilteredData(filtered);
-    setCurrentPage(1);
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
 
   const handleCreateUser = () => {
     setIsCreateDialogOpen(true);
@@ -141,7 +115,7 @@ export default function Users() {
     try {
       await initAdminUserPassword(userPassword.id);
       toast.success(`${userPassword.name}님의 비밀번호가 초기화되었습니다.`);
-      mutate();
+      mutateUsers();
     } catch (error) {
       toast.error('비밀번호 초기화에 실패했습니다.');
     } finally {
@@ -155,12 +129,13 @@ export default function Users() {
     setIsDeleteUserDialogOpen(true);
   }
 
-  const handleConfirmDeleteUser = async () => { 
+  const handleConfirmDeleteUser = async () => {
     if (!userDelete) return;
     try {
-      await deleteAdminUser(userDelete.id); 
+      await deleteAdminUser(userDelete.id);
       toast.success(`${userDelete.name}님이 삭제되었습니다.`);
-      mutate(); 
+      mutateUsers();
+      mutateRoles();
     } catch (error) {
       toast.error('사용자 삭제에 실패했습니다.');
     } finally {
@@ -169,105 +144,56 @@ export default function Users() {
     }
   }
 
-  const handleCloseCreateModal = () => {
-    setIsCreateDialogOpen(false);
-  }
-
-  const handleSuccessCreateUser = () => {
-    mutate(); 
-    setIsCreateDialogOpen(false);
-  }
-
-  const handleCloseEditModal = () => {
-    setIsEditDialogOpen(false);
-    setSelectedUser(null);
-  }
-
-  const handleSuccessEditUser = () => {
-    mutate();
-    setIsEditDialogOpen(false);
-    setSelectedUser(null);
-  }
-
   return (
-    <div className="container mx-auto py-10 space-y-8">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-bold mb-4">사용자 관리</h1>
+        <h1 className="text-xl font-bold mb-1">사용자 관리</h1>
+        <p className="text-sm text-gray-600">사용자 목록을 관리합니다.</p>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>사용자 목록</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-4 gap-2">
-            <div className="flex items-center gap-2">
-              <Input 
-                placeholder="검색" 
-                className="w-64" 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
-                onKeyDown={handleKeyDown}
-              />
-              <Button variant="outline" onClick={handleSearch}>검색</Button>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={handleCreateUser}>사용자 추가하기</Button>
-            </div>
-          </div>
-          <DataTable 
-            data={currentPageData} 
+      <div className="flex items-center justify-between mb-4 gap-2">
+          <SearchBar
+            value={searchTerm}
+            onChange={handleSearch}
+            placeholder="이름, 아이디, 부서, 전화번호로 검색"
+          />
+          <Button onClick={handleCreateUser}>사용자 추가하기</Button>
+      </div>
+      <div className="flex flex-col gap-4">
+          <DataTable
+            data={currentPageData}
             columns={userColumns}
             onRowEdit={handleEditUser}
             onRowDelete={handleDeleteUser}
           />
-          {totalPages >= 1 && (
-            <Pagination className="mt-5">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                  />
-                </PaginationItem>
 
-                {Array.from({length: totalPages}).map((_, index) => (
-                  <PaginationItem key={index}>
-                    <PaginationLink 
-                      onClick={() => setCurrentPage(index + 1)}
-                      isActive={currentPage === index + 1}
-                    >
-                      {index + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+            onPrev={prevPage}
+            onNext={nextPage}
+          />
+      </div>
 
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => totalPages > currentPage && setCurrentPage(currentPage + 1)}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 사용자 생성 모달 */}
       <UserCreateDialog 
         isOpen={isCreateDialogOpen} 
-        onClose={handleCloseCreateModal} 
-        onSuccess={handleSuccessCreateUser} 
+        onClose={() => setIsCreateDialogOpen(false)} 
+        onSuccess={() => {
+          mutateUsers();
+          mutateRoles();
+        }} 
       />
 
-      {/* 사용자 수정 모달 */}
       <UserEditDialog 
         isOpen={isEditDialogOpen}
         user={selectedUser} 
-        onClose={handleCloseEditModal} 
-        onSuccess={handleSuccessEditUser} 
+        onClose={() => setIsEditDialogOpen(false)} 
+        onSuccess={() => {
+          mutateUsers();
+          mutateRoles();
+        }} 
       />
 
-      {/* 비밀번호 초기화 확인 다이얼로그 */}
       <AlertDialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -284,7 +210,6 @@ export default function Users() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 사용자 삭제 확인 다이얼로그 */}
       <AlertDialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -295,7 +220,7 @@ export default function Users() {
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">삭제</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDeleteUser} variant="destructive">삭제</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

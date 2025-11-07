@@ -1,13 +1,17 @@
 import { Badge, Card, CardContent, CardHeader, CardTitle, Button, DataTable, Column, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@plug-atlas/ui';
-import { useRoles, useDeleteRole } from '@plug-atlas/api-hooks';
+import { useRoles, useDeleteRole, usePermissions, useAdminUsers } from '@plug-atlas/api-hooks';
 import type { RoleResponse } from '@plug-atlas/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import RoleCreateDialog from './dialogs/RoleCreateDialog';
 import RoleEditDialog from './dialogs/RoleEditDialog';
+import { useSearchBar, usePagination } from './hooks';
+import { SearchBar, TablePagination } from './components';
 
 export default function Roles() {
-  const { data: roleData , mutate } = useRoles();
-  const { trigger: deleteRole } = useDeleteRole()
+  const { data: roleData, mutate: mutateRoles } = useRoles();
+  const { trigger: deleteRole } = useDeleteRole();
+  const { mutate: mutatePermissions } = usePermissions();
+  const { mutate: mutateUsers } = useAdminUsers();
 
   const roleColumns: Column<RoleResponse>[] = [
     {
@@ -17,6 +21,7 @@ export default function Roles() {
     {
       key: 'description',
       header: '설명',
+      cell: (value) => value ? String(value) : '-'
     },
     {
       key: 'permissions',
@@ -24,19 +29,31 @@ export default function Roles() {
       cell: (value) => {
         const permissionGroups = (value as RoleResponse['permissions']) || [];
         return (
-          <div className="flex gap-1 flex-wrap">
-            {permissionGroups
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((group) => (
-              <Badge key={group.id} variant="secondary">
-                {group.name}
-              </Badge>  
-            ))}
+          <div className="flex gap-1 flex-wrap items-center justify-center">
+            {permissionGroups.length > 0 ? (
+              <>
+                {permissionGroups
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((group) => (
+                    <Badge key={group.id} variant="secondary">
+                      {group.name}
+                    </Badge>  
+                ))}
+              </>
+            ) : '-'}
           </div>
         )
       }
     }
   ]
+
+  const { searchTerm, filteredData: searchFilteredData, handleSearch } = useSearchBar<RoleResponse>(roleData || [], ['name', 'description']);
+
+  const { currentPage, totalPages, currentPageData, goToPage, nextPage, prevPage, resetPage } = usePagination<RoleResponse>(searchFilteredData, 5);
+
+  useEffect(() => {
+    resetPage();
+  }, [searchFilteredData.length]);
 
   const [ isCreateDialogOpen, setIsCreateDialogOpen ] = useState(false);
   const [ isDeleteRoleDialogOpen, setIsDeleteRoleDialogOpen ] = useState(false);
@@ -63,7 +80,9 @@ export default function Roles() {
     try{
       await deleteRole(roleDelete.id);
       toast.success(`${roleDelete.name}이 삭제되었습니다.`);
-      mutate();
+      mutateRoles();
+      mutatePermissions();
+      mutateUsers();
     } catch(error){
       toast.error(`역할 삭제에 실패했습니다.`);
       console.error(error);
@@ -74,42 +93,55 @@ export default function Roles() {
   }
 
   return (
-    <div className="container mx-auto py-10 space-y-8">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-bold mb-4">역할 관리</h1>
-        <p className="text-gray-600">사용자 역할을 관리합니다.</p>
+        <h1 className="text-xl font-bold mb-1">역할 관리</h1>
+        <p className="text-sm text-gray-600">역할 목록을 관리합니다.</p>
       </div>
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <SearchBar
+          value={searchTerm}
+          onChange={handleSearch}
+          placeholder="역할 이름, 설명으로 검색"
+        />
+        <Button onClick={handleCreateRole}>역할 추가하기</Button>
+      </div>
+      <div className="flex flex-col gap-4">
+        <DataTable
+          data={currentPageData}
+          columns={roleColumns}
+          onRowEdit={handleEditRole}
+          onRowDelete={handleDeleteRole}
+        />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>역할 목록</CardTitle>
-        </CardHeader>
-        <CardContent>
-        <div className="flex items-center mb-4">
-            <div className="ml-auto">
-              <Button onClick={handleCreateRole}>역할 추가하기</Button>
-            </div>
-          </div>
-          <DataTable 
-            data={roleData || []} 
-            columns={roleColumns}
-            onRowEdit={handleEditRole}
-            onRowDelete={handleDeleteRole}
-          />
-        </CardContent>
-      </Card>
-
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+          onPrev={prevPage}
+          onNext={nextPage}
+        />
+      </div>
+      
       <RoleCreateDialog 
         isOpen={isCreateDialogOpen} 
         onClose={() => setIsCreateDialogOpen(false)} 
-        onSuccess={() => mutate()} 
+        onSuccess={() => {
+          mutateRoles();
+          mutatePermissions();
+          mutateUsers();
+        }} 
       />
 
       <RoleEditDialog 
         isOpen={isEditDialogOpen} 
         role={selectedRole} 
         onClose={() => setIsEditDialogOpen(false)} 
-        onSuccess={() => mutate()} 
+        onSuccess={() => {
+          mutateRoles();
+          mutatePermissions();
+          mutateUsers();
+        }} 
       />
 
       <AlertDialog open={isDeleteRoleDialogOpen} onOpenChange={setIsDeleteRoleDialogOpen}>

@@ -1,20 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useEvents } from '../../services/hooks';
-import { getTimeRange } from "./utils/timeUtils";
 import EventStatisticsSection from "./components/StatisticsSection.tsx";
-import EventListSection from "./components/EventListSection";
+import EventListSection from "./components/EventListSection.tsx";
 import type { EventStatus } from '../../services/types';
 
 export default function EventsHistoryPage() {
-  const [globalTimeRange] = useState('today');
   const [globalStatusFilter] = useState('all');
   const [globalSiteFilter] = useState('all');
 
-  const { from, to } = useMemo(() => getTimeRange(globalTimeRange), [globalTimeRange]);
-
   const { data: events, error: eventsError } = useEvents({
-    from,
-    to,
     ...(globalStatusFilter !== 'all' && { status: globalStatusFilter as EventStatus }),
     ...(globalSiteFilter !== 'all' && { siteId: parseInt(globalSiteFilter) })
   });

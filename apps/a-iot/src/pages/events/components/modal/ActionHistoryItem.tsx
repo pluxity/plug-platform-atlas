@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@plug-atlas/ui';
-import { Plus, Edit2, Trash2, FileText } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { ActionHistory } from '../../../../services/types';
 import {
   useCreateActionHistory,
@@ -117,14 +117,14 @@ const ActionHistoryItem: React.FC<ActionHistoryItemProps> = ({ history, eventId,
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500">
-                {history.author || '작성자 없음'}
+                작성자: {history.createdBy || '작성자 없음'}
               </span>
-              {history.files && (
-                <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                  <FileText className="h-3 w-3" />
-                  <span>첨부파일</span>
-                </div>
-              )}
+              {/*{history.files && (*/}
+              {/*  <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">*/}
+              {/*    <FileText className="h-3 w-3" />*/}
+              {/*    <span>첨부파일</span>*/}
+              {/*  </div>*/}
+              {/*)}*/}
             </div>
             <span className="text-xs text-gray-500">
               {history.createdAt ? new Date(history.createdAt).toLocaleString('ko-KR') : 'N/A'}

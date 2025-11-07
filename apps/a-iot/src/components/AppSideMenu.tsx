@@ -21,7 +21,6 @@ import {
 import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../constants/menu'
 import { useAuthStore } from '../stores'
 
-// TODO: API 연동 후 실제 알람 개수로 교체
 const realtimeAlarmCount = 5
 
 export default function AppSideMenu() {
@@ -43,9 +42,7 @@ export default function AppSideMenu() {
     [location.pathname]
   )
 
-  const handleAlarmClick = () => {
-    // TODO: 알람/이벤트 모달 구현
-  }
+  const handleAlarmClick = () => {}
 
   const renderMenuItem = React.useCallback((item: typeof MAIN_MENU_ITEMS[0]) => {
     const Icon = item.icon
@@ -105,8 +102,8 @@ export default function AppSideMenu() {
   }, [isActive])
 
   return (
-    <div className="fixed top-0 left-0 h-screen z-50 p-4">
-      <SideMenu defaultOpen={true} collapsible={false} className="flex flex-col gap-2 h-full">
+    <div className="fixed top-0 left-0 h-screen z-50 py-4 pl-4">
+      <SideMenu defaultOpen={true} collapsible={false} className="flex flex-col gap-3 h-full">
         {({ open }) => (
           <>
             <SideMenuTrigger open={open} showChevron={false} className="h-10 shrink-0">
@@ -114,7 +111,7 @@ export default function AppSideMenu() {
               <span className="font-semibold text-sm">시민안심공원 서비스</span>
             </SideMenuTrigger>
 
-            <SideMenuContent className="w-72 flex-1 min-h-0 overflow-y-auto shrink-0">
+            <SideMenuContent className="w-72 h-[calc(100vh-5.2rem)] shrink-0">
               <SideMenuHeader className="py-2 shrink-0">
                 <div className="flex items-center gap-2">
                   <Avatar className="size-8 rounded-lg">
@@ -157,7 +154,7 @@ export default function AppSideMenu() {
                 </div>
               </SideMenuHeader>
 
-              <SideMenuNav className="flex-1">
+              <SideMenuNav className="flex-1 overflow-y-auto">
                 <div className="space-y-4">
                   <div className="space-y-0.5">
                     <div className="px-3 py-1.5 text-xs font-semibold text-gray-400">

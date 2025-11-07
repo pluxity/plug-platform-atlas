@@ -6,9 +6,13 @@ export interface ActionHistory {
     eventName:string;
     eventHistoryId: number;
     content: string;
-    files: FileResponse;
+    files: FileResponse[];
+    longitude?: number;
+    latitude?: number;
     createdAt?: string;
+    createdBy?: string;
     updatedAt?: string;
+    updatedBy?: string;
     author?: string;
 }
 

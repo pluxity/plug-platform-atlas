@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle } from '@plug-atlas/ui';
+import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from '@plug-atlas/ui';
 import { useCreateRole, usePermissions } from '@plug-atlas/api-hooks';
 import { RoleCreateRequest, RoleCreateRequestSchema } from '@plug-atlas/types';
 interface RoleCreateDialogProps{
@@ -47,7 +47,7 @@ export default function RoleCreateDialog({ isOpen, onClose, onSuccess }: RoleCre
                 resetCreateRoleForm();
             }
         }}>
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>역할 생성</DialogTitle>
                 </DialogHeader>
@@ -88,33 +88,35 @@ export default function RoleCreateDialog({ isOpen, onClose, onSuccess }: RoleCre
 
                     <FormField>
                         <FormItem>
-                            <FormLabel htmlFor="permissionGroupIds">권한</FormLabel>
+                            <FormLabel>권한</FormLabel>
                             <Controller
                                 name="permissionGroupIds"
                                 control={createRoleForm.control}
                                 render={({ field }) => (
-                                    <FormControl className="flex gap-4">
-                                        {permissionsGroup?.map((permissionGroup) => {
-                                            const isChecked = field.value?.includes(permissionGroup.id) ?? false;
-                                            
-                                            return (
-                                                <div key={permissionGroup.id} className="flex items-center gap-2">
-                                                    <Checkbox 
-                                                        id={`create-${permissionGroup.id.toString()}`}
-                                                        checked={isChecked}
-                                                        onCheckedChange={(checked) => {
-                                                            const currentValue = field.value || [];
-                                                            if (checked) {
-                                                                field.onChange([...currentValue, permissionGroup.id]);
-                                                            } else {
-                                                                field.onChange(currentValue.filter(id => id !== permissionGroup.id));
-                                                            }
-                                                        }}
-                                                    />
-                                                    <Label htmlFor={`create-${permissionGroup.id.toString()}`}>{permissionGroup.name}</Label>
-                                                </div>
-                                            );
-                                        })}
+                                    <FormControl>
+                                        <div className="flex flex-wrap gap-x-6 gap-y-2 max-h-96 overflow-y-auto border rounded-lg p-4">
+                                            {permissionsGroup?.map((permissionGroup) => {
+                                                const isChecked = field.value?.includes(permissionGroup.id) ?? false;
+                                                
+                                                return (
+                                                    <div key={permissionGroup.id} className="flex items-center gap-2">
+                                                        <Checkbox 
+                                                            id={`create-${permissionGroup.id.toString()}`}
+                                                            checked={isChecked}
+                                                            onCheckedChange={(checked) => {
+                                                                const currentValue = field.value || [];
+                                                                if (checked) {
+                                                                    field.onChange([...currentValue, permissionGroup.id]);
+                                                                } else {
+                                                                    field.onChange(currentValue.filter(id => id !== permissionGroup.id));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <Label htmlFor={`create-${permissionGroup.id.toString()}`}>{permissionGroup.name}</Label>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </FormControl>
                                 )}
                             />
@@ -127,7 +129,7 @@ export default function RoleCreateDialog({ isOpen, onClose, onSuccess }: RoleCre
 
                     <div className="flex gap-3">
                         <Button type="button" variant="outline" className="flex-1" onClick={resetCreateRoleForm}>취소</Button>
-                        <Button type="submit" variant="default" className="flex-1" disabled={isCreateRole || !createRoleForm.formState.isValid}>{isCreateRole ? '저장중...' : '저장'}</Button>
+                        <Button type="submit" variant="default" className="flex-1" disabled={isCreateRole || !createRoleForm.formState.isValid}>{isCreateRole ? (<> 저장중... <Spinner size="sm" /> </>) : '저장'}</Button>
                     </div>
                 </Form>
             </DialogContent>

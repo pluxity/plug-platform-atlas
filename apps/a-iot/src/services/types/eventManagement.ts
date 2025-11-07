@@ -20,6 +20,14 @@ export interface EventsQueryParams {
     to?: string;
     siteId?: number;
     status?: EventStatus;
+    size?: number;
+    lastId?: number;
+}
+
+export interface PaginatedEventsResponse {
+    content: Event[];
+    nextCursor: number | null;
+    hasNext: boolean;
 }
 
 export interface TimeSeriesQueryParams {

@@ -1,4 +1,5 @@
 import useSWR, { SWRConfiguration } from 'swr';
+import useSWRInfinite, { SWRInfiniteConfiguration } from 'swr/infinite';
 import useSWRMutation, { SWRMutationConfiguration } from 'swr/mutation';
 import { useApiClient } from '@plug-atlas/api-hooks';
 import {
@@ -6,7 +7,8 @@ import {
     EventsQueryParams,
     EventStatusRequest,
     TimeSeriesData,
-    TimeSeriesQueryParams
+    TimeSeriesQueryParams,
+    PaginatedEventsResponse
 } from '../types';
 
 type ApiResponse<T> = { data: T };
@@ -31,16 +33,71 @@ export const useEvents = (
     return useSWR<Event[]>(
         key,
         async () => {
-            const response = await client.get<ApiResponse<Event[]>>(`events${queryString ? `?${queryString}` : ''}`);
-            return response.data || [];
+            const response = await client.get<ApiResponse<PaginatedEventsResponse>>(`events${queryString ? `?${queryString}` : ''}`);
+            return response.data?.content || [];
         },
         options
     );
 };
 
+export const useInfiniteEvents = (
+    baseParams?: Omit<EventsQueryParams, 'lastId'>,
+    pageSize: number = 10,
+    options?: SWRInfiniteConfiguration<PaginatedEventsResponse, Error>
+) => {
+    const client = useApiClient();
+
+    const getKey = (pageIndex: number, previousPageData: PaginatedEventsResponse | null) => {
+        // If we reached the end, return null to stop fetching
+        if (previousPageData && !previousPageData.hasNext) return null;
+
+        // Build query params
+        const params: EventsQueryParams = {
+            ...baseParams,
+            size: pageSize,
+        };
+
+        // Add lastId from previous page's nextCursor
+        if (pageIndex > 0 && previousPageData?.nextCursor) {
+            params.lastId = previousPageData.nextCursor;
+        }
+
+        const queryString = new URLSearchParams(
+            Object.entries(params).reduce((acc, [key, value]) => {
+                if (value !== undefined) {
+                    acc[key] = String(value);
+                }
+                return acc;
+            }, {} as Record<string, string>)
+        ).toString();
+
+        return `events?${queryString}`;
+    };
+
+    const result = useSWRInfinite<PaginatedEventsResponse>(
+        getKey,
+        async (key: string) => {
+            const response = await client.get<ApiResponse<PaginatedEventsResponse>>(key);
+            return response.data || { content: [], nextCursor: null, hasNext: false };
+        },
+        options
+    );
+
+    // Flatten all pages into a single array of events
+    const events = result.data?.flatMap(page => page.content) || [];
+    const hasMore = result.data?.[result.data.length - 1]?.hasNext || false;
+
+    return {
+        ...result,
+        events,
+        hasMore,
+        loadMore: () => result.setSize(result.size + 1),
+    };
+};
+
 export const useEventsTimeSeries = (
     params: TimeSeriesQueryParams,
-    options?: SWRConfiguration<TimeSeriesData[], Error>
+    options?: SWRConfiguration<TimeSeriesData | null, Error>
 ) => {
     const client = useApiClient();
 
@@ -50,11 +107,11 @@ export const useEventsTimeSeries = (
         to: params.to
     }).toString();
 
-    return useSWR<TimeSeriesData[]>(
+    return useSWR<TimeSeriesData | null>(
         `events-time-series?${queryString}`,
         async () => {
-            const response = await client.get<ApiResponse<TimeSeriesData[]>>(`events/time-series?${queryString}`);
-            return response.data || [];
+            const response = await client.get<ApiResponse<TimeSeriesData>>(`events/time-series?${queryString}`);
+            return response.data || null;
         },
         options
     );

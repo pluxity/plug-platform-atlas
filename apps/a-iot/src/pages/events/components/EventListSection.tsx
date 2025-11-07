@@ -1,43 +1,57 @@
 import { useState, useMemo } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
-import { useEvents, useSites } from '../../../services/hooks';
-import {getTimeRange, statusOptions, timeRangeOptions} from '../utils/timeUtils';
-import EventList from './EventList';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, DatePicker, Button } from '@plug-atlas/ui';
+import { useInfiniteEvents, useSites } from '../../../services/hooks';
+import { statusOptions, formatDate, startOfDay, endOfDay } from '../utils/timeUtils.ts';
+import EventList from './EventList.tsx';
 import type { EventStatus } from '../../../services/types';
+import { type DateRange } from 'react-day-picker';
+import { X } from 'lucide-react';
 
 export default function EventListSection() {
-    const [listTimeRange, setListTimeRange] = useState('today');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [listStatusFilter, setListStatusFilter] = useState('all');
     const [listSiteFilter, setListSiteFilter] = useState('all');
 
     const { data: sites } = useSites();
 
-    const { from, to } = useMemo(() => getTimeRange(listTimeRange), [listTimeRange]);
+    const { from, to } = useMemo(() => {
+        if (!dateRange?.from || !dateRange?.to) {
+            return { from: undefined, to: undefined };
+        }
+        return {
+            from: formatDate(startOfDay(dateRange.from), 'yyyyMMddHHmmss'),
+            to: formatDate(endOfDay(dateRange.to), 'yyyyMMddHHmmss')
+        };
+    }, [dateRange]);
 
-    const { data: events, isLoading: eventsLoading, mutate } = useEvents({
-        from,
-        to,
+    const hasActiveFilters = dateRange !== undefined || listStatusFilter !== 'all' || listSiteFilter !== 'all';
+
+    const handleResetFilters = () => {
+        setDateRange(undefined);
+        setListStatusFilter('all');
+        setListSiteFilter('all');
+    };
+
+    const baseParams = useMemo(() => ({
+        ...(from && { from }),
+        ...(to && { to }),
         ...(listStatusFilter !== 'all' && { status: listStatusFilter as EventStatus }),
         ...(listSiteFilter !== 'all' && { siteId: parseInt(listSiteFilter) })
-    });
+    }), [from, to, listStatusFilter, listSiteFilter]);
+
+    const { events, isLoading, hasMore, loadMore, mutate } = useInfiniteEvents(baseParams, 10);
 
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">이벤트 목록</h2>
                 <div className="flex gap-2">
-                    <Select value={listTimeRange} onValueChange={setListTimeRange}>
-                        <SelectTrigger className="w-32">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {timeRangeOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <DatePicker
+                        mode="range"
+                        value={dateRange}
+                        onChange={setDateRange}
+                        placeholder="날짜 범위 선택"
+                    />
 
                     <Select value={listStatusFilter} onValueChange={setListStatusFilter}>
                         <SelectTrigger className="w-24">
@@ -65,12 +79,26 @@ export default function EventListSection() {
                             ))}
                         </SelectContent>
                     </Select>
+
+                    {hasActiveFilters && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleResetFilters}
+                            className="text-gray-600 hover:text-gray-900"
+                        >
+                            <X className="h-4 w-4 mr-1" />
+                            필터 초기화
+                        </Button>
+                    )}
                 </div>
             </div>
 
             <EventList
-                events={events || []}
-                isLoading={eventsLoading}
+                events={events}
+                isLoading={isLoading}
+                hasMore={hasMore}
+                onLoadMore={loadMore}
                 onRefresh={() => mutate()}
             />
         </div>

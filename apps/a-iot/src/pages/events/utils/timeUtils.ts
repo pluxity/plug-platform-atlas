@@ -86,6 +86,7 @@ export const getStatusInfo = (status: string) => {
 };
 
 export const timeRangeOptions = [
+    { label: '전체', value: 'all' },
     { label: '오늘', value: 'today' },
     { label: '어제', value: 'yesterday' },
     { label: '최근 7일', value: '7days' },
@@ -93,7 +94,7 @@ export const timeRangeOptions = [
 ];
 
 export const statusOptions = [
-    { label: '전체', value: 'all' },
+    { label: '전체 상태', value: 'all' },
     { label: '대기중', value: 'PENDING' },
     { label: '진행중', value: 'WORKING' },
     { label: '완료', value: 'COMPLETED' },
@@ -105,3 +106,53 @@ export const intervalOptions = [
     { label: '주별', value: 'WEEK' },
     { label: '월별', value: 'MONTH' },
 ];
+
+export const formatTimestampByInterval = (timestamp: string, interval: string): string => {
+    switch (interval) {
+        case 'HOUR':
+            // Keep as is
+            return timestamp;
+
+        case 'DAY':
+            // Format: "2025-11-01" -> keep as is
+            return timestamp;
+
+        case 'WEEK':
+            // Format: "2025-42" -> "10월 2째주"
+            if (timestamp.includes('-')) {
+                const parts = timestamp.split('-');
+                if (parts.length === 2 && parts[0] && parts[1]) {
+                    const year = parts[0];
+                    const weekStr = parts[1];
+                    const weekNum = parseInt(weekStr);
+
+                    // Calculate the date of the first day of this week
+                    const jan1 = new Date(parseInt(year), 0, 1);
+                    const daysToFirstMonday = (8 - jan1.getDay()) % 7;
+                    const firstMonday = new Date(parseInt(year), 0, 1 + daysToFirstMonday);
+                    const weekDate = new Date(firstMonday.getTime() + (weekNum - 1) * 7 * 24 * 60 * 60 * 1000);
+
+                    const month = weekDate.getMonth() + 1;
+                    const weekOfMonth = Math.ceil(weekDate.getDate() / 7);
+
+                    const weekLabels = ['', '1', '2', '3', '4', '5'];
+                    return `${month}월 ${weekLabels[weekOfMonth]}째주`;
+                }
+            }
+            return timestamp;
+
+        case 'MONTH':
+            // Format: "2025-10" -> "11월"
+            if (timestamp.includes('-')) {
+                const parts = timestamp.split('-');
+                if (parts.length === 2 && parts[1]) {
+                    const month = parseInt(parts[1]);
+                    return `${month}월`;
+                }
+            }
+            return timestamp;
+
+        default:
+            return timestamp;
+    }
+};

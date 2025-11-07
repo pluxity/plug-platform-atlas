@@ -18,18 +18,18 @@ import {
 
 // Variant definitions
 const selectTriggerVariants = cva(
-  "flex w-full items-center justify-between rounded-md text-sm ring-offset-background transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+  "flex w-full items-center justify-between rounded-[7px] text-sm ring-offset-background transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
   {
     variants: {
       variant: {
-        default: "border border-gray-200 bg-background hover:border-gray-300",
-        outline: "border-2 border-gray-200 bg-background hover:border-primary-300 focus:border-primary-500",
-        filled: "border border-gray-200 bg-gray-50 hover:bg-gray-100 focus:bg-background",
+        default: "border border-[#bbbfcf] bg-white hover:border-gray-300",
+        outline: "border-2 border-[#bbbfcf] bg-white hover:border-primary-300 focus:border-primary-500",
+        filled: "border border-[#bbbfcf] bg-gray-50 hover:bg-gray-100 focus:bg-white",
         ghost: "border-0 bg-transparent hover:bg-gray-100 focus:bg-gray-50"
       },
       size: {
-        sm: "h-8 px-3 py-1 text-xs",
-        default: "h-10 px-3 py-2",
+        sm: "h-8 px-[10px] py-0 text-xs",
+        default: "h-9 px-[10px] py-0",
         lg: "h-12 px-4 py-3 text-base"
       },
       state: {

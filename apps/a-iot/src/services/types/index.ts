@@ -14,6 +14,16 @@ export {
 } from './cctv'
 
 export type {
+  DeviceType,
+  DeviceProfile,
+} from './deviceType'
+
+export type {
+  EventCondition,
+  EventConditionRequest,
+} from './eventCondition'
+
+export type {
   ActionHistory,
   ActionHistoryRequest,
 } from './eventHistory'
@@ -22,6 +32,7 @@ export type {
     Event,
     EventStatusRequest,
     EventsQueryParams,
+    PaginatedEventsResponse,
     TimeSeriesData,
     TimeSeriesQueryParams,
     EventStatus,

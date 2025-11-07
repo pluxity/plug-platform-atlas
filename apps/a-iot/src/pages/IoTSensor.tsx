@@ -1,0 +1,324 @@
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Column, DataTable, Input, Progress, Switch, Spinner, toast, Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
+import { useFeatures, useSyncFeatures, FeatureResponse, useUpdateFeature } from '@plug-atlas/web-core';
+import { useState, useEffect, useMemo } from 'react';
+import DeviceMapViewer from '../components/devices/DeviceMapViewer';
+
+export default function IoTSensor() {
+  const { data, mutate, error, isLoading } = useFeatures();
+  const { trigger: syncFeatures, isMutating: isSyncingFeatures } = useSyncFeatures();
+  const { trigger: updateFeature } = useUpdateFeature();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedSite, setSelectedSite] = useState('all');
+  const [selectedDeviceType, setSelectedDeviceType] = useState('all');
+  const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<FeatureResponse | null>(null);
+
+  const itemsPerPage = 5;
+
+  const sites = useMemo(() => 
+    Array.from(new Set(
+      (data || [])
+      .map(f => f.siteResponse?.name)
+      .filter((name): name is string => !!name)
+    )).sort() as string[],
+    [data]
+  );
+  
+  const deviceTypes = useMemo(() => {
+    if (!data) return [];
+
+    const filteredData = selectedSite === 'all'
+      ? data
+      : data.filter(f => f.siteResponse?.name === selectedSite);
+
+    return Array.from(new Set(
+      filteredData
+      .map(f => f.deviceTypeResponse?.description)
+      .filter(Boolean)
+    )).sort() as string[];
+
+  }, [data, selectedSite]);
+
+  const displayData = useMemo(() => {
+    if (!data) return [];
+  
+    let filtered = data;
+  
+    if (selectedSite !== 'all') {
+      filtered = filtered.filter(f => f.siteResponse?.name === selectedSite);
+    }
+    if (selectedDeviceType !== 'all') {
+      filtered = filtered.filter(f => f.deviceTypeResponse?.description === selectedDeviceType);
+    }
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(f => 
+        f.deviceId.toLowerCase().includes(search) ||
+        f.name.toLowerCase().includes(search) ||
+        f.objectId.toLowerCase().includes(search)
+      );
+    }
+  
+    return filtered.sort((a, b) => a.id - b.id);
+  }, [data, selectedSite, selectedDeviceType, searchTerm]);
+
+  const totalPages = Math.ceil(displayData.length / itemsPerPage);
+  const currentPageData = displayData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [data, searchTerm, selectedSite, selectedDeviceType]);
+
+  const handleSyncFeatures = async () => {
+    try {
+      await syncFeatures();
+      toast.success('디바이스 동기화가 성공적으로 완료되었습니다.');
+      mutate();
+    } catch (error) {
+      toast.error('디바이스 동기화에 실패했습니다.');
+    } 
+  };
+
+  const handleSiteChange = (value: string) => {
+    setSelectedSite(value);
+    setSelectedDeviceType('all');
+  };
+
+  const handleDeviceTypeChange = (value: string) => {
+    setSelectedDeviceType(value);
+  };
+
+  const getVisiblePages = () => {
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = startPage + maxVisible - 1;
+
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  const handleToggleActive = async (featureId: number, active: boolean) => {
+    try {
+      await updateFeature({ id: featureId, data: { active } });
+      toast.success('활성화 상태가 변경되었습니다.');
+      mutate();
+    } catch (error) {
+      toast.error('활성화 상태 변경에 실패했습니다.');
+    } 
+  };
+
+  const handleOpenMap = (device: FeatureResponse) => {
+    setSelectedDevice(device);
+    setIsMapDialogOpen(true);
+  };
+
+  const featureColumns: Column<FeatureResponse>[] = [
+    {
+      key: 'id',
+      header: '번호',
+    },
+    {
+      key: 'deviceId',
+      header: '디바이스 코드',
+      cell: (_, row) => (
+        <div className="flex flex-col">
+          <span className="font-semibold">{row.name}</span>
+          <span className="flex flex-col text-xs text-gray-500">
+            {row.deviceId} ({row.objectId})
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'name',
+      header: '공원명',
+      cell: (_,row) => (
+        <>{row.siteResponse?.name}</>
+      )
+    },
+    {
+      key: 'latitude',
+      header: '위경도',
+      cell: (_,row) => (
+        <div className="flex flex-col">
+          <span>{row.latitude}</span>
+          <span className="text-xs text-gray-500">{row.longitude}</span>
+        </div>
+      )
+    },
+    {
+      key: 'eventStatus',
+      header: '이벤트 상태',
+      cell: (_,row) => (
+          <Badge variant='secondary'>{row.eventStatus}</Badge>
+      )
+    },
+    {
+      key: 'batteryLevel',
+      header: '배터리 잔량',
+      cell: (_,row) => (
+        <div className="relative">
+          <Progress className={"h-4"} value={row.batteryLevel} />
+          <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-gray-300">
+            {row.batteryLevel ?? 0}%
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'active',
+      header: '활성화',
+      cell: (_,row) => (
+          <Switch 
+            checked={row.active ?? false} 
+            onCheckedChange={(checked) => handleToggleActive(row.id, checked)}
+          />
+      )
+    },
+    {
+      key: 'siteResponse',
+      header: '지도보기',
+      cell: (_, row) => (
+        <Button variant="outline" size="sm" onClick={() => handleOpenMap(row)}>
+          지도보기
+        </Button>
+      )
+    }
+  ]
+
+  return (
+    <div className="container mx-auto py-10 space-y-8">
+      <div>
+        <h1 className="text-4xl font-bold mb-4">IoT 센서</h1>
+        <p className="text-gray-600">성남시 공원에 설치된 IoT 센서를 조회하고 관리합니다.</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            IoT 센서 목록 <span className="text-gray-500 text-sm">{data && `(${displayData.length}개)`}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading && (
+            <div className="flex items-center justify-center gap-2 py-10">
+              로딩중 ... <Spinner />
+            </div>
+          )}
+          {error && (
+            <div className="flex items-center justify-center">
+              <p>데이터를 불러오는 중 오류가 발생했습니다.</p>
+            </div>
+          )}
+          {data && (
+            <>
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <div className="flex items-center gap-2">             
+                  <Select value={selectedSite} onValueChange={handleSiteChange}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="공원 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 공원</SelectItem>
+                      {sites.map((site) => (
+                        <SelectItem key={site} value={site}>
+                          {site}
+                        </SelectItem> 
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select 
+                    value={selectedDeviceType} 
+                    onValueChange={handleDeviceTypeChange}
+                    disabled={selectedSite === 'all'}
+                  >
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="디바이스 타입 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 타입</SelectItem>
+                      {deviceTypes.map((deviceType) => (
+                        <SelectItem key={deviceType} value={deviceType}>
+                          {deviceType}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Input 
+                    placeholder="디바이스 ID 검색" 
+                    className="w-64" 
+                    value={searchTerm} 
+                    onChange={(e) => setSearchTerm(e.target.value)} 
+                  />
+                </div>
+                <Button onClick={handleSyncFeatures} disabled={isSyncingFeatures}>
+                  {isSyncingFeatures ? (
+                    <>
+                      디바이스 동기화 중... <Spinner size="sm" />
+                    </>
+                  ) : (
+                    '디바이스 동기화'
+                  )}
+                </Button>
+              </div>
+              
+              {displayData.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  검색 결과가 없습니다.
+                </div>
+              ) : (
+                <DataTable data={currentPageData} columns={featureColumns} />
+              )}
+              
+              {totalPages >= 1 && (
+                <Pagination className="mt-5">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                      />
+                    </PaginationItem>
+
+                    {getVisiblePages().map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink 
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => totalPages > currentPage && setCurrentPage(currentPage + 1)}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <DeviceMapViewer
+        open={isMapDialogOpen}
+        onOpenChange={setIsMapDialogOpen}
+        device={selectedDevice}
+      />
+    </div>
+  );
+}
