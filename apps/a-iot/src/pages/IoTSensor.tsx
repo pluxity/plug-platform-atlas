@@ -118,7 +118,7 @@ export default function IoTSensor() {
     {
       key: 'id',
       header: '번호',
-      cell: (value) => value ? String(value) : '-'
+      cell: (value) => value != null ? String(value) : '-'
     },
     {
       key: 'deviceId',
@@ -149,7 +149,7 @@ export default function IoTSensor() {
       header: '위도',
       cell: (_,row) => (
         <span className="text-center tabular-nums block">
-          {row.latitude ? Number(row.latitude).toFixed(5) : '-'}
+          {row.latitude != null ? Number(row.latitude).toFixed(5) : '-'}
         </span>
       )
     },
@@ -158,7 +158,7 @@ export default function IoTSensor() {
       header: '경도',
       cell: (_,row) => (
         <span className="text-center tabular-nums block">
-          {row.longitude ? Number(row.longitude).toFixed(5) : '-'}
+          {row.longitude != null ? Number(row.longitude).toFixed(5) : '-'}
         </span>
       )
     },
@@ -173,7 +173,7 @@ export default function IoTSensor() {
       key: 'batteryLevel',
       header: '배터리 잔량',
       cell: (_,row) => (
-        row.batteryLevel ? (
+        row.batteryLevel != null ? (
           <div className="relative">
             <Progress 
               className={row.batteryLevel <= 20 ? "h-4 [&>div]:bg-destructive bg-destructive/20" : "h-4"} 
