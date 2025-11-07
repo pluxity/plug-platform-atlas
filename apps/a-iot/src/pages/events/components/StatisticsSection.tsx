@@ -31,12 +31,12 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
 
     const { data: sites } = useSites();
 
-    // Validate DAY interval range (max 10 days)
+    // Validate DAY interval range (max 7 days)
     const dayRangeExceeded = useMemo(() => {
         if (interval !== 'DAY' || !dateRange?.from || !dateRange?.to) return false;
         const diffInMs = dateRange.to.getTime() - dateRange.from.getTime();
         const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-        return diffInDays > 10;
+        return diffInDays > 7;
     }, [interval, dateRange]);
 
     const { fromForSeries, toForSeries } = useMemo(() => {
@@ -158,26 +158,26 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
                     )}
 
                     {interval === 'DAY' && (
-                        <TooltipProvider>
-                            <Tooltip open={dayRangeExceeded}>
-                                <TooltipTrigger asChild>
-                                    <div className="relative">
-                                        <DatePicker
-                                            mode="range"
-                                            value={dateRange}
-                                            onChange={setDateRange}
-                                            placeholder="날짜 범위 선택 (최대 10일)"
-                                        />
-                                        {dayRangeExceeded && (
-                                            <AlertCircle className="absolute -right-6 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
-                                        )}
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>최대 10일까지 선택 가능합니다</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                        <div className="flex items-center gap-2">
+                            <DatePicker
+                                mode="range"
+                                value={dateRange}
+                                onChange={setDateRange}
+                                placeholder="날짜 범위 선택 (최대 7일)"
+                            />
+                            {dayRangeExceeded && (
+                                <TooltipProvider>
+                                    <Tooltip open={dayRangeExceeded}>
+                                        <TooltipTrigger asChild>
+                                            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom">
+                                            <p>최대 7일까지 선택 가능합니다</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
                     )}
 
                     {interval === 'WEEK' && (

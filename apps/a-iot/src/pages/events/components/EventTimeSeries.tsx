@@ -72,18 +72,18 @@ export default function EventTimeSeries({ data, isLoading, interval }: EventTime
                         />
                         <Bar
                             dataKey="대기중"
+                            stackId="stack"
                             fill="#dc2626"
-                            radius={[4, 4, 0, 0]}
                         />
                         <Bar
                             dataKey="진행중"
+                            stackId="stack"
                             fill="#f59e0b"
-                            radius={[4, 4, 0, 0]}
                         />
                         <Bar
                             dataKey="완료"
+                            stackId="stack"
                             fill="#16a34a"
-                            radius={[4, 4, 0, 0]}
                         />
                     </BarChart>
                 </ResponsiveContainer>

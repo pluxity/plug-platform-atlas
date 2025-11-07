@@ -39,6 +39,14 @@ function EventRow({ event, onStatusUpdate }: EventRowProps) {
         }
     };
 
+    const handleOpenChange = (open: boolean) => {
+        setIsOpen(open);
+        // Refresh list when modal closes
+        if (!open) {
+            onStatusUpdate();
+        }
+    };
+
     const getStatusStyle = () => {
         if (event.status === 'PENDING') {
             return 'bg-red-100 text-red-800 border-l-4 border-red-600';
@@ -50,7 +58,7 @@ function EventRow({ event, onStatusUpdate }: EventRowProps) {
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <div className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200 last:border-b-0 cursor-pointer">
                     <div className="flex-1 min-w-0 pr-4">
