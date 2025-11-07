@@ -1,7 +1,7 @@
 import { Badge, Button, Column, DataTable, Progress, Switch, Spinner, toast, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
 import { useFeatures, useSyncFeatures, FeatureResponse, useUpdateFeature } from '@plug-atlas/web-core';
 import { useState, useEffect, useMemo } from 'react';
-import DeviceMapViewer from '../components/devices/DeviceMapViewer';
+import DeviceMapViewer from './components/DeviceMapViewer';
 import { useSearchBar, usePagination } from './hooks';
 import { SearchBar, TablePagination } from './components';
 import { XIcon } from 'lucide-react';
@@ -125,7 +125,7 @@ export default function IoTSensor() {
       header: '디바이스 코드',
       cell: (_, row) => (
         row.name ? (
-          <div className="flex flex-col items-start">
+          <div className="flex flex-col">
             <span className="font-semibold">{row.name}</span>
             <span className="flex flex-col text-xs text-gray-500">
               {row.deviceId} ({row.objectId})
@@ -138,10 +138,7 @@ export default function IoTSensor() {
       key: 'name',
       header: '공원명',
       cell: (_,row) => (
-        <div className="flex items-start">
-          {row.siteResponse?.name ? String(row.siteResponse?.name) : '-'}
-        </div>
-
+        row.siteResponse?.name ? String(row.siteResponse?.name) : '-'
       )
     },
     {
@@ -264,7 +261,6 @@ export default function IoTSensor() {
                   value={searchTerm}
                   onChange={handleSearch}
                   placeholder="디바이스 ID 검색"
-                  className="w-64"
                 />
               </div>
               <Button onClick={handleSyncFeatures} disabled={isSyncingFeatures}>
