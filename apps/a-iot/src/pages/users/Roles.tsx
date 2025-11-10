@@ -1,11 +1,12 @@
-import { Badge, Card, CardContent, CardHeader, CardTitle, Button, DataTable, Column, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@plug-atlas/ui';
+import { Badge, Button, DataTable, Column, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@plug-atlas/ui';
 import { useRoles, useDeleteRole, usePermissions, useAdminUsers } from '@plug-atlas/api-hooks';
 import type { RoleResponse } from '@plug-atlas/types';
 import { useState, useEffect } from 'react';
 import RoleCreateDialog from './dialogs/RoleCreateDialog';
 import RoleEditDialog from './dialogs/RoleEditDialog';
-import { useSearchBar, usePagination } from './hooks';
-import { SearchBar, TablePagination } from './components';
+import { useSearchBar, usePagination } from '../../services/hooks';
+import { SearchBar } from '../../components/SearchBar';
+import { TablePagination } from '../../components/Pagination';
 
 export default function Roles() {
   const { data: roleData, mutate: mutateRoles } = useRoles();

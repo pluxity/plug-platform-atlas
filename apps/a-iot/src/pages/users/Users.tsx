@@ -1,11 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, CardDescription } from '@plug-atlas/ui';
+import { DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@plug-atlas/ui';
 import { useState, useEffect } from 'react';
 import UserCreateDialog from './dialogs/UsersCreateDialog';
 import UserEditDialog from './dialogs/UserEditDialog';
 import { useAdminUsers, useDeleteAdminUser, useInitAdminUserPassword, useRoles } from '@plug-atlas/api-hooks'; 
 import { UserResponse } from '@plug-atlas/types';
-import { useSearchBar, usePagination } from './hooks';
-import { SearchBar, TablePagination } from './components';
+import { useSearchBar, usePagination } from '../../services/hooks';
+import { SearchBar } from '../../components/SearchBar';
+import { TablePagination } from '../../components/Pagination';
 
 export default function Users() {
   const { data, mutate: mutateUsers } = useAdminUsers();

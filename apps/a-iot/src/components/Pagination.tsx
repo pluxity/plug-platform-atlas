@@ -14,6 +14,7 @@ interface TablePaginationProps {
   onPrev: () => void;
   onNext: () => void;
   className?: string;
+  maxVisible?: number;
 }
 
 export const TablePagination = ({
@@ -22,9 +23,28 @@ export const TablePagination = ({
   onPageChange,
   onPrev,
   onNext,
-  className = 'mt-5',
+  className,
+  maxVisible = 5,
 }: TablePaginationProps) => {
   if (totalPages < 1) return null;
+
+  const getVisiblePages = () => {
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = startPage + maxVisible - 1;
+
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  const visiblePages = getVisiblePages();
 
   return (
     <Pagination className={className}>
@@ -38,16 +58,16 @@ export const TablePagination = ({
           />
         </PaginationItem>
 
-        {Array.from({ length: totalPages }).map((_, index) => (
-          <PaginationItem key={index}>
+        {visiblePages.map((page) => (
+          <PaginationItem key={page}>
             <PaginationLink
               onClick={(e) => { 
                 e.preventDefault(); 
-                onPageChange(index + 1);
+                onPageChange(page);
               }}
-              isActive={currentPage === index + 1}
+              isActive={currentPage === page}
             >
-              {index + 1}
+              {page}
             </PaginationLink>
           </PaginationItem>
         ))}
