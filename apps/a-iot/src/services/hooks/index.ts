@@ -8,13 +8,28 @@ export {
 } from './useCctv'
 
 export {
-  useDeviceTypes,
+    useDeviceTypes,
 } from './useDeviceType.ts'
 
 export {
-  useEventConditions,
-  useEventConditionMutations,
+    useEventConditions,
+    useEventConditionMutations,
 } from './useEventCondition.ts'
+
+export {
+  useEventActionHistories,
+  useCreateActionHistory,
+  useUpdateActionHistory,
+  useDeleteActionHistory,
+} from './useEventsHistory.ts'
+
+export {
+  useEvents,
+  useInfiniteEvents,
+  useUpdateEventStatus,
+  useEventsTimeSeries
+} from './useEventsManagement.ts'
+
 // Site hooks
 export {
   useSites,
