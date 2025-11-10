@@ -36,6 +36,8 @@ export type {
     TimeSeriesData,
     TimeSeriesQueryParams,
     EventStatus,
+    EventLevel,
+    SensorType,
     EventCollectInterval
 } from './eventManagement'
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { TrendingUp, AlertCircle } from 'lucide-react';
 import { DatePicker, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@plug-atlas/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
@@ -30,6 +30,19 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
     const [selectedYear, setSelectedYear] = useState<string>(today.getFullYear().toString());
 
     const { data: sites } = useSites();
+
+    // Auto-set date range to recent 7 days when interval is DAY
+    useEffect(() => {
+        if (interval === 'DAY' && !dateRange) {
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+            setDateRange({
+                from: sevenDaysAgo,
+                to: today
+            });
+        }
+    }, [interval]);
 
     // Validate DAY interval range (max 7 days)
     const dayRangeExceeded = useMemo(() => {

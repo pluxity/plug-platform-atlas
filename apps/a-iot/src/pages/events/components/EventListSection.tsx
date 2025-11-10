@@ -1,15 +1,17 @@
 import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, DatePicker, Button } from '@plug-atlas/ui';
 import { useInfiniteEvents, useSites } from '../../../services/hooks';
-import { statusOptions, formatDate, startOfDay, endOfDay } from '../utils/timeUtils.ts';
+import { statusOptions, levelOptions, sensorTypeOptions, formatDate, startOfDay, endOfDay } from '../utils/timeUtils.ts';
 import EventList from './EventList.tsx';
-import type { EventStatus } from '../../../services/types';
+import type { EventStatus, EventLevel, SensorType } from '../../../services/types';
 import { type DateRange } from 'react-day-picker';
 import { X } from 'lucide-react';
 
 export default function EventListSection() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [listStatusFilter, setListStatusFilter] = useState('all');
+    const [listLevelFilter, setListLevelFilter] = useState('all');
+    const [listSensorTypeFilter, setListSensorTypeFilter] = useState('all');
     const [listSiteFilter, setListSiteFilter] = useState('all');
 
     const { data: sites } = useSites();
@@ -24,11 +26,13 @@ export default function EventListSection() {
         };
     }, [dateRange]);
 
-    const hasActiveFilters = dateRange !== undefined || listStatusFilter !== 'all' || listSiteFilter !== 'all';
+    const hasActiveFilters = dateRange !== undefined || listStatusFilter !== 'all' || listLevelFilter !== 'all' || listSensorTypeFilter !== 'all' || listSiteFilter !== 'all';
 
     const handleResetFilters = () => {
         setDateRange(undefined);
         setListStatusFilter('all');
+        setListLevelFilter('all');
+        setListSensorTypeFilter('all');
         setListSiteFilter('all');
     };
 
@@ -36,8 +40,10 @@ export default function EventListSection() {
         ...(from && { from }),
         ...(to && { to }),
         ...(listStatusFilter !== 'all' && { status: listStatusFilter as EventStatus }),
+        ...(listLevelFilter !== 'all' && { level: listLevelFilter as EventLevel }),
+        ...(listSensorTypeFilter !== 'all' && { sensorType: listSensorTypeFilter as SensorType }),
         ...(listSiteFilter !== 'all' && { siteId: parseInt(listSiteFilter) })
-    }), [from, to, listStatusFilter, listSiteFilter]);
+    }), [from, to, listStatusFilter, listLevelFilter, listSensorTypeFilter, listSiteFilter]);
 
     const { events, isLoading, hasMore, loadMore, mutate } = useInfiniteEvents(baseParams, 10);
 
@@ -54,11 +60,37 @@ export default function EventListSection() {
                     />
 
                     <Select value={listStatusFilter} onValueChange={setListStatusFilter}>
-                        <SelectTrigger className="w-24">
+                        <SelectTrigger className="w-28">
                             <SelectValue placeholder="상태" />
                         </SelectTrigger>
                         <SelectContent>
                             {statusOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={listLevelFilter} onValueChange={setListLevelFilter}>
+                        <SelectTrigger className="w-28">
+                            <SelectValue placeholder="심각도" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {levelOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={listSensorTypeFilter} onValueChange={setListSensorTypeFilter}>
+                        <SelectTrigger className="w-28">
+                            <SelectValue placeholder="센서" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {sensorTypeOptions.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                     {option.label}
                                 </SelectItem>

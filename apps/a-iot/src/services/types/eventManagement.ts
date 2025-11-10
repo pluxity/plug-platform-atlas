@@ -6,6 +6,7 @@ export interface Event {
     minValue: number,
     maxValue: number,
     status: string,
+    level: string,
     eventName: string,
     fieldKey: string,
     guideMessage: string,
@@ -20,6 +21,8 @@ export interface EventsQueryParams {
     to?: string;
     siteId?: number;
     status?: EventStatus;
+    level?: EventLevel;
+    sensorType?: SensorType;
     size?: number;
     lastId?: number;
 }
@@ -58,5 +61,8 @@ export interface TimeSeriesData {
 export interface EventStatusRequest {
     result: EventStatus;
 }
-export type EventStatus = 'PENDING' | 'WORKING' | 'COMPLETED'
+
+export type EventStatus = 'PENDING' | 'WORKING' | 'COMPLETED';
+export type EventLevel = 'NORMAL' | 'WARNING' | 'CAUTION' | 'DANGER' | 'DISCONNECTED';
+export type SensorType = 'TEMPERATURE_HUMIDITY' | 'FIRE' | 'DISPLACEMENT_GAUGE';
 export type EventCollectInterval = 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';

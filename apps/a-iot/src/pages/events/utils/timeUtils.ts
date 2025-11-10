@@ -85,6 +85,41 @@ export const getStatusInfo = (status: string) => {
     }
 };
 
+export const getLevelInfo = (level: string) => {
+    switch (level) {
+        case 'NORMAL':
+            return {
+                color: 'text-emerald-700 bg-emerald-50/80 border-l-4 border-emerald-500',
+                text: '정상'
+            };
+        case 'WARNING':
+            return {
+                color: 'text-amber-700 bg-amber-50/80 border-l-4 border-amber-500',
+                text: '경고'
+            };
+        case 'CAUTION':
+            return {
+                color: 'text-orange-700 bg-orange-50/80 border-l-4 border-orange-500',
+                text: '주의'
+            };
+        case 'DANGER':
+            return {
+                color: 'text-red-700 bg-red-50/80 border-l-4 border-red-600',
+                text: '위험'
+            };
+        case 'DISCONNECTED':
+            return {
+                color: 'text-purple-700 bg-purple-50/80 border-l-4 border-purple-500',
+                text: '연결끊김'
+            };
+        default:
+            return {
+                color: 'text-gray-700 bg-gray-50/80 border-l-4 border-gray-400',
+                text: '알 수 없음'
+            };
+    }
+};
+
 export const timeRangeOptions = [
     { label: '전체', value: 'all' },
     { label: '오늘', value: 'today' },
@@ -98,6 +133,22 @@ export const statusOptions = [
     { label: '대기중', value: 'PENDING' },
     { label: '진행중', value: 'WORKING' },
     { label: '완료', value: 'COMPLETED' },
+];
+
+export const levelOptions = [
+    { label: '전체 심각도', value: 'all' },
+    { label: '정상', value: 'NORMAL' },
+    { label: '경고', value: 'WARNING' },
+    { label: '주의', value: 'CAUTION' },
+    { label: '위험', value: 'DANGER' },
+    { label: '연결끊김', value: 'DISCONNECTED' },
+];
+
+export const sensorTypeOptions = [
+    { label: '전체 센서', value: 'all' },
+    { label: '온습도', value: 'TEMPERATURE_HUMIDITY' },
+    { label: '화재', value: 'FIRE' },
+    { label: '변위계', value: 'DISPLACEMENT_GAUGE' },
 ];
 
 export const intervalOptions = [
