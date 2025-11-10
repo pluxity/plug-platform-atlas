@@ -1,5 +1,5 @@
-import React from 'react'
-import { Building2, Bell, LogOut, ChevronRight } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Building2, LogOut, ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   SideMenu,
@@ -12,7 +12,6 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-  Badge,
   Button,
   Collapsible,
   CollapsibleContent,
@@ -20,13 +19,34 @@ import {
 } from '@plug-atlas/ui'
 import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../constants/menu'
 import { useAuthStore } from '../stores'
-
-const realtimeAlarmCount = 5
+import { useStompNotifications } from '../services/hooks'
+import NotificationPop from './NotificationPop'
 
 export default function AppSideMenu() {
   const location = useLocation()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
+  const [notificationOpen, setNotificationOpen] = useState(false)
+
+  const {
+    notifications,
+    unreadCount,
+    isConnected,
+    markAsRead,
+    markAllAsRead,
+    clearNotifications,
+    sendTestMessage,
+  } = useStompNotifications()
+
+  // Auto-open popup when new notification arrives
+  const prevUnreadCount = useRef(0)
+  useEffect(() => {
+    if (unreadCount > prevUnreadCount.current) {
+      console.log('[AppSideMenu] New notification received! Auto-opening popup. Count:', prevUnreadCount.current, '->', unreadCount)
+      setNotificationOpen(true)
+    }
+    prevUnreadCount.current = unreadCount
+  }, [unreadCount])
 
   const currentUser = user
     ? { ...user, avatar: '' }
@@ -41,8 +61,6 @@ export default function AppSideMenu() {
     (path: string) => location.pathname === path,
     [location.pathname]
   )
-
-  const handleAlarmClick = () => {}
 
   const renderMenuItem = React.useCallback((item: typeof MAIN_MENU_ITEMS[0]) => {
     const Icon = item.icon
@@ -134,22 +152,16 @@ export default function AppSideMenu() {
                     >
                       <LogOut className="size-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 relative"
-                      onClick={handleAlarmClick}
-                    >
-                      <Bell className="size-4" />
-                      {realtimeAlarmCount > 0 && (
-                        <Badge
-                          variant="destructive"
-                          className="absolute -top-1 -right-1 size-4 flex items-center justify-center p-0 text-xs"
-                        >
-                          {realtimeAlarmCount}
-                        </Badge>
-                      )}
-                    </Button>
+                    <NotificationPop
+                      notifications={notifications}
+                      unreadCount={unreadCount}
+                      isConnected={isConnected}
+                      open={notificationOpen}
+                      onOpenChange={setNotificationOpen}
+                      onMarkAsRead={markAsRead}
+                      onMarkAllAsRead={markAllAsRead}
+                      onClearAll={clearNotifications}
+                    />
                   </div>
                 </div>
               </SideMenuHeader>
@@ -168,6 +180,22 @@ export default function AppSideMenu() {
                       관리 기능
                     </div>
                     {ADMIN_MENU_ITEMS.map(renderMenuItem)}
+                  </div>
+
+                  {/* Temporary Test Button - Remove in production */}
+                  <div className="px-3 py-2 border-t border-gray-200">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={sendTestMessage}
+                      disabled={!isConnected}
+                      className="w-full text-xs"
+                    >
+                      {isConnected ? '🔥 테스트 알림 보내기' : '⏳ 연결 중...'}
+                    </Button>
+                    <p className="text-[10px] text-gray-400 mt-1 text-center">
+                      STOMP {isConnected ? '연결됨' : '연결 안 됨'}
+                    </p>
                   </div>
                 </div>
               </SideMenuNav>

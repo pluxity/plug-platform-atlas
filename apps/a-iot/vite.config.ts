@@ -15,6 +15,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     }
   },
+  define: {
+    global: 'globalThis',
+  },
   server: {
     port: 4000,
     host: true,
@@ -23,6 +26,8 @@ export default defineConfig({
         target: 'http://dev.pluxity.com',
         changeOrigin: true,
         secure: false,
+        ws: true, // Enable WebSocket proxying
+        rewrite: (path) => path.replace(/^\/api/, '/aiot/api'), // Rewrite /api to /aiot/api
       },
     },
   },

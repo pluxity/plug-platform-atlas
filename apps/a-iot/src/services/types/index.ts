@@ -23,6 +23,14 @@ export type {
   EventConditionRequest,
 } from './eventCondition'
 
+export type {
+    ConnectionErrorPayload,
+    SensorAlarmPayload,
+    NotificationType,
+    Notification,
+    NotificationStore
+} from './notification'
+
 // Site types
 export type {
   Site,

@@ -32,3 +32,8 @@ export {
 export {
   usePermissionCheckbox,
 } from './usePermissionCheckbox'
+
+// Notification hooks
+export {
+  useStompNotifications,
+} from './useStompNotifications'
