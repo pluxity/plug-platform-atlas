@@ -55,3 +55,8 @@ export {
 export {
   useSearchBar,
 } from './useSearchBar'
+
+// Notification hooks
+export {
+  useStompNotifications,
+} from './useStompNotifications'

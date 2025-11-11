@@ -1,277 +1,413 @@
-import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@plug-atlas/ui'
-import { TreePine, Camera, Radio, Users, AlertCircle, CheckCircle2, MapPin } from 'lucide-react'
-import { useRef, useEffect, useState } from 'react'
-import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath } from 'cesium'
-import { useViewerStore, useTilesetStore, ION_ASSETS, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD } from '../stores/cesium'
+import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Column, DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
+import { TreePine, Camera, Radio, Users, Map } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { useSites } from '../services/hooks/useSite'
+import { useCctvList } from '../services/hooks/useCctv'
+import { FeatureResponse, useFeatures } from '@plug-atlas/web-core'
+import { useAdminUsers } from '@plug-atlas/api-hooks'
+import CesiumMap from '../components/CesiumMap'
+import { useEvents } from '../services/hooks/useEventsManagement'
+import type { Event } from '../services/types'
+import { getStatusInfo, getLevelInfo } from './events/utils/timeUtils'
 
 export default function Dashboard() {
-  const cesiumContainerRef = useRef<HTMLDivElement>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'overview' | 'parks'>('overview')
+  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
 
-  const { createViewer } = useViewerStore()
-  const { loadIonTileset, loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, setupSeongnamAutoHide, applyHeightOffset } = useTilesetStore()
+  const { data: sites = [] } = useSites()
+  const { data: cctvs = [] } = useCctvList()
+  const { data: sensors = [] } = useFeatures()
+  const { data: users = [] } = useAdminUsers()
+  const { data: events = [] } = useEvents(
+    selectedSiteId ? { siteId: parseInt(selectedSiteId)} : undefined
+  )
 
-  useEffect(() => {
-    if (!cesiumContainerRef.current) return
+  const handleSiteSelect = (siteId: string) => {
+    setActiveTab('parks')
+    setSelectedSiteId(siteId)
+  }
 
-    let viewerInstance: CesiumViewer | null = null
-    const cleanupFunctions: Array<() => void> = []
+  const stats = useMemo(() => {
+    return [
+      {
+        title: '전체 공원',
+        value: sites.length,
+        icon: TreePine,
+        description: '관리 중인 공원 수',
+        iconColor: 'text-green-600',
+        iconBg: 'bg-green-100',
+      },
+      {
+        title: 'CCTV',
+        value: cctvs.length,
+        icon: Camera,
+        description: '운영 중인 CCTV',
+        iconColor: 'text-blue-600',
+        iconBg: 'bg-blue-100',
+      },
+      {
+        title: 'IoT 센서',
+        value: sensors.length,
+        icon: Radio,
+        description: '설치된 센서',
+        iconColor: 'text-yellow-600',
+        iconBg: 'bg-yellow-100',
+      },
+      {
+        title: '관리자',
+        value: users.length,
+        icon: Users,
+        description: '등록된 관리자',
+        iconColor: 'text-purple-600',
+        iconBg: 'bg-purple-100',
+      },
+    ]
+  }, [sites, cctvs, sensors, users])
 
-    const initializeViewer = async () => {
-      try {
-        setIsLoading(true)
+  const batteryAlarmColumns: Column<FeatureResponse>[] = [
+    {
+      key: 'name',
+      header: '장치 이름',
+      cell: (value) => value ? String(value) : '-',
+    },
+    {
+      key: 'batteryLevel',
+      header: '배터리 잔량',
+      cell: (value) => (
+        <div>
+          {value ? `${value}%` : '-'}
+        </div>
+      ),
+    },
+  ]
 
-        viewerInstance = createViewer(cesiumContainerRef.current!)
+  const getStatusStyle = (status: string) => {
+    if (status === 'PENDING') {
+      return 'bg-red-100 text-red-800 border-l-4 border-red-600'
+    }
+    if (status === 'WORKING') {
+      return 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-600'
+    }
+    return 'bg-green-100 text-green-800 border-l-4 border-green-600'
+  }
 
-        viewerInstance.scene.globe.depthTestAgainstTerrain = true
-        viewerInstance.scene.fog.enabled = true
-        viewerInstance.scene.fog.density = 0.0002
-        viewerInstance.scene.fog.screenSpaceErrorFactor = 2.0
-
-        const destination = Cartesian3.fromDegrees(
-          DEFAULT_CAMERA_POSITION.lon,
-          DEFAULT_CAMERA_POSITION.lat,
-          DEFAULT_CAMERA_POSITION.height
+  const eventColumns: Column<Event>[] = [
+    {
+      key: 'deviceId',
+      header: '디바이스 ID',
+      cell: (value) => (
+        value ? String(value) : '-'
+      ),
+    },
+    {
+      key: 'status',
+      header: '상태',
+      cell: (value, row) => {
+        const statusInfo = getStatusInfo(String(value))
+        const StatusIcon = statusInfo.icon
+        return (
+          <div className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium ${getStatusStyle(row.status)}`}>
+            <StatusIcon className="h-3.5 w-3.5" />
+            <span>{statusInfo.text}</span>
+          </div>
         )
-        const orientation = {
-          heading: CesiumMath.toRadians(DEFAULT_CAMERA_POSITION.heading || 0),
-          pitch: CesiumMath.toRadians(DEFAULT_CAMERA_POSITION.pitch || -45),
-          roll: CesiumMath.toRadians(DEFAULT_CAMERA_POSITION.roll || 0),
-        }
-        viewerInstance.camera.setView({ destination, orientation })
-
-        await loadIonTileset(viewerInstance, ION_ASSETS.GOOGLE_PHOTOREALISTIC_3D_TILES, {
-          maximumScreenSpaceError: 24,
-          skipLevelOfDetail: true,
-        })
-
-        const tilesets = await loadAllIonTilesets(viewerInstance)
-        const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, TILESET_AUTO_HIDE_THRESHOLD)
-        cleanupFunctions.push(tilesetsCleanup)
-
-        const seongnamTileset = await loadSeongnamTileset(viewerInstance)
-        if (seongnamTileset) {
-          applyHeightOffset(seongnamTileset, TILESET_HEIGHT_OFFSETS.SEONGNAM)
-          const seongnamCleanup = setupSeongnamAutoHide(viewerInstance, seongnamTileset, TILESET_AUTO_HIDE_THRESHOLD)
-          cleanupFunctions.push(seongnamCleanup)
-        }
-
-        setIsLoading(false)
-      } catch (err) {
-        console.error('Failed to initialize viewer:', err)
-        setError('지도를 로드하는 중 오류가 발생했습니다.')
-        setIsLoading(false)
-      }
-    }
-
-    initializeViewer()
-
-    return () => {
-      cleanupFunctions.forEach(cleanup => cleanup())
-      if (viewerInstance && !viewerInstance.isDestroyed()) {
-        viewerInstance.destroy()
-      }
-    }
-  }, [])
-  const stats = [
-    {
-      title: '전체 공원',
-      value: 12,
-      icon: TreePine,
-      description: '관리 중인 공원 수',
-      badge: '사이트(위치)',
-      bgColor: 'bg-green-50',
-      iconColor: 'text-green-600',
-      iconBg: 'bg-green-100',
+      },
     },
     {
-      title: 'CCTV',
-      value: 55,
-      icon: Camera,
-      description: '운영 중인 CCTV',
-      badge: '장치 개수 확인',
-      subBadge: '사이트별 확인',
-      bgColor: 'bg-blue-50',
-      iconColor: 'text-blue-600',
-      iconBg: 'bg-blue-100',
+      key: 'level',
+      header: '심각도',
+      cell: (value) => {
+        const levelInfo = getLevelInfo(String(value))
+        return (
+          <div className={`inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-sm shadow-sm ${levelInfo.color}`}>
+            {levelInfo.text}
+          </div>
+        )
+      },
     },
     {
-      title: 'IoT 센서',
-      value: 153,
-      icon: Radio,
-      description: '설치된 센서',
-      badge: '사이트별',
-      bgColor: 'bg-yellow-50',
-      iconColor: 'text-yellow-600',
-      iconBg: 'bg-yellow-100',
-    },
-    {
-      title: '관리자',
-      value: 12,
-      icon: Users,
-      description: '등록된 관리자',
-      badge: '사이트별',
-      bgColor: 'bg-purple-50',
-      iconColor: 'text-purple-600',
-      iconBg: 'bg-purple-100',
+      key: 'occurredAt',
+      header: '발생시간',
+      cell: (_, row) => (
+        row.occurredAt ? new Date(row.occurredAt).toLocaleString('ko-KR', {
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : '-'
+      ),
     },
   ]
 
-  const recentAlerts = [
-    { id: 1, type: '중급 관람', message: 'CCTV 작동', status: 'error', time: '10분 전', bgColor: 'bg-red-50', textColor: 'text-red-700', icon: AlertCircle },
-    { id: 2, type: '서부 관람', message: '센서 작동 점검', status: 'warning', time: '10분 전', bgColor: 'bg-orange-50', textColor: 'text-orange-700', icon: AlertCircle },
-    { id: 3, type: '중급 관람', message: '센서 정상 확인', status: 'success', time: '10분 전', bgColor: 'bg-green-50', textColor: 'text-green-700', icon: CheckCircle2 },
+  const filteredEvents = useMemo(() => {
+    if (!selectedSiteId) return []
+    return events
+      .filter(event => event.status && event.level && event.level !== 'NORMAL')
+      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+      .slice(0, 50)
+  }, [events, selectedSiteId])
+
+  const deviceStats = useMemo(() => {
+    if (!selectedSiteId) return { total: 0, disconnected: 0, danger: 0, warning: 0, caution: 0 }
+    
+    const siteSensors = sensors.filter(sensor => sensor.siteResponse?.id?.toString() === selectedSiteId)
+    const totalDevices = siteSensors.length
+    
+
+    const deviceLatestEvents = events
+      .filter(event => event.deviceId && event.level)
+      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+      .reduce((acc, event) => {
+        if (!acc[event.deviceId]) {
+          acc[event.deviceId] = { level: event.level, occurredAt: event.occurredAt }
+        }
+        return acc
+      }, {} as Record<string, { level: string; occurredAt: string }>)
+    
+    const stats = Object.values(deviceLatestEvents).reduce(
+      (acc, { level }) => {
+        if (level === 'DISCONNECTED') acc.disconnected++
+        else if (level === 'DANGER') acc.danger++
+        else if (level === 'WARNING') acc.warning++
+        else if (level === 'CAUTION') acc.caution++
+        return acc
+      },
+      { disconnected: 0, danger: 0, warning: 0, caution: 0 }
+    )
+    
+    return { total: totalDevices, ...stats }
+  }, [selectedSiteId, sensors, events])
+  
+  const featureStatusColumns: Column<FeatureResponse>[] = [
+    {
+      key: 'siteResponse',
+      header: '공원명',
+      cell: (_, row) => (
+        row.siteResponse?.name ? String(row.siteResponse?.name) : '-'
+      )
+    },
+    {
+      key: 'name',
+      header: '디바이스 코드',
+      cell: (_, row) => (
+        row.name ? String(row.name) : '-'
+      ),
+    },
+    {
+      key: 'eventStatus',
+      header: '이벤트 상태',
+      cell: (_, row) => (
+        row.eventStatus ? <Badge variant='secondary'>{row.eventStatus}</Badge> : '-'
+      )
+    },
+    {
+      key: 'active',
+      header: '활성화',
+      cell: (_, row) => (
+        row.active ? <Badge>활성화</Badge> : <Badge variant='secondary'>비활성화</Badge>
+      )
+    },
   ]
+
+  const featureStatusData = useMemo((): FeatureResponse[] => {
+    if (!selectedSiteId) return []
+    
+    return sensors.filter(
+      sensor => sensor.siteResponse?.id?.toString() === selectedSiteId
+    ).sort((a, b) => a.name.localeCompare(b.name))
+  }, [selectedSiteId, sensors])
 
   return (
-    <div className="space-y-8">
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <Card key={stat.title} className={`${stat.bgColor} border-none shadow-sm`}>
-              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                <div className="space-y-0.5">
-                  <CardTitle className="text-xs font-medium text-gray-500">{stat.title}</CardTitle>
-                  <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
-                  <p className="text-xs text-gray-500">{stat.description}</p>
-                </div>
-                <div className={`p-2.5 rounded-full ${stat.iconBg}`}>
-                  <Icon className={`size-5 ${stat.iconColor}`} />
-                </div>
-              </CardHeader>
-              <CardContent className="flex gap-1.5">
-                <Badge variant="secondary" className="text-xs font-normal px-2 py-0.5">
-                  {stat.badge}
-                </Badge>
-                {stat.subBadge && (
-                  <Badge variant="secondary" className="text-xs font-normal px-2 py-0.5">
-                    {stat.subBadge}
-                  </Badge>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })}
+    <>
+      <div className="mb-6">
+      <Tabs value={activeTab} onValueChange={(value) => {
+          if (value === 'overview' || value === 'parks') {
+            setActiveTab(value)
+            if (value === 'overview') {
+              setSelectedSiteId(null)
+            }
+          }
+        }} variant="buttons">
+          <TabsList className="justify-start">
+            <TabsTrigger value="overview" icon={<Map className="size-4" />}>
+              전체보기
+            </TabsTrigger>
+            <TabsTrigger value="parks" icon={<TreePine className="size-4" />}>
+              공원별 보기
+            </TabsTrigger>
+          </TabsList> 
+        </Tabs>
       </div>
 
-
-      {/* 공원 위치 지도 */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <MapPin className="size-5" />
-            공원 위치 지도
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <span>지도 보기</span>
+            {activeTab === 'parks' && (
+              <Select value={selectedSiteId || ''} onValueChange={setSelectedSiteId}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="공원 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sites.map((site) => (
+                    <SelectItem key={site.id} value={site.id.toString()}>{site.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </CardTitle>
-          <CardDescription className="text-xs">공원별 장치 현황 및 위치 정보</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="relative w-full h-[600px] rounded-lg overflow-hidden">
-            <div
-              ref={cesiumContainerRef}
-              className="w-full h-full"
-            />
-            {isLoading && (
-              <div className="absolute inset-0 bg-gray-100/80 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                  <span className="text-sm text-gray-600">지도 로딩 중...</span>
-                </div>
-              </div>
-            )}
-            {error && (
-              <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                <p className="text-red-500">{error}</p>
-              </div>
-            )}
-          </div>
+          <CesiumMap
+            sites={sites}
+            activeTab={activeTab}
+            selectedSiteId={selectedSiteId}
+            onSiteSelect={handleSiteSelect}
+            sensors={sensors}
+            events={events}
+          />
         </CardContent>
       </Card>
-      
-      {/* 최근 알림 */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">최근 알림</CardTitle>
-          <CardDescription className="text-xs">최근 발생한 이벤트 및 알림</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2.5">
-            {recentAlerts.map((alert) => {
-              const Icon = alert.icon
+
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+
+          {/* 통계 카드 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {stats.map((stat) => {
+              const Icon = stat.icon
               return (
-                <div key={alert.id} className={`flex items-center justify-between p-3 rounded-lg ${alert.bgColor}`}>
-                  <div className="flex items-center gap-2.5">
-                    <div className={`p-1.5 rounded-full ${alert.bgColor.replace('50', '100')}`}>
-                      <Icon className={`size-4 ${alert.textColor}`} />
+                <Card key={stat.title}>
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                    <div className="space-y-0.5">
+                      <CardTitle className="font-medium text-lg text-gray-800">{stat.title}</CardTitle>
+                      <div className="text-2xl font-bold">{stat.value}</div>
                     </div>
-                    <div>
-                      <p className={`text-sm font-medium ${alert.textColor}`}>{alert.type}</p>
-                      <p className={`text-xs ${alert.textColor}`}>{alert.message}</p>
+                    <div className={`p-2.5 rounded-xl ${stat.iconBg}`}>
+                      <Icon className={`size-5 ${stat.iconColor}`} />
                     </div>
-                  </div>
-                  <span className={`text-xs ${alert.textColor}`}>{alert.time}</span>
-                </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-gray-800">{stat.description}</p>
+                  </CardContent>
+                </Card>          
               )
             })}
           </div>
-        </CardContent>
-      </Card>
 
-      {/* 공원별 현황 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">공원별 장치 현황</CardTitle>
-            <CardDescription className="text-xs">주요 공원 설치 장치 수</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {[
-                { park: '중급 공원', cctv: 5, sensor: 12 },
-                { park: '서부 공원', cctv: 3, sensor: 8 },
-                { park: '북부 공원', cctv: 5, sensor: 15 },
-                { park: '동부 공원', cctv: 4, sensor: 10 },
-                { park: '남부 공원', cctv: 5, sensor: 11 },
-              ].map((item) => (
-                <div key={item.park} className="flex items-center justify-between py-2.5 border-b last:border-0 border-gray-100">
-                  <span className="text-sm font-medium text-gray-700">{item.park}</span>
-                  <div className="flex gap-4 text-xs text-gray-500">
-                    <span>CCTV {item.cctv}대</span>
-                    <span>센서 {item.sensor}개</span>
+        </div>
+      )}
+
+      {activeTab === 'parks' && selectedSiteId && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{sites.find(site => site.id.toString() === selectedSiteId)?.name} | 전체 장치 현황</CardTitle>
+            </CardHeader>
+            <CardContent className="flex gap-4">
+             <div className="w-1/6">
+               <div className="bg-primary-100 rounded-lg p-4">
+                <div className="flex-1 flex items-center gap-2 text-sm mb-2 p-2 whitespace-nowrap">
+                  <div className="font-bold text-gray-500">총 장비수 |</div><div className="text-gray-600">{deviceStats.total.toLocaleString()}</div>
+                </div>
+                 <div className="space-y-4">
+                   <div className="flex items-center gap-3 bg-primary-200/50 rounded-md p-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 12 12" fill="none" className="flex-shrink-0">
+                        <path fillRule="evenodd" clipRule="evenodd" d="M6.62497 0.798919C6.71114 0.454482 6.50158 0.105455 6.1569 0.019346C5.81222 -0.0667632 5.46295 0.142653 5.37678 0.48709L4.96481 2.13387C4.87863 2.4783 5.08819 2.82733 5.43287 2.91344C5.77755 2.99955 6.12682 2.79013 6.21299 2.44569L6.62497 0.798919ZM6.36287 3.70597C6.36287 3.35093 6.65088 3.06312 7.00618 3.06312H9.18139C9.929 3.06312 10.6459 3.35986 11.1744 3.88808C11.7031 4.41629 12 5.13271 12 5.87972C12 6.62672 11.7031 7.34313 11.1744 7.87135C10.6459 8.39956 9.929 8.69634 9.18139 8.69634H7.64886C7.29358 8.69634 7.00556 8.4085 7.00556 8.05346C7.00556 7.69842 7.29358 7.41061 7.64886 7.41061H9.18139C9.5877 7.41061 9.97737 7.24932 10.2647 6.96222C10.552 6.67512 10.7134 6.28574 10.7134 5.87972C10.7134 5.4737 10.552 5.08431 10.2647 4.79721C9.97737 4.51012 9.5877 4.34882 9.18139 4.34882H7.00618C6.65088 4.34882 6.36287 4.06101 6.36287 3.70597ZM3.27538 5.6474C3.52661 5.89845 3.52661 6.30548 3.27538 6.55653L1.7355 8.09534C1.44827 8.38376 1.2866 8.77451 1.2866 9.18148C1.2866 9.5881 1.44767 9.97827 1.73458 10.2666C2.02315 10.5533 2.41354 10.7143 2.8205 10.7143C3.22768 10.7143 3.61829 10.5532 3.9069 10.2661L4.82102 9.35265C5.07225 9.10159 5.47957 9.10159 5.73079 9.35265C5.98202 9.6037 5.98202 10.0108 5.73079 10.2618L4.81619 11.1758L4.81526 11.1766C4.28547 11.7039 3.56821 12 2.8205 12C2.07279 12 1.35552 11.7039 0.825732 11.1766L0.823872 11.1748C0.29624 10.6454 0 9.92864 0 9.18148C0 8.43425 0.29624 7.71749 0.823872 7.18807L0.8248 7.18713L2.36562 5.6474C2.61684 5.39635 3.02415 5.39635 3.27538 5.6474ZM0.0697999 2.82569C0.228689 2.50814 0.615102 2.37942 0.93288 2.5382L2.58081 3.36159C2.89859 3.52036 3.02739 3.90651 2.8685 4.22406C2.70961 4.54162 2.3232 4.67033 2.00542 4.51156L0.357493 3.68816C0.0397159 3.52939 -0.0890889 3.14325 0.0697999 2.82569ZM3.28052 0.355512C3.12163 0.0379569 2.73522 -0.0907579 2.41744 0.0680198C2.09967 0.226798 1.97086 0.612942 2.12975 0.930499L2.95371 2.57727C3.1126 2.89482 3.49901 3.02354 3.81679 2.86477C4.13457 2.70599 4.26338 2.31984 4.10449 2.00229L3.28052 0.355512Z" fill="#0B1FFF"/>
+                      </svg>
+                     <div className="flex-1 flex items-center gap-2 text-sm whitespace-nowrap">
+                       <div className="text-[#0B1FFF]">연결 끊김 |</div> <div className="text-gray-600">{deviceStats.disconnected}</div>
+                     </div>
+                   </div>
+                   
+                   <div className="flex items-center gap-3 bg-red-100/70 rounded-md p-2">
+                     <span className="flex items-center justify-center w-3 h-3 rounded-full bg-destructive flex-shrink-0"></span>
+                     <div className="flex-1 flex items-center gap-2 text-sm whitespace-nowrap">
+                       <div className="text-destructive">위험 |</div> <div className="text-gray-600">{deviceStats.danger}</div>
+                     </div>
+                   </div>
+                   
+                   <div className="flex items-center gap-3 bg-orange-100/70 rounded-md p-2">
+                     <span className="flex items-center justify-center w-3 h-3 rounded-full bg-orange-500 flex-shrink-0"></span>
+                     <div className="flex-1 flex items-center gap-2 text-sm whitespace-nowrap">
+                       <div className="text-orange-500">경고 |</div> <div className="text-gray-600">{deviceStats.warning}</div>
+                     </div>
+                   </div>
+                   
+                   <div className="flex items-center gap-3 bg-yellow-100/70 rounded-md p-2">
+                     <span className="flex items-center justify-center w-3 h-3 rounded-full bg-yellow-500 flex-shrink-0"></span>
+                     <div className="flex-1 flex items-center gap-2 text-sm whitespace-nowrap">
+                       <div className="text-yellow-500">주의 |</div> <div className="text-gray-600">{deviceStats.caution}</div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+             <div className="flex-1">
+              {featureStatusData.length === 0 ? (
+                <div className="min-h-[260px] flex items-center justify-center text-gray-500">
+                  장치가 없습니다.
+                </div>
+              ) : (
+                <DataTable 
+                  columns={featureStatusColumns}
+                  data={featureStatusData}
+                  className="max-h-[260px] overflow-y-auto"
+                />
+              )}
+             </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-5 gap-4">
+            <Card className="col-span-3">
+              <CardHeader>
+                <CardTitle className="text-lg">이벤트 현황</CardTitle>
+                <CardDescription>최근 발생한 이벤트를 확인할 수 있습니다. (최대 50개)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {filteredEvents.length === 0 ? (
+                  <div className="min-h-[300px] flex items-center justify-center text-gray-500">
+                    이벤트가 없습니다.
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ) : (
+                  <DataTable
+                    className="max-h-[300px] overflow-y-auto"
+                    columns={eventColumns}
+                    data={filteredEvents}
+                  />
+                )}
+              </CardContent>
+            </Card>
 
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">시스템 상태</CardTitle>
-            <CardDescription className="text-xs">주요 시스템 운영 상태</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {[
-                { name: '중급 공원', status: '정상', color: 'bg-[#0057E3]' },
-                { name: '북부 공원', status: '오류', color: 'bg-[#EF4444]' },
-                { name: '서부 공원', status: '주의', color: 'bg-[#F97316]' },
-                { name: '남부 공원', status: '정상', color: 'bg-[#0057E3]' },
-                { name: '동부 공원', status: '정상', color: 'bg-[#0057E3]' },
-              ].map((system) => (
-                <div key={system.name} className="flex items-center justify-between py-2.5 border-b last:border-0 border-gray-100">
-                  <span className="text-sm font-medium text-gray-700">{system.name}</span>
-                  <Badge className={`${system.color} text-white border-none hover:${system.color} text-xs px-3 py-0.5`}>
-                    {system.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            <Card className="col-span-2">
+              <CardHeader>
+                <CardTitle className="text-lg">장치 배터리 알람</CardTitle>
+                <CardDescription>배터리 잔량이 20% 이하인 장치를 확인할 수 있습니다.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const lowBatterySensors = sensors
+                    .filter(sensor => sensor.batteryLevel && sensor.batteryLevel <= 20)
+                    .sort((a, b) => a.id - b.id);
+                  
+                  return lowBatterySensors.length === 0 ? (
+                    <div className="min-h-[300px] flex items-center justify-center text-gray-500">
+                      배터리 잔량이 20% 이하인 장치가 없습니다.
+                    </div>
+                  ) : (
+                    <DataTable
+                      className="min-h-[300px] max-h-[300px] overflow-y-auto"
+                      columns={batteryAlarmColumns}
+                      data={lowBatterySensors}
+                    />
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

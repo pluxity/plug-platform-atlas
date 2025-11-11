@@ -48,16 +48,13 @@ export const useInfiniteEvents = (
     const client = useApiClient();
 
     const getKey = (pageIndex: number, previousPageData: PaginatedEventsResponse | null) => {
-        // If we reached the end, return null to stop fetching
         if (previousPageData && !previousPageData.hasNext) return null;
 
-        // Build query params
         const params: EventsQueryParams = {
             ...baseParams,
             size: pageSize,
         };
 
-        // Add lastId from previous page's nextCursor
         if (pageIndex > 0 && previousPageData?.nextCursor) {
             params.lastId = previousPageData.nextCursor;
         }
@@ -83,7 +80,6 @@ export const useInfiniteEvents = (
         options
     );
 
-    // Flatten all pages into a single array of events
     const events = result.data?.flatMap(page => page.content) || [];
     const hasMore = result.data?.[result.data.length - 1]?.hasNext || false;
 

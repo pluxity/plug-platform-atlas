@@ -1,5 +1,5 @@
-import React from 'react'
-import { Building2, Bell, LogOut, ChevronRight } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Building2, LogOut, ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   SideMenu,
@@ -12,7 +12,6 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-  Badge,
   Button,
   Collapsible,
   CollapsibleContent,
@@ -20,13 +19,30 @@ import {
 } from '@plug-atlas/ui'
 import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../constants/menu'
 import { useAuthStore } from '../stores'
-
-const realtimeAlarmCount = 5
+import { useStompNotifications } from '../services/hooks'
+import NotificationPop from './NotificationPop'
 
 export default function AppSideMenu() {
   const location = useLocation()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
+  const [notificationOpen, setNotificationOpen] = useState(false)
+
+  const {
+    notifications,
+    unreadCount,
+    isConnected,
+    markAsRead,
+  } = useStompNotifications()
+
+  // Auto-open popup when new notification arrives
+  const prevUnreadCount = useRef(0)
+  useEffect(() => {
+    if (unreadCount > prevUnreadCount.current) {
+      setNotificationOpen(true)
+    }
+    prevUnreadCount.current = unreadCount
+  }, [unreadCount])
 
   const currentUser = user
     ? { ...user, avatar: '' }
@@ -41,8 +57,6 @@ export default function AppSideMenu() {
     (path: string) => location.pathname === path,
     [location.pathname]
   )
-
-  const handleAlarmClick = () => {}
 
   const renderMenuItem = React.useCallback((item: typeof MAIN_MENU_ITEMS[0]) => {
     const Icon = item.icon
@@ -134,22 +148,14 @@ export default function AppSideMenu() {
                     >
                       <LogOut className="size-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 relative"
-                      onClick={handleAlarmClick}
-                    >
-                      <Bell className="size-4" />
-                      {realtimeAlarmCount > 0 && (
-                        <Badge
-                          variant="destructive"
-                          className="absolute -top-1 -right-1 size-4 flex items-center justify-center p-0 text-xs"
-                        >
-                          {realtimeAlarmCount}
-                        </Badge>
-                      )}
-                    </Button>
+                    <NotificationPop
+                      notifications={notifications}
+                      unreadCount={unreadCount}
+                      isConnected={isConnected}
+                      open={notificationOpen}
+                      onOpenChange={setNotificationOpen}
+                      onMarkAsRead={markAsRead}
+                    />
                   </div>
                 </div>
               </SideMenuHeader>
