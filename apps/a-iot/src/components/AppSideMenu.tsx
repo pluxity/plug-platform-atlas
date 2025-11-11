@@ -35,7 +35,6 @@ export default function AppSideMenu() {
     markAsRead,
     markAllAsRead,
     clearNotifications,
-    sendTestMessage,
   } = useStompNotifications()
 
   // Auto-open popup when new notification arrives
@@ -180,22 +179,6 @@ export default function AppSideMenu() {
                       관리 기능
                     </div>
                     {ADMIN_MENU_ITEMS.map(renderMenuItem)}
-                  </div>
-
-                  {/* Temporary Test Button - Remove in production */}
-                  <div className="px-3 py-2 border-t border-gray-200">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={sendTestMessage}
-                      disabled={!isConnected}
-                      className="w-full text-xs"
-                    >
-                      {isConnected ? '🔥 테스트 알림 보내기' : '⏳ 연결 중...'}
-                    </Button>
-                    <p className="text-[10px] text-gray-400 mt-1 text-center">
-                      STOMP {isConnected ? '연결됨' : '연결 안 됨'}
-                    </p>
                   </div>
                 </div>
               </SideMenuNav>

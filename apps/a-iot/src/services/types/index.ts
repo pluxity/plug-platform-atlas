@@ -24,6 +24,24 @@ export type {
 } from './eventCondition'
 
 export type {
+  ActionHistory,
+  ActionHistoryRequest,
+} from './eventHistory'
+
+export type {
+    Event,
+    EventStatusRequest,
+    EventsQueryParams,
+    PaginatedEventsResponse,
+    TimeSeriesData,
+    TimeSeriesQueryParams,
+    EventStatus,
+    EventLevel,
+    SensorType,
+    EventCollectInterval
+} from './eventManagement'
+
+export type {
     ConnectionErrorPayload,
     SensorAlarmPayload,
     NotificationType,

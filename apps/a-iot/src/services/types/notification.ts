@@ -6,31 +6,33 @@ export interface ConnectionErrorPayload {
 }
 
 export interface SensorAlarmPayload {
-    actionResult: string;
     deviceId: string;
-    eventName: string;
-    fieldKey: string;
-    guideMessage: string;
-    lat: number;
-    lon: number;
-    level: string;
-    maxValue: number;
+    eventName?: string;
+    fieldKey?: string;
+    guideMessage?: string;
+    lat?: number;
+    lon?: number;
+    level?: string;
+    maxValue?: number;
     message: string;
-    minValue: number;
+    minValue?: number;
     objectId: string;
-    sensorDescription: string;
-    sensorType: string;
+    profileDescription?: string;
+    sensorDescription?: string;
+    sensorType?: string;
     siteId: number;
-    status: 'PENDING' | 'WORKING' | 'RESOLVED';
-    timestamp: string;
-    unit: string;
-    value: number;
+    siteName?: string;
+    status?: 'PENDING' | 'WORKING' | 'RESOLVED';
+    timestamp?: string;
+    unit?: string;
+    value?: number;
 }
 
 export type NotificationType = 'sensor-alarm' | 'connection-error';
 
 export interface Notification {
     id: string;
+    eventId?: number;
     type: NotificationType;
     title: string;
     siteName?: string;

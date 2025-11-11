@@ -2,6 +2,8 @@ import { Bell } from 'lucide-react';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@plug-atlas/ui';
 import { Notification, SensorAlarmPayload } from "../services/types";
 import { useState } from 'react';
+import { useUpdateEventStatus } from '../services/hooks';
+import { useNavigate } from 'react-router-dom';
 
 interface NotificationPanelProps {
     notifications: Notification[];
@@ -19,13 +21,11 @@ const getLevelColor = (level?: string) => {
         case 'DANGER':
             return 'text-red-700';
         case 'WARNING':
-            return 'text-amber-700';
+            return 'text-orange-700';
         case 'CAUTION':
-            return 'text-orange-600';
+            return 'text-amber-600';
         case 'DISCONNECTED':
             return 'text-purple-700';
-        case 'NORMAL':
-            return 'text-green-600';
         default:
             return 'text-gray-600';
     }
@@ -45,66 +45,57 @@ const getRelativeTime = (date: Date): string => {
 };
 
 function NotificationItem({ notification, onMarkAsRead }: { notification: Notification; onMarkAsRead?: (id: string) => void }) {
-    const [isUpdating, setIsUpdating] = useState(false);
+    const navigate = useNavigate();
     const [currentStatus, setCurrentStatus] = useState<string>(
         notification.type === 'sensor-alarm'
-            ? (notification.payload as SensorAlarmPayload).status
+            ? (notification.payload as SensorAlarmPayload).status || ''
             : ''
     );
+
+    const { trigger: updateStatus, isMutating: isUpdating } = useUpdateEventStatus();
 
     const handleClick = () => {
         if (!notification.read && onMarkAsRead) {
             onMarkAsRead(notification.id);
+        }
+
+        if (notification.eventId) {
+            navigate(`/events?eventId=${notification.eventId}`);
         }
     };
 
     const handleAction = async (e: React.MouseEvent) => {
         e.stopPropagation();
 
-        if (notification.type !== 'sensor-alarm') return;
-
-        const payload = notification.payload as SensorAlarmPayload;
-        setIsUpdating(true);
+        if (notification.type !== 'sensor-alarm' || !notification.eventId) {
+            console.warn('[NotificationItem] Cannot update status - missing eventId');
+            return;
+        }
 
         try {
-                // TODO: Replace with actual API endpoint
-                const response = await fetch('/api/sensor-alarms/action', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        deviceId: payload.deviceId,
-                        objectId: payload.objectId,
-                        status: 'WORKING',
-                    }),
-                });
-
-            if (response.ok) {
-                setCurrentStatus('WORKING');
-                console.log('[NotificationItem] Status updated to WORKING');
-            }
+            await updateStatus({
+                eventId: notification.eventId,
+                status: { result: 'WORKING' }
+            });
+            setCurrentStatus('WORKING');
+            console.log('[NotificationItem] Status updated to WORKING for event', notification.eventId);
         } catch (error) {
             console.error('[NotificationItem] Failed to update status:', error);
-        } finally {
-            setIsUpdating(false);
         }
     };
 
-    const getLevelBgColor = () => {
+    const getLevelIconPath = () => {
         switch (notification.level) {
             case 'DANGER':
-                return 'bg-red-600';
+                return '/images/icons/notification/danger.svg';
             case 'WARNING':
-                return 'bg-amber-600';
+                return '/images/icons/notification/warning.svg';
             case 'CAUTION':
-                return 'bg-orange-600';
+                return '/images/icons/notification/caution.svg';
             case 'DISCONNECTED':
-                return 'bg-purple-600';
-            case 'NORMAL':
-                return 'bg-green-600';
+                return '/images/icons/notification/danger.svg';
             default:
-                return 'bg-gray-400';
+                return '/images/icons/notification/caution.svg';
         }
     };
 
@@ -120,10 +111,9 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
         >
 
             <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className={`w-7 h-7 rounded-full flex-shrink-0 ${getLevelBgColor()}`} />
+                <div className="flex items-center flex-1 min-w-0">
                     <span className="text-sm font-bold text-zinc-800 truncate">
-                        {notification.title}
+                        {(notification.payload as SensorAlarmPayload).profileDescription || (notification.payload as SensorAlarmPayload).sensorDescription || '센서'} {(notification.payload as SensorAlarmPayload).level || notification.level}발생
                     </span>
                 </div>
                 <span className="text-xs text-neutral-400 whitespace-nowrap ml-2">
@@ -131,17 +121,22 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
                 </span>
             </div>
             <div className="flex justify-between items-center">
-                <div className="ml-9 space-y-1">
+                <img
+                    src={getLevelIconPath()}
+                    alt={notification.level || 'notification'}
+                    className="w-7 h-7 flex-shrink-0"
+                />
+                <div className="space-y-1">
                     <div className="text-sm text-zinc-800">
-                        {notification.siteName || '알 수 없음'}
+                        {(notification.payload as SensorAlarmPayload).siteName || '알 수 없음'}
                     </div>
                     <div className={`text-xs ${getLevelColor(notification.level)}`}>
-                        {notification.message}
+                        {(notification.payload as SensorAlarmPayload).sensorDescription || ''}: {notification.payload.deviceId}
                     </div>
                 </div>
 
                 {showActionButton && (
-                    <div className="ml-9 mt-3">
+                    <div className="ml-1 mt-3">
                         <Button
                             size="sm"
                             variant={currentStatus === 'PENDING' ? 'default' : 'secondary'}
@@ -177,7 +172,7 @@ export default function NotificationPop({
                 <Button variant="ghost" size="icon" className="size-8 relative">
                     <Bell className="size-4" />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 size-4 flex items-center justify-center p-0 text-xs bg-red-600 text-white rounded-full">
+                        <span className="absolute top-0 -right-1 size-4 flex items-center justify-center p-0 text-[10px] bg-red-600 text-white rounded-full">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     )}

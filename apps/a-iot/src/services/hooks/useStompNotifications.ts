@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Client, StompSubscription } from '@stomp/stompjs';
 import type { Notification, SensorAlarmPayload, ConnectionErrorPayload } from '../types';
+import { useEvents } from './useEventsManagement';
+import type { Event } from '../types';
 
 const getWebSocketUrl = () => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -21,43 +23,112 @@ interface UseStompNotificationsReturn {
     sendTestMessage: () => void;
 }
 
+const eventToNotification = (event: Event): Notification => {
+    return {
+        id: `event-${event.eventId}`,
+        eventId: event.eventId,
+        type: 'sensor-alarm',
+        title: event.eventName,
+        siteName: event.deviceId,
+        message: event.guideMessage,
+        timestamp: new Date(event.occurredAt),
+        level: event.level as any,
+        payload: {
+            deviceId: event.deviceId,
+            eventName: event.eventName,
+            fieldKey: event.fieldKey,
+            guideMessage: event.guideMessage,
+            lat: event.latitude,
+            lon: event.longitude,
+            level: event.level,
+            maxValue: event.maxValue,
+            message: event.guideMessage,
+            minValue: event.minValue,
+            objectId: event.objectId,
+            sensorDescription: event.deviceId,
+            sensorType: 'Unknown',
+            siteId: 0,
+            status: event.status as 'PENDING' | 'WORKING' | 'RESOLVED',
+            timestamp: event.occurredAt,
+            unit: '',
+            value: event.minValue,
+            profileDescription: '',
+            siteName: ''
+        },
+        read: false,
+    };
+};
+
 export function useStompNotifications(): UseStompNotificationsReturn {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [realtimeNotifications, setRealtimeNotifications] = useState<Notification[]>([]);
     const [isConnected, setIsConnected] = useState(false);
 
     const clientRef = useRef<Client | null>(null);
     const subscriptionsRef = useRef<StompSubscription[]>([]);
 
+    // Fetch only PENDING events from API
+    const { data: pendingEvents = [] } = useEvents(
+        { status: 'PENDING' },
+        { refreshInterval: 5000 } // Refresh every 5 seconds for real-time updates
+    );
+
+    // Convert API events to notifications
+    const apiNotifications = pendingEvents.map(eventToNotification);
+
+    // Merge real-time STOMP notifications with API notifications, removing duplicates by eventId
+    const allNotifications = [...realtimeNotifications, ...apiNotifications];
+    const uniqueNotifications = allNotifications.reduce((acc, notification) => {
+        // If notification has eventId, use it as unique key; otherwise use id
+        const key = notification.eventId ? `event-${notification.eventId}` : notification.id;
+        if (!acc.has(key)) {
+            acc.set(key, notification);
+        }
+        return acc;
+    }, new Map<string, Notification>());
+
+    const notifications = Array.from(uniqueNotifications.values())
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .slice(0, MAX_NOTIFICATIONS);
+
+    // Unread count is the number of PENDING events (from API)
+    const unreadCount = pendingEvents.length;
+
+    // Debug log for merged notifications
+    useEffect(() => {
+        console.log('[useStompNotifications] Merged notifications:', {
+            realtimeCount: realtimeNotifications.length,
+            apiPendingCount: pendingEvents.length,
+            totalUniqueCount: notifications.length,
+            unreadCount,
+            notifications
+        });
+    }, [realtimeNotifications, pendingEvents, notifications, unreadCount]);
+
     const addNotification = useCallback((notification: Notification) => {
-        console.log('[NOTIFICATION] Adding notification:', notification);
-        setNotifications(prev => {
+        console.log('[NOTIFICATION] Adding real-time notification:', notification);
+        setRealtimeNotifications(prev => {
             const updated = [notification, ...prev].slice(0, MAX_NOTIFICATIONS);
-            console.log('[NOTIFICATION] Updated notifications list:', updated);
+            console.log('[NOTIFICATION] Updated real-time notifications list:', updated);
             return updated;
         });
-        setUnreadCount(prev => {
-            const newCount = prev + 1;
-            console.log('[NOTIFICATION] Updated unread count:', newCount);
-            return newCount;
-        });
+        // Note: unreadCount is now calculated from pendingEvents.length, not managed manually
     }, []);
 
     const markAsRead = useCallback((id: string) => {
-        setNotifications(prev =>
+        setRealtimeNotifications(prev =>
             prev.map(n => n.id === id ? { ...n, read: true } : n)
         );
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        // Note: marking as read doesn't affect unreadCount (which is PENDING count)
     }, []);
 
     const markAllAsRead = useCallback(() => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        setUnreadCount(0);
+        setRealtimeNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        // Note: marking as read doesn't affect unreadCount (which is PENDING count)
     }, []);
 
     const clearNotifications = useCallback(() => {
-        setNotifications([]);
-        setUnreadCount(0);
+        setRealtimeNotifications([]);
+        // Note: clearing notifications doesn't affect unreadCount (which is PENDING count)
     }, []);
 
     const sendTestMessage = useCallback(() => {
@@ -68,25 +139,24 @@ export function useStompNotifications(): UseStompNotificationsReturn {
         }
 
         const testPayload = {
-            deviceId: "SNIOT-P-FIR-005",
-            eventName: "화재 발생",
-            fieldKey: "Fire Alarm",
-            guideMessage: "불이 났어요",
+            deviceId: "SNIOT-P-THM-001",
+            fieldKey: "Temperature",
             lat: 37.3948,
             level: "DANGER",
             lon: 127.1114,
-            maxValue: 1.1,
+            maxValue: -10,
             message: "테스트 화재 알람",
-            minValue: 1.1,
-            objectId: "34956",
-            sensorDescription: "화재감지",
-            sensorType: "Boolean",
+            minValue: -20,
+            objectId: "34954",
+            profileDescription: "온도",
+            sensorDescription: "온습도계",
+            sensorType: "Float",
             siteId: 1,
-            siteName: "중앙공원",
+            siteName: "율동공원",
             status: "PENDING",
             timestamp: new Date().toISOString(),
             unit: "-",
-            value: 1.1
+            value: -15
         };
 
         try {
@@ -123,9 +193,9 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                             id: `sensor-${Date.now()}-${Math.random()}`,
                             type: 'sensor-alarm',
                             title: payload.eventName || '센서 알람',
-                            siteName: payload.sensorDescription,
-                            message: payload.message || payload.guideMessage,
-                            timestamp: new Date(payload.timestamp),
+                            siteName: payload.siteName || payload.sensorDescription,
+                            message: payload.message || payload.guideMessage || '',
+                            timestamp: payload.timestamp ? new Date(payload.timestamp) : new Date(),
                             level: payload.level as any,
                             payload,
                         };
@@ -138,7 +208,6 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                 subscriptionsRef.current.push(sensorAlarmSub);
                 console.log('[STOMP] Successfully subscribed to /queue/sensor-alarm');
 
-                // Also subscribe to user-specific queue (in case backend sends there)
                 console.log('[STOMP] Subscribing to /user/queue/sensor-alarm');
                 const userSensorAlarmSub = client.subscribe('/user/queue/sensor-alarm', (message: any) => {
                     console.log('[STOMP] ✅ Received from /user/queue/sensor-alarm:', message.body);
@@ -148,12 +217,13 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                             id: `sensor-${Date.now()}-${Math.random()}`,
                             type: 'sensor-alarm',
                             title: payload.eventName || '센서 알람',
-                            siteName: payload.sensorDescription,
-                            message: payload.message || payload.guideMessage,
-                            timestamp: new Date(payload.timestamp),
+                            siteName: payload.siteName || payload.sensorDescription,
+                            message: payload.message || payload.guideMessage || '',
+                            timestamp: payload.timestamp ? new Date(payload.timestamp) : new Date(),
                             level: payload.level as any,
                             payload,
                         };
+                        console.log('[STOMP] Created user notification object:', notification);
                         addNotification(notification);
                     } catch (error) {
                         console.error('[STOMP] Failed to parse user sensor alarm:', error);
