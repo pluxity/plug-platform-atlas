@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui';
+import { DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui';
 import { useState, useEffect } from 'react';
 import { usePermissions, useDeletePermission, useRoles } from '@plug-atlas/api-hooks';
 import { usePermissionResources } from '../../services/hooks';

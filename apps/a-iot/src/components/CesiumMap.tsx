@@ -1,14 +1,12 @@
 import { useRef, useEffect, useState } from 'react'
-import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Color, Entity, Cesium3DTileset, HeightReference } from 'cesium'
-import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, ION_ASSETS, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD } from '../stores/cesium'
-import { FeatureResponse } from '@plug-atlas/web-core'
-import { SiteResponse } from '../services/api/site'
+import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference } from 'cesium'
+import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD } from '../stores/cesium'
+import { SiteResponse } from '@plug-atlas/web-core'
 import MapControls from './MapControls'
 import { Spinner } from '@plug-atlas/ui'
 
 interface CesiumMapProps {
   sites?: SiteResponse[]
-  sensors?: FeatureResponse[]
   activeTab?: 'overview' | 'parks'
   selectedSiteId?: string | null
   onSiteSelect?: (siteId: string) => void
@@ -17,9 +15,7 @@ interface CesiumMapProps {
 
 export default function CesiumMap({
   sites = [],
-  sensors = [],
   activeTab = 'overview',
-  selectedSiteId = null,
   onSiteSelect,
   className = ''
 }: CesiumMapProps) {
@@ -30,9 +26,9 @@ export default function CesiumMap({
   const [seongnamTilesetRef, setSeongnamTilesetRef] = useState<Cesium3DTileset | null>(null)
 
   const { createViewer, initializeResources } = useViewerStore()
-  const { loadIonTileset, loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, setupSeongnamAutoHide, applyHeightOffset } = useTilesetStore()
+  const { loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, applyHeightOffset } = useTilesetStore()
   const { addMarker, clearAllMarkers } = useMarkerStore()
-  const { displayWktPolygon, clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
+  const { clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
   const { focusOn } = useCameraStore()
 
   // Viewer 초기화

@@ -8,7 +8,7 @@ import { useAdminUsers } from '@plug-atlas/api-hooks'
 import CesiumMap from '../components/CesiumMap'
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'parks'>('overview')
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
 
   const { data: sites = [] } = useSites()
@@ -17,8 +17,6 @@ export default function Dashboard() {
   const { data: users = [] } = useAdminUsers()
 
   const handleSiteSelect = (siteId: string) => {
-    // TODO
-    // 공원별 보기 탭으로 전환
     setActiveTab('parks')
     setSelectedSiteId(siteId)
   }
@@ -86,9 +84,11 @@ export default function Dashboard() {
     <>
       <div className="mb-6">
         <Tabs value={activeTab} onValueChange={(value) => {
-          setActiveTab(value)
-          if (value === 'overview') {
-            setSelectedSiteId(null)
+          if (value === 'overview' || value === 'parks') {
+            setActiveTab(value)
+            if (value === 'overview') {
+              setSelectedSiteId(null)
+            }
           }
         }} variant="buttons">
           <TabsList className="justify-start">
@@ -123,7 +123,6 @@ export default function Dashboard() {
         <CardContent>
           <CesiumMap
             sites={sites}
-            sensors={sensors}
             activeTab={activeTab}
             selectedSiteId={selectedSiteId}
             onSiteSelect={handleSiteSelect}

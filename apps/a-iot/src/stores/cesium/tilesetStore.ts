@@ -52,9 +52,8 @@ export const useTilesetStore = create<TilesetStore>(() => ({
 
       if (viewer.isDestroyed()) return null
 
-      // tileFailed 이벤트 핸들러 추가 (에러 로그 억제)
-      tileset.tileFailed.addEventListener((error) => {
-        // 타일 로딩 실패는 무시 (콘솔 로그 출력 안함)
+      tileset.tileFailed.addEventListener(() => {
+        // Silent
       })
 
       viewer.scene.primitives.add(tileset)
@@ -76,9 +75,8 @@ export const useTilesetStore = create<TilesetStore>(() => ({
 
       if (viewer.isDestroyed()) return null
 
-      // tileFailed 이벤트 핸들러 추가 (에러 로그 억제)
-      tileset.tileFailed.addEventListener((error) => {
-        // 타일 로딩 실패는 무시 (콘솔 로그 출력 안함)
+      tileset.tileFailed.addEventListener(() => {
+        // Silent
       })
 
       viewer.scene.primitives.add(tileset)

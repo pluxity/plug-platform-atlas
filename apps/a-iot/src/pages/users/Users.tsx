@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle, DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, CardDescription } from '@plug-atlas/ui';
+import { DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@plug-atlas/ui';
 import { useState, useEffect } from 'react';
 import UserCreateDialog from './dialogs/UsersCreateDialog';
 import UserEditDialog from './dialogs/UserEditDialog';
