@@ -46,19 +46,27 @@ useEffect(() => {
 }, [])
 ```
 
-### 2. Tileset 로딩
+### 2. Imagery & Terrain 초기화
 
 ```tsx
-import { useTilesetStore, ION_ASSETS } from '../../stores/cesium'
+import { useViewerStore } from '../../stores/cesium'
 
-const { loadIonTileset, loadAllIonTilesets } = useTilesetStore()
+const { initializeResources } = useViewerStore()
 
-await loadIonTileset(viewer, ION_ASSETS.GOOGLE_PHOTOREALISTIC_3D_TILES)
+await initializeResources(viewer)
+```
+
+### 3. Tileset 로딩
+
+```tsx
+import { useTilesetStore } from '../../stores/cesium'
+
+const { loadAllIonTilesets } = useTilesetStore()
 
 const tilesets = await loadAllIonTilesets(viewer)
 ```
 
-### 3. 자동 숨김 설정
+### 4. 자동 숨김 설정
 
 카메라 거리에 따라 tileset 자동 표시/숨김:
 
@@ -71,7 +79,7 @@ const cleanup = setupTilesetsAutoHide(viewer, tilesets, 2000)
 return () => cleanup()
 ```
 
-### 4. 높이 오프셋 적용
+### 5. 높이 오프셋 적용
 
 ```tsx
 import { useTilesetStore, TILESET_HEIGHT_OFFSETS } from '../../stores/cesium'
@@ -138,10 +146,7 @@ export default function MapDashboard() {
         }
         viewerInstance.camera.setView({ destination, orientation })
 
-        await loadIonTileset(viewerInstance, ION_ASSETS.GOOGLE_PHOTOREALISTIC_3D_TILES, {
-          maximumScreenSpaceError: 64,
-          skipLevelOfDetail: true,
-        })
+        await initializeResources(viewerInstance)
 
         const tilesets = await loadAllIonTilesets(viewerInstance)
         const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, 2000)
@@ -374,23 +379,55 @@ viewer.scene.fog.screenSpaceErrorFactor = 2.0
 4. **높이 오프셋**: Tileset이 지형과 안 맞으면 오프셋 조정
 5. **카메라 거리 threshold**: 사용 사례에 따라 조정 (기본 2000m)
 
-## 마커 및 카메라 제어
+## 마커 관리
 
-마커와 카메라 제어는 별도 store로 분리되어 있습니다:
+### markerStore
+
+마커 생성 및 관리:
 
 ```tsx
-import { useCameraStore, useMarkerStore } from '../../stores/cesium'
+import { useMarkerStore } from '../../stores/cesium'
+import { HeightReference } from 'cesium'
 
-const { focusOn, flyToPosition } = useCameraStore()
-const { addMarker, removeMarker } = useMarkerStore()
+const { addMarker, removeMarker, clearAllMarkers } = useMarkerStore()
 
-focusOn(viewer, { lon: 127.1114, lat: 37.3948 }, 1500)
 addMarker(viewer, {
-  id: 'marker-1',
+  id: 'park-1',
   lon: 127.1114,
   lat: 37.3948,
-  label: 'My Location',
+  height: 20,
+  image: '/images/icons/map/park.png',
+  width: 45,
+  heightValue: 55,
+  label: '공원 이름',
+  labelColor: '#000000',
+  heightReference: HeightReference.RELATIVE_TO_GROUND,
+  disableDepthTest: true,
+  disableScaleByDistance: true,
 })
 ```
 
-자세한 내용은 기존 README 참조.
+**MarkerOptions:**
+- `id`: 마커 고유 ID
+- `lon`, `lat`: 좌표
+- `height`: 지면으로부터 높이 (기본 1m)
+- `image`: 아이콘 이미지 경로
+- `width`, `heightValue`: 아이콘 크기
+- `label`: 라벨 텍스트 (SUIT 폰트 사용)
+- `labelColor`: 라벨 색상 (검은색 글씨, 흰색 테두리)
+- `heightReference`: 높이 참조 (기본 RELATIVE_TO_GROUND)
+- `disableDepthTest`: 다른 객체에 가려지지 않음
+- `disableScaleByDistance`: 거리에 따른 크기 변화 비활성화
+
+## 카메라 제어
+
+### cameraStore
+
+```tsx
+import { useCameraStore } from '../../stores/cesium'
+
+const { focusOn, flyToPosition } = useCameraStore()
+
+focusOn(viewer, wktPolygon, 500)
+flyToPosition(viewer, { lon: 127.1114, lat: 37.3948, height: 1500 })
+```

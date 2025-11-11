@@ -30,7 +30,7 @@ export const useMarkerStore = create<MarkerStore>(() => ({
     const position = Cartesian3.fromDegrees(
       options.lon,
       options.lat,
-      options.height ?? 0
+      options.height ?? 1
     )
 
     const entity = viewer.entities.add({
@@ -40,21 +40,25 @@ export const useMarkerStore = create<MarkerStore>(() => ({
         image: options.image || '/images/icons/map/marker.png',
         width: options.width || 32,
         height: options.heightValue || 32,
-        heightReference: HeightReference.RELATIVE_TO_GROUND,
-        scaleByDistance: new NearFarScalar(100, 1.5, 5000, 0.3),
+        heightReference: options.heightReference ?? HeightReference.RELATIVE_TO_GROUND,
+        scaleByDistance: options.disableScaleByDistance ? undefined : new NearFarScalar(100, 1.5, 5000, 0.3),
+        disableDepthTestDistance: options.disableDepthTest ? Number.POSITIVE_INFINITY : undefined,
       },
       label: options.label
         ? {
             text: options.label,
-            font: '14px sans-serif',
+            font: '14px SUIT',
             fillColor: options.labelColor
               ? Color.fromCssColorString(options.labelColor)
-              : Color.WHITE,
-            outlineColor: Color.BLACK,
-            outlineWidth: 2,
+              : Color.BLACK,
+            outlineColor: Color.WHITE,
+            outlineWidth: 3,
             style: LabelStyle.FILL_AND_OUTLINE,
             verticalOrigin: VerticalOrigin.BOTTOM,
-            pixelOffset: new Cartesian2(0, -40),
+            pixelOffset: new Cartesian2(0, -(options.heightValue ? options.heightValue / 2 + 10 : 26)),
+            heightReference: options.heightReference,
+            show: true,
+            disableDepthTestDistance: options.disableDepthTest ? Number.POSITIVE_INFINITY : undefined,
           }
         : undefined,
     })

@@ -1,3 +1,5 @@
+import { HeightReference } from 'cesium'
+
 export interface CameraPosition {
   lon: number
   lat: number
@@ -12,11 +14,14 @@ export interface MarkerOptions {
   lon: number
   lat: number
   height?: number
+  heightReference?: HeightReference
   image?: string
   width?: number
   heightValue?: number
   label?: string
   labelColor?: string
+  disableDepthTest?: boolean
+  disableScaleByDistance?: boolean
 }
 
 export const DEFAULT_CAMERA_POSITION: CameraPosition = {

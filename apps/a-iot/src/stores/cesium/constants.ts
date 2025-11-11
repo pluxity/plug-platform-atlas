@@ -20,4 +20,4 @@ export const TILESET_HEIGHT_OFFSETS = {
   SEONGNAM: Number(import.meta.env.VITE_CESIUM_SEONGNAM_HEIGHT_OFFSET) || 20,
 } as const
 
-export const TILESET_AUTO_HIDE_THRESHOLD = 2000
+export const TILESET_AUTO_HIDE_THRESHOLD = 15000

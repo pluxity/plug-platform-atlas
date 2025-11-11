@@ -23,6 +23,8 @@ const DEFAULT_TILESET_OPTIONS = {
   dynamicScreenSpaceErrorDensity: 0.00278,
   dynamicScreenSpaceErrorFactor: 4.0,
   dynamicScreenSpaceErrorHeightFalloff: 0.25,
+  cacheBytes: 1024 * 1024 * 1024, // 1GB (기본값: 512MB)
+  maximumCacheOverflowBytes: 512 * 1024 * 1024, // 512MB (기본값: 256MB)
 } as const
 
 interface TilesetStore {
@@ -50,6 +52,11 @@ export const useTilesetStore = create<TilesetStore>(() => ({
 
       if (viewer.isDestroyed()) return null
 
+      // tileFailed 이벤트 핸들러 추가 (에러 로그 억제)
+      tileset.tileFailed.addEventListener((error) => {
+        // 타일 로딩 실패는 무시 (콘솔 로그 출력 안함)
+      })
+
       viewer.scene.primitives.add(tileset)
 
       return tileset
@@ -68,6 +75,11 @@ export const useTilesetStore = create<TilesetStore>(() => ({
       const tileset = await Cesium3DTileset.fromUrl(tilesetUrl, DEFAULT_TILESET_OPTIONS)
 
       if (viewer.isDestroyed()) return null
+
+      // tileFailed 이벤트 핸들러 추가 (에러 로그 억제)
+      tileset.tileFailed.addEventListener((error) => {
+        // 타일 로딩 실패는 무시 (콘솔 로그 출력 안함)
+      })
 
       viewer.scene.primitives.add(tileset)
 

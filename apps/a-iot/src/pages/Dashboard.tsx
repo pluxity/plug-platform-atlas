@@ -1,18 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Column, DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Column, DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
 import { TreePine, Camera, Radio, Users, Map } from 'lucide-react'
-import { useRef, useEffect, useState, useMemo } from 'react'
-import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Color, Entity } from 'cesium'
-import { useViewerStore, useTilesetStore, ION_ASSETS, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, usePolygonStore, useMarkerStore, useCameraStore } from '../stores/cesium'
+import { useState, useMemo } from 'react'
 import { useSites } from '../services/hooks/useSite'
 import { useCctvList } from '../services/hooks/useCctv'
 import { FeatureResponse, useFeatures } from '@plug-atlas/web-core'
 import { useAdminUsers } from '@plug-atlas/api-hooks'
+import CesiumMap from '../components/CesiumMap'
 
 export default function Dashboard() {
-  const cesiumContainerRef = useRef<HTMLDivElement>(null)
-  const viewerRef = useRef<CesiumViewer | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
 
@@ -21,190 +16,12 @@ export default function Dashboard() {
   const { data: sensors = [] } = useFeatures()
   const { data: users = [] } = useAdminUsers()
 
-  const { createViewer } = useViewerStore()
-  const { loadIonTileset, loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, setupSeongnamAutoHide, applyHeightOffset } = useTilesetStore()
-  const { displayWktPolygon, clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
-  const { addMarker, clearAllMarkers } = useMarkerStore()
-  const { focusOn } = useCameraStore()
-
-  useEffect(() => {
-    if (!cesiumContainerRef.current) return
-
-    let viewerInstance: CesiumViewer | null = null
-    const cleanupFunctions: Array<() => void> = []
-
-    const initializeViewer = async () => {
-      try {
-        setIsLoading(true)
-
-        viewerInstance = createViewer(cesiumContainerRef.current!)
-        viewerRef.current = viewerInstance
-
-        viewerInstance.scene.globe.depthTestAgainstTerrain = true
-        viewerInstance.scene.fog.enabled = true
-        viewerInstance.scene.fog.density = 0.0002
-        viewerInstance.scene.fog.screenSpaceErrorFactor = 2.0
-
-        const destination = Cartesian3.fromDegrees(
-          DEFAULT_CAMERA_POSITION.lon,
-          DEFAULT_CAMERA_POSITION.lat,
-          DEFAULT_CAMERA_POSITION.height
-        )
-        const orientation = {
-          heading: CesiumMath.toRadians(DEFAULT_CAMERA_POSITION.heading || 0),
-          pitch: CesiumMath.toRadians(DEFAULT_CAMERA_POSITION.pitch || -45),
-          roll: CesiumMath.toRadians(DEFAULT_CAMERA_POSITION.roll || 0),
-        }
-        viewerInstance.camera.setView({ destination, orientation })
-
-        await loadIonTileset(viewerInstance, ION_ASSETS.GOOGLE_PHOTOREALISTIC_3D_TILES, {
-          maximumScreenSpaceError: 24,
-          skipLevelOfDetail: true,
-        })
-
-        const tilesets = await loadAllIonTilesets(viewerInstance)
-        const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, TILESET_AUTO_HIDE_THRESHOLD)
-        cleanupFunctions.push(tilesetsCleanup)
-
-        const seongnamTileset = await loadSeongnamTileset(viewerInstance)
-        if (seongnamTileset) {
-          applyHeightOffset(seongnamTileset, TILESET_HEIGHT_OFFSETS.SEONGNAM)
-          const seongnamCleanup = setupSeongnamAutoHide(viewerInstance, seongnamTileset, TILESET_AUTO_HIDE_THRESHOLD)
-          cleanupFunctions.push(seongnamCleanup)
-        }
-
-        setIsLoading(false)
-      } catch (err) {
-        console.error('Failed to initialize viewer:', err)
-        setError('지도를 로드하는 중 오류가 발생했습니다.')
-        setIsLoading(false)
-      }
-    }
-
-    initializeViewer()
-
-    return () => {
-      cleanupFunctions.forEach(cleanup => cleanup())
-      if (viewerInstance) {
-        clearAllMarkers(viewerInstance)
-        clearAllPolygons(viewerInstance)
-        if (!viewerInstance.isDestroyed()) {
-          viewerInstance.destroy()
-        }
-      }
-      viewerRef.current = null
-    }
-  }, [clearAllMarkers, clearAllPolygons])
-
-  useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer || viewer.isDestroyed() || isLoading) return
-
-    const handleEntitySelected = (selectedEntity: Entity | undefined) => {
-      if (!selectedEntity || !selectedEntity.id) return
-
-      const entityId = selectedEntity.id.toString()
-      
-      if (entityId.startsWith('site-')) {
-        const siteId = entityId.replace('site-', '')
-        const clickedSite = sites.find(site => site.id.toString() === siteId)
-        
-        if (!clickedSite) return
-
-        if (activeTab === 'overview') {
-          setActiveTab('parks')
-          setSelectedSiteId(siteId)
-        } else if (activeTab === 'parks') {
-          if (clickedSite.location?.trim()) {
-            focusOn(viewer, clickedSite.location, 500)
-          }
-        }
-      }
-    }
-
-    viewer.selectedEntityChanged.addEventListener(handleEntitySelected)
-
-    return () => {
-      if (!viewer.isDestroyed()) {
-        viewer.selectedEntityChanged.removeEventListener(handleEntitySelected)
-      }
-    }
-  }, [sites, isLoading, activeTab, focusOn])
-
-  useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer || viewer.isDestroyed() || isLoading || !sites.length) return
-
-    clearAllMarkers(viewer)
-    clearAllPolygons(viewer)
-
-    const zoomController = viewer.scene.screenSpaceCameraController;
-    if(activeTab === 'parks') {
-      zoomController.maximumZoomDistance = 4000;
-    } else {
-      zoomController.maximumZoomDistance = Number.POSITIVE_INFINITY;
-    }
-
-    const filteredSites = activeTab === 'parks' && selectedSiteId
-      ? sites.filter(site => site.id.toString() === selectedSiteId)
-      : sites
-
-    filteredSites.forEach((site) => {
-      if (site.location?.trim()) {
-        displayWktPolygon(viewer, site.location, {
-          name: `polygon-${site.id}`,
-          height: 500, 
-        })
-
-        if (activeTab === 'overview') {
-          const coordinates = parseWktToCoordinates(site.location)
-          if (coordinates.length > 0) {
-            const lons = coordinates.map((coord) => coord[0])
-            const lats = coordinates.map((coord) => coord[1])
-            const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2
-            const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
-
-            addMarker(viewer, {
-              id: `site-${site.id}`,
-              lon: centerLon,
-              lat: centerLat,
-              height: 520, 
-              label: site.name,
-              labelColor: Color.WHITE.toString(),
-            })
-          }
-        }
-      }
-    })
-
-    if (activeTab === 'parks' && selectedSiteId) {
-      const filteredFeatures = sensors.filter(
-        (feature) => feature.siteResponse?.id?.toString() === selectedSiteId
-      )
-
-      filteredFeatures.forEach((feature) => {
-        if (feature.longitude && feature.latitude) {
-          addMarker(viewer, {
-            id: `device-${feature.id}`,
-            lon: feature.longitude,
-            lat: feature.latitude,
-            label: feature.name,
-            labelColor: Color.WHITE.toString(),
-            height: 520, 
-          })
-        }
-      })
-    }
-
-    if (activeTab === 'parks' && selectedSiteId && filteredSites.length > 0) {
-      const selectedSite = filteredSites[0]
-      if (selectedSite?.location?.trim()) {
-        focusOn(viewer, selectedSite.location, 500)
-      }
-    }
-
-    viewer.scene.requestRender()
-  }, [sites, sensors, isLoading, activeTab, selectedSiteId, displayWktPolygon, parseWktToCoordinates, addMarker, clearAllMarkers, clearAllPolygons, focusOn])
+  const handleSiteSelect = (siteId: string) => {
+    // TODO
+    // 공원별 보기 탭으로 전환
+    setActiveTab('parks')
+    setSelectedSiteId(siteId)
+  }
 
   const stats = useMemo(() => {
     return [
@@ -304,22 +121,13 @@ export default function Dashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="relative w-full h-[600px] rounded-lg overflow-hidden">
-            <div
-              ref={cesiumContainerRef}
-              className="w-full h-full"
-            />
-            {isLoading && (
-              <div className="absolute inset-0 bg-gray-100/80 flex items-center justify-center">
-                <span className="flex items-center gap-2 text-sm text-gray-600"><Spinner size="sm" /> 지도 로딩 중...</span>
-              </div>
-            )}
-            {error && (
-              <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                <p className="text-red-500">{error}</p>
-              </div>
-            )}
-          </div>
+          <CesiumMap
+            sites={sites}
+            sensors={sensors}
+            activeTab={activeTab}
+            selectedSiteId={selectedSiteId}
+            onSiteSelect={handleSiteSelect}
+          />
         </CardContent>
       </Card>
 

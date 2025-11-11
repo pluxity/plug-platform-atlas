@@ -20,7 +20,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://dev.pluxity.com/aiot',
+        target: 'http://192.168.10.181:8101',
         changeOrigin: true,
         secure: false,
       },

@@ -1,16 +1,19 @@
 import { Viewer as CesiumViewer } from 'cesium'
-import { Plus, Minus, Home } from 'lucide-react'
+import { Plus, Minus, Home, Layers } from 'lucide-react'
 import { Button } from '@plug-atlas/ui'
 import { useCameraStore, type CameraPosition } from '../stores/cesium'
+import { useState } from 'react'
 
 interface MapControlsProps {
   viewer: CesiumViewer | null
   homePosition?: CameraPosition
+  onToggleSeongnamTileset?: (visible: boolean) => void
   className?: string
 }
 
-export default function MapControls({ viewer, homePosition, className = '' }: MapControlsProps) {
+export default function MapControls({ viewer, homePosition, onToggleSeongnamTileset, className = '' }: MapControlsProps) {
   const { flyToPosition } = useCameraStore()
+  const [seongnamVisible, setSeongnamVisible] = useState(false) // 기본값 off
 
   const zoomIn = () => {
     if (!viewer || viewer.isDestroyed()) return
@@ -30,6 +33,12 @@ export default function MapControls({ viewer, homePosition, className = '' }: Ma
     if (!viewer || viewer.isDestroyed()) return
     if (!homePosition) return
     flyToPosition(viewer, homePosition)
+  }
+
+  const toggle3DLayers = () => {
+    const newVisible = !seongnamVisible
+    setSeongnamVisible(newVisible)
+    onToggleSeongnamTileset?.(newVisible)
   }
 
   return (
@@ -65,6 +74,17 @@ export default function MapControls({ viewer, homePosition, className = '' }: Ma
           <Home />
         </Button>
       )}
+
+      <Button
+        type="button"
+        onClick={toggle3DLayers}
+        variant="outline"
+        size="icon"
+        title="3D 레이어"
+        className={seongnamVisible ? 'bg-blue-100 border-blue-300' : ''}
+      >
+        <Layers className={seongnamVisible ? 'text-blue-600' : ''} />
+      </Button>
     </div>
   )
 }
