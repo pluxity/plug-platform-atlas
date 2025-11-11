@@ -419,6 +419,145 @@ addMarker(viewer, {
 - `disableDepthTest`: 다른 객체에 가려지지 않음
 - `disableScaleByDistance`: 거리에 따른 크기 변화 비활성화
 
+## SVG 마커 시스템
+
+### 개요
+
+SVG 마커 시스템은 `public/images/icons/markers/` 디렉토리의 SVG 파일들을 동적으로 색상 변경하여 사용하는 시스템입니다.
+
+### 주요 기능
+
+1. **SVG 파일 자동 캐싱**: 앱 시작 시 모든 SVG 파일을 메모리에 로드
+2. **색상 변경된 SVG 캐싱**: SVG + 색상 조합을 캐싱하여 메모리 효율 극대화
+3. **동적 색상 변경**: 런타임에 마커 색상 변경 가능
+4. **깜빡임 효과**: 마커에 blink 효과 적용/해제 가능
+
+### 사용 가능한 SVG 마커
+
+```tsx
+import { SVG_MARKERS } from '../../utils/svgMarkerUtils'
+
+SVG_MARKERS.FIRE          // fire.svg
+SVG_MARKERS.TEMPERATURE   // temperature.svg
+SVG_MARKERS.DISPLACEMENT  // displacement.svg
+```
+
+### 초기화
+
+```tsx
+import { preloadAllMarkerSvgs } from '../../utils/svgMarkerUtils'
+
+useEffect(() => {
+  preloadAllMarkerSvgs()
+}, [])
+```
+
+### SVG 마커 생성
+
+```tsx
+import { createColoredSvgDataUrl, SVG_MARKERS } from '../../utils/svgMarkerUtils'
+import { useMarkerStore } from '../../stores/cesium'
+
+const { addMarker } = useMarkerStore()
+
+const imageUrl = createColoredSvgDataUrl(SVG_MARKERS.FIRE, '#FF0000')
+
+addMarker(viewer, {
+  id: 'fire-sensor-1',
+  lon: 127.114416,
+  lat: 37.294320,
+  height: 10,
+  image: imageUrl,
+  width: 44,
+  heightValue: 53,
+  label: '화재 센서 1',
+  labelColor: '#000000',
+  heightReference: HeightReference.RELATIVE_TO_GROUND,
+  disableDepthTest: true,
+  disableScaleByDistance: true,
+})
+```
+
+### 동적 색상 변경
+
+```tsx
+import { useMarkerStore } from '../../stores/cesium'
+import { SVG_MARKERS } from '../../utils/svgMarkerUtils'
+
+const { changeMarkerColor } = useMarkerStore()
+
+changeMarkerColor(viewer, 'fire-sensor-1', SVG_MARKERS.FIRE, '#FF0000')
+```
+
+### 깜빡임 효과
+
+```tsx
+import { useMarkerStore } from '../../stores/cesium'
+
+const { startMarkerBlink, stopMarkerBlink } = useMarkerStore()
+
+startMarkerBlink(viewer, 'fire-sensor-1', 800)
+
+stopMarkerBlink(viewer, 'fire-sensor-1')
+```
+
+**Parameters:**
+- `viewer`: Cesium Viewer 인스턴스
+- `markerId`: 마커 ID
+- `duration`: 깜빡임 주기 (밀리초, 기본값: 1000ms)
+
+### 전체 예시: 이벤트 발생 시나리오
+
+```tsx
+import { useMarkerStore } from '../../stores/cesium'
+import { createColoredSvgDataUrl, SVG_MARKERS } from '../../utils/svgMarkerUtils'
+
+const { addMarker, changeMarkerColor, startMarkerBlink } = useMarkerStore()
+
+const sensors = [
+  { id: 'fire-1', svgName: SVG_MARKERS.FIRE, lon: 127.11, lat: 37.29, name: '화재센서 1' },
+  { id: 'fire-2', svgName: SVG_MARKERS.FIRE, lon: 127.12, lat: 37.30, name: '화재센서 2' },
+]
+
+sensors.forEach(sensor => {
+  const imageUrl = createColoredSvgDataUrl(sensor.svgName, '#11C208')
+  addMarker(viewer, {
+    id: sensor.id,
+    lon: sensor.lon,
+    lat: sensor.lat,
+    height: 10,
+    image: imageUrl,
+    width: 44,
+    heightValue: 53,
+    label: sensor.name,
+    labelColor: '#000000',
+    heightReference: HeightReference.RELATIVE_TO_GROUND,
+    disableDepthTest: true,
+    disableScaleByDistance: true,
+  })
+})
+
+function handleFireEvent(sensorId: string) {
+  changeMarkerColor(viewer, sensorId, SVG_MARKERS.FIRE, '#FF0000')
+  startMarkerBlink(viewer, sensorId, 800)
+}
+
+handleFireEvent('fire-1')
+```
+
+### 메모리 효율
+
+- **SVG 원본**: 각 SVG 파일당 1번만 fetch
+- **색상 변경된 SVG**: 같은 색상 조합은 캐시에서 재사용
+- **예시**: 100개의 빨간 화재 센서를 만들어도 메모리는 1개분만 사용
+
+### 주의사항
+
+1. `preloadAllMarkerSvgs()`를 먼저 호출해야 함
+2. SVG 파일은 `public/images/icons/markers/` 디렉토리에 위치
+3. Blink 효과를 위해 `viewer.scene.requestRenderMode = false` 설정 필요
+4. Blink 리스너는 자동으로 정리되지만, 수동으로 중지하려면 `stopMarkerBlink` 호출
+
 ## 카메라 제어
 
 ### cameraStore
