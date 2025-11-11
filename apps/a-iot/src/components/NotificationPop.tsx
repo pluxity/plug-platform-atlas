@@ -13,8 +13,6 @@ interface NotificationPanelProps {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     onMarkAsRead?: (id: string) => void;
-    onMarkAllAsRead?: () => void;
-    onClearAll?: () => void;
 }
 
 const getLevelColor = (level?: string) => {
@@ -47,10 +45,13 @@ const getRelativeTime = (date: Date): string => {
 
 function NotificationItem({ notification, onMarkAsRead }: { notification: Notification; onMarkAsRead?: (id: string) => void }) {
     const navigate = useNavigate();
+
+    const payload = notification.type === 'sensor-alarm'
+        ? (notification.payload as SensorAlarmPayload)
+        : null;
+
     const [currentStatus, setCurrentStatus] = useState<string>(
-        notification.type === 'sensor-alarm'
-            ? (notification.payload as SensorAlarmPayload).status || ''
-            : ''
+        payload?.status || ''
     );
 
     const { trigger: updateStatus, isMutating: isUpdating } = useUpdateEventStatus();
@@ -69,7 +70,6 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
         e.stopPropagation();
 
         if (notification.type !== 'sensor-alarm' || !notification.eventId) {
-            console.warn('[NotificationItem] Cannot update status - missing eventId');
             return;
         }
 
@@ -79,9 +79,8 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
                 status: { result: 'WORKING' }
             });
             setCurrentStatus('WORKING');
-            console.log('[NotificationItem] Status updated to WORKING for event', notification.eventId);
         } catch (error) {
-            console.error('[NotificationItem] Failed to update status:', error);
+            // Silent error handling - status update failure will be handled by SWR
         }
     };
 
@@ -114,7 +113,7 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center flex-1 min-w-0">
                     <span className="text-sm font-bold text-zinc-800 truncate">
-                        {(notification.payload as SensorAlarmPayload).profileDescription || (notification.payload as SensorAlarmPayload).sensorDescription || '센서'} {getLevelInfo((notification.payload as SensorAlarmPayload).level || notification.level || '').text} 발생
+                        {payload?.profileDescription || payload?.sensorDescription || '센서'} {getLevelInfo(payload?.level || notification.level || '').text} 발생
                     </span>
                 </div>
                 <span className="text-xs text-neutral-400 whitespace-nowrap ml-2">
@@ -130,10 +129,10 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
                     />
                     <div className="space-y-1">
                         <div className="text-sm text-zinc-800 m-0">
-                            {(notification.payload as SensorAlarmPayload).siteName || '알 수 없음'}
+                            {payload?.siteName || '알 수 없음'}
                         </div>
                         <div className={`text-xs ${getLevelColor(notification.level)}`}>
-                            {(notification.payload as SensorAlarmPayload).sensorDescription || ''}: {notification.payload.deviceId}
+                            {payload?.sensorDescription || ''}: {notification.payload.deviceId}
                         </div>
                     </div>
                 </div>
@@ -164,12 +163,6 @@ export default function NotificationPop({
     onOpenChange,
     onMarkAsRead,
 }: NotificationPanelProps) {
-    console.log('[NotificationPop] Rendering with:', {
-        notificationCount: notifications.length,
-        unreadCount,
-        notifications
-    });
-
     return (
         <Popover open={open} onOpenChange={onOpenChange}>
             <PopoverTrigger asChild>

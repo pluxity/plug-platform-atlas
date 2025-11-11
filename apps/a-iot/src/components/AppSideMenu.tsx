@@ -33,15 +33,12 @@ export default function AppSideMenu() {
     unreadCount,
     isConnected,
     markAsRead,
-    markAllAsRead,
-    clearNotifications,
   } = useStompNotifications()
 
   // Auto-open popup when new notification arrives
   const prevUnreadCount = useRef(0)
   useEffect(() => {
     if (unreadCount > prevUnreadCount.current) {
-      console.log('[AppSideMenu] New notification received! Auto-opening popup. Count:', prevUnreadCount.current, '->', unreadCount)
       setNotificationOpen(true)
     }
     prevUnreadCount.current = unreadCount
@@ -158,8 +155,6 @@ export default function AppSideMenu() {
                       open={notificationOpen}
                       onOpenChange={setNotificationOpen}
                       onMarkAsRead={markAsRead}
-                      onMarkAllAsRead={markAllAsRead}
-                      onClearAll={clearNotifications}
                     />
                   </div>
                 </div>

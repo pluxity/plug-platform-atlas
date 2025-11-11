@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Client, StompSubscription } from '@stomp/stompjs';
+import { Client, StompSubscription, IMessage } from '@stomp/stompjs';
 import type { Notification, SensorAlarmPayload, ConnectionErrorPayload } from '../types';
 import { useEvents } from './useEventsManagement';
 import type { Event } from '../types';
@@ -20,7 +20,6 @@ interface UseStompNotificationsReturn {
     markAsRead: (id: string) => void;
     markAllAsRead: () => void;
     clearNotifications: () => void;
-    sendTestMessage: () => void;
 }
 
 const eventToNotification = (event: Event): Notification => {
@@ -88,21 +87,9 @@ export function useStompNotifications(): UseStompNotificationsReturn {
 
     const unreadCount = pendingEvents.length;
 
-    useEffect(() => {
-        console.log('[useStompNotifications] Merged notifications:', {
-            realtimeCount: realtimeNotifications.length,
-            apiPendingCount: pendingEvents.length,
-            totalUniqueCount: notifications.length,
-            unreadCount,
-            notifications
-        });
-    }, [realtimeNotifications, pendingEvents, notifications, unreadCount]);
-
     const addNotification = useCallback((notification: Notification) => {
-        console.log('[NOTIFICATION] Adding real-time notification:', notification);
         setRealtimeNotifications(prev => {
             const updated = [notification, ...prev].slice(0, MAX_NOTIFICATIONS);
-            console.log('[NOTIFICATION] Updated real-time notifications list:', updated);
             return updated;
         });
     }, []);
@@ -121,64 +108,18 @@ export function useStompNotifications(): UseStompNotificationsReturn {
         setRealtimeNotifications([]);
     }, []);
 
-    const sendTestMessage = useCallback(() => {
-        const client = clientRef.current;
-        if (!client || !isConnected) {
-            console.warn('[STOMP] Client not connected. Cannot send test message.');
-            return;
-        }
-
-        const testPayload = {
-            deviceId: "SNIOT-P-THM-001",
-            fieldKey: "Temperature",
-            lat: 37.3948,
-            level: "DANGER",
-            lon: 127.1114,
-            maxValue: -10,
-            message: "테스트 화재 알람",
-            minValue: -20,
-            objectId: "34954",
-            profileDescription: "온도",
-            sensorDescription: "온습도계",
-            sensorType: "Float",
-            siteId: 1,
-            siteName: "율동공원",
-            status: "PENDING",
-            timestamp: new Date().toISOString(),
-            unit: "-",
-            value: -15
-        };
-
-        try {
-            client.publish({
-                destination: '/app/test/sensor-alarm',
-                body: JSON.stringify(testPayload)
-            });
-            console.log('[STOMP] Test message sent:', testPayload);
-        } catch (error) {
-            console.error('[STOMP] Failed to send test message:', error);
-        }
-    }, [isConnected]);
-
     useEffect(() => {
         const client = new Client({
             brokerURL: STOMP_ENDPOINT,
             reconnectDelay: 5000,
             heartbeatIncoming: 5000,
             heartbeatOutgoing: 5000,
-            debug: (str: string) => {
-                console.log('[STOMP]', str);
-            },
             onConnect: () => {
-                console.log('[STOMP] Connected successfully!');
                 setIsConnected(true);
 
-                console.log('[STOMP] Subscribing to /queue/sensor-alarm');
-                const sensorAlarmSub = client.subscribe('/queue/sensor-alarm', (message: any) => {
-                    console.log('[STOMP] Received sensor alarm message:', message.body);
+                const sensorAlarmSub = client.subscribe('/queue/sensor-alarm', (message: IMessage) => {
                     try {
                         const payload: SensorAlarmPayload = JSON.parse(message.body);
-                        console.log('[STOMP] Parsed sensor alarm payload:', payload);
                         const notification: Notification = {
                             id: `sensor-${Date.now()}-${Math.random()}`,
                             type: 'sensor-alarm',
@@ -186,21 +127,17 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                             siteName: payload.siteName || payload.sensorDescription,
                             message: payload.message || payload.guideMessage || '',
                             timestamp: payload.timestamp ? new Date(payload.timestamp) : new Date(),
-                            level: payload.level as any,
+                            level: payload.level as Notification['level'],
                             payload,
                         };
-                        console.log('[STOMP] Created notification object:', notification);
                         addNotification(notification);
                     } catch (error) {
-                        console.error('[STOMP] Failed to parse sensor alarm:', error);
+                        // Silent error handling
                     }
                 });
                 subscriptionsRef.current.push(sensorAlarmSub);
-                console.log('[STOMP] Successfully subscribed to /queue/sensor-alarm');
 
-                console.log('[STOMP] Subscribing to /user/queue/sensor-alarm');
-                const userSensorAlarmSub = client.subscribe('/user/queue/sensor-alarm', (message: any) => {
-                    console.log('[STOMP] ✅ Received from /user/queue/sensor-alarm:', message.body);
+                const userSensorAlarmSub = client.subscribe('/user/queue/sensor-alarm', (message: IMessage) => {
                     try {
                         const payload: SensorAlarmPayload = JSON.parse(message.body);
                         const notification: Notification = {
@@ -210,20 +147,17 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                             siteName: payload.siteName || payload.sensorDescription,
                             message: payload.message || payload.guideMessage || '',
                             timestamp: payload.timestamp ? new Date(payload.timestamp) : new Date(),
-                            level: payload.level as any,
+                            level: payload.level as Notification['level'],
                             payload,
                         };
-                        console.log('[STOMP] Created user notification object:', notification);
                         addNotification(notification);
                     } catch (error) {
-                        console.error('[STOMP] Failed to parse user sensor alarm:', error);
+                        // Silent error handling
                     }
                 });
                 subscriptionsRef.current.push(userSensorAlarmSub);
-                console.log('[STOMP] Successfully subscribed to /user/queue/sensor-alarm');
 
-                console.log('[STOMP] Subscribing to /queue/connection-error');
-                const connectionErrorSub = client.subscribe('/queue/connection-error', (message: any) => {
+                const connectionErrorSub = client.subscribe('/queue/connection-error', (message: IMessage) => {
                     try {
                         const payload: ConnectionErrorPayload = JSON.parse(message.body);
                         const notification: Notification = {
@@ -238,20 +172,16 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                         };
                         addNotification(notification);
                     } catch (error) {
-                        console.error('[STOMP] Failed to parse connection error:', error);
+                        // Silent error handling
                     }
                 });
                 subscriptionsRef.current.push(connectionErrorSub);
-                console.log('[STOMP] Successfully subscribed to /queue/connection-error');
-                console.log('[STOMP] All subscriptions ready. Total subscriptions:', subscriptionsRef.current.length);
             },
             onDisconnect: () => {
-                console.log('[STOMP] Disconnected');
                 setIsConnected(false);
             },
-            onStompError: (frame: any) => {
-                console.error('[STOMP] Error:', frame.headers['message']);
-                console.error('[STOMP] Details:', frame.body);
+            onStompError: () => {
+                // Silent error handling
             },
         });
 
@@ -272,6 +202,5 @@ export function useStompNotifications(): UseStompNotificationsReturn {
         markAsRead,
         markAllAsRead,
         clearNotifications,
-        sendTestMessage,
     };
 }
