@@ -23,6 +23,24 @@ export type {
   EventConditionRequest,
 } from './eventCondition'
 
+export type {
+  ActionHistory,
+  ActionHistoryRequest,
+} from './eventHistory'
+
+export type {
+    Event,
+    EventStatusRequest,
+    EventsQueryParams,
+    PaginatedEventsResponse,
+    TimeSeriesData,
+    TimeSeriesQueryParams,
+    EventStatus,
+    EventLevel,
+    SensorType,
+    EventCollectInterval
+} from './eventManagement'
+
 // Site types
 export type {
   Site,

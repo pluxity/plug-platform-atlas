@@ -5,7 +5,7 @@ import {
     useCameraStore,
     usePolygonStore,
     useMarkerStore,
-} from '../../stores/cesium'
+} from '../stores/cesium'
 import { Viewer as CesiumViewer, Color } from 'cesium'
 import type { FeatureResponse } from '@plug-atlas/web-core'
 
@@ -113,8 +113,8 @@ export default function DeviceMapViewer({
 
     if (open !== undefined && onOpenChange) {
         return (
-            <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent>
+            <Dialog open={open} onOpenChange={onOpenChange}> 
+                <DialogContent className="sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>{device.name}</DialogTitle>
                         <DialogDescription>확대 축소만 가능합니다. 마우스 휠을 사용하세요.</DialogDescription>

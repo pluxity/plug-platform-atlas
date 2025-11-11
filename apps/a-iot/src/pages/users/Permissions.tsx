@@ -5,8 +5,9 @@ import { usePermissionResources } from '../../services/hooks';
 import { PermissionGroupResponse } from '@plug-atlas/types';
 import PermissionCreateDialog from './dialogs/PermissionCreateDialog';
 import PermissionEditDialog from './dialogs/PermissionEditDialog';
-import { useSearchBar, usePagination } from './hooks';
-import { SearchBar, TablePagination } from './components';
+import { useSearchBar, usePagination } from '../../services/hooks';
+import { SearchBar } from '../../components/SearchBar';
+import { TablePagination } from '../../components/Pagination';
 
 export default function Permissions() {
   const { data, mutate: mutatePermissions } = usePermissions();
