@@ -1,22 +1,29 @@
 import { useRef, useEffect, useState } from 'react'
 import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference } from 'cesium'
 import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD } from '../stores/cesium'
-import { SiteResponse } from '@plug-atlas/web-core'
+import { SiteResponse, FeatureResponse, type FeatureDeviceTypeResponse } from '@plug-atlas/web-core'
 import MapControls from './MapControls'
 import { Spinner } from '@plug-atlas/ui'
+import { preloadAllMarkerSvgs, createColoredSvgDataUrl, SVG_MARKERS, type SvgMarkerType } from '../utils/svgMarkerUtils'
+import type { Event } from '../services/types'
 
 interface CesiumMapProps {
   sites?: SiteResponse[]
   activeTab?: 'overview' | 'parks'
   selectedSiteId?: string | null
   onSiteSelect?: (siteId: string) => void
+  sensors?: FeatureResponse[]
+  events?: Event[]
   className?: string
 }
 
 export default function CesiumMap({
   sites = [],
   activeTab = 'overview',
+  selectedSiteId,
   onSiteSelect,
+  sensors = [],
+  events = [],
   className = ''
 }: CesiumMapProps) {
   const cesiumContainerRef = useRef<HTMLDivElement>(null)
@@ -27,9 +34,15 @@ export default function CesiumMap({
 
   const { createViewer, initializeResources } = useViewerStore()
   const { loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, applyHeightOffset } = useTilesetStore()
-  const { addMarker, clearAllMarkers } = useMarkerStore()
+  const { addMarker, clearAllMarkers, changeMarkerColor } = useMarkerStore()
   const { clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
   const { focusOn } = useCameraStore()
+  
+  const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
+
+  useEffect(() => {
+    preloadAllMarkerSvgs()
+  }, [])
 
   // Viewer 초기화
   useEffect(() => {
@@ -95,6 +108,7 @@ export default function CesiumMap({
         }
       }
       viewerRef.current = null
+      markerSvgTypeMapRef.current.clear()
     }
   }, [clearAllMarkers, clearAllPolygons])
 
@@ -142,6 +156,52 @@ export default function CesiumMap({
     }
   }, [sites, isLoading, activeTab, focusOn, onSiteSelect])
 
+  const getSvgMarkerType = (deviceType?: FeatureDeviceTypeResponse): SvgMarkerType => {
+    if (!deviceType) return SVG_MARKERS.TEMPERATURE
+    
+    if (deviceType.description) {
+      const desc = deviceType.description.toLowerCase()
+      if (desc.includes('화재') || desc.includes('fire')) {
+        return SVG_MARKERS.FIRE
+      }
+      if (desc.includes('변위') || desc.includes('displacement')) {
+        return SVG_MARKERS.DISPLACEMENT
+      }
+      if (desc.includes('온도') || desc.includes('온습도') || desc.includes('temperature') || desc.includes('humidity')) {
+        return SVG_MARKERS.TEMPERATURE
+      }
+    }
+    
+    return SVG_MARKERS.TEMPERATURE
+  }
+
+  const getEventLevelColor = (level?: string): string => {
+    switch (level) {
+      case 'NORMAL':
+        return '#11C208' 
+      case 'WARNING':
+        return '#F86700' 
+      case 'CAUTION':
+        return '#FDC200'
+      case 'DANGER':
+        return '#CA0014' 
+      case 'DISCONNECTED':
+        return '#0B1FFF' 
+      default:
+        return '#11C208' 
+    }
+  }
+
+  const getDeviceEventLevel = (deviceId: string): string | undefined => {
+    const deviceEvents = events.filter(e => e.deviceId === deviceId)
+    if (deviceEvents.length === 0) return undefined
+    
+    const sortedEvents = deviceEvents.sort((a, b) => 
+      new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
+    )
+    return sortedEvents[0]?.level
+  }
+
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed() || isLoading || !sites.length) return
@@ -176,10 +236,87 @@ export default function CesiumMap({
           }
         }
       })
+    } else if (activeTab === 'parks' && selectedSiteId) {
+      
+      const siteSensors = sensors.filter(sensor => 
+        sensor.siteResponse?.id?.toString() === selectedSiteId &&
+        sensor.longitude &&
+        sensor.latitude
+      )
+
+      siteSensors.forEach((sensor) => {
+        const svgMarkerType = getSvgMarkerType(sensor.deviceTypeResponse)
+        const eventLevel = getDeviceEventLevel(sensor.deviceId)
+        const color = getEventLevelColor(eventLevel)
+        
+        const markerId = `device-${sensor.id}`
+        markerSvgTypeMapRef.current.set(markerId, svgMarkerType)
+        
+        const imageUrl = createColoredSvgDataUrl(svgMarkerType, color)
+        if (!imageUrl) return
+
+        addMarker(viewer, {
+          id: markerId,
+          lon: sensor.longitude!,
+          lat: sensor.latitude!,
+          height: sensor.height || 10,
+          image: imageUrl,
+          width: 44,
+          heightValue: 53,
+          label: sensor.name || sensor.deviceId,
+          labelColor: '#000000',
+          heightReference: HeightReference.RELATIVE_TO_GROUND,
+          disableDepthTest: true,
+          disableScaleByDistance: true,
+        })
+      })
     }
 
     viewer.scene.requestRender()
-  }, [sites, isLoading, activeTab, parseWktToCoordinates, addMarker, clearAllMarkers, clearAllPolygons])
+  }, [sites, isLoading, activeTab, selectedSiteId, sensors, parseWktToCoordinates, addMarker, clearAllMarkers, clearAllPolygons])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed() || isLoading || activeTab !== 'parks' || !selectedSiteId) return
+
+    const siteSensors = sensors.filter(sensor => 
+      sensor.siteResponse?.id?.toString() === selectedSiteId &&
+      sensor.longitude &&
+      sensor.latitude
+    )
+
+    siteSensors.forEach((sensor) => {
+      const markerId = `device-${sensor.id}`
+      const svgMarkerType = markerSvgTypeMapRef.current.get(markerId)
+      if (!svgMarkerType) return
+
+      const eventLevel = getDeviceEventLevel(sensor.deviceId)
+      const color = getEventLevelColor(eventLevel)
+      
+      changeMarkerColor(viewer, markerId, svgMarkerType, color)
+    })
+
+    viewer.scene.requestRender()
+  }, [events, isLoading, activeTab, selectedSiteId, sensors, changeMarkerColor])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed() || isLoading) return
+  
+    const controller = viewer.scene.screenSpaceCameraController
+    if (activeTab === 'parks') {
+      controller.maximumZoomDistance = 4000 
+    } else {
+      controller.maximumZoomDistance = 50000000 
+    }
+  
+    if (activeTab === 'parks' && selectedSiteId) {
+      const selectedSite = sites.find(site => site.id.toString() === selectedSiteId)
+      if (selectedSite?.location?.trim()) {
+        focusOn(viewer, selectedSite.location, 500)
+      }
+    }
+  }, [selectedSiteId, activeTab, isLoading, sites, focusOn])
 
   const handleToggleSeongnamTileset = (visible: boolean) => {
     if (seongnamTilesetRef) {

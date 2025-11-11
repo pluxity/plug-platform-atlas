@@ -26,8 +26,7 @@ export default defineConfig({
         target: 'http://192.168.10.181:8101',
         changeOrigin: true,
         secure: false,
-        ws: true, // Enable WebSocket proxying
-        rewrite: (path) => path.replace(/^\/api/, '/aiot/api'), // Rewrite /api to /aiot/api
+        ws: true,
       },
     },
   },
