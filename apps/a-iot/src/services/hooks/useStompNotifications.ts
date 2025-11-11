@@ -45,15 +45,15 @@ const eventToNotification = (event: Event): Notification => {
             message: event.guideMessage,
             minValue: event.minValue,
             objectId: event.objectId,
-            sensorDescription: event.deviceId,
+            sensorDescription: event.sensorDescription,
             sensorType: 'Unknown',
             siteId: 0,
             status: event.status as 'PENDING' | 'WORKING' | 'RESOLVED',
             timestamp: event.occurredAt,
             unit: '',
             value: event.minValue,
-            profileDescription: '',
-            siteName: ''
+            profileDescription: event.profileDescription,
+            siteName: event.siteName
         },
         read: false,
     };
@@ -66,19 +66,15 @@ export function useStompNotifications(): UseStompNotificationsReturn {
     const clientRef = useRef<Client | null>(null);
     const subscriptionsRef = useRef<StompSubscription[]>([]);
 
-    // Fetch only PENDING events from API
     const { data: pendingEvents = [] } = useEvents(
         { status: 'PENDING' },
-        { refreshInterval: 5000 } // Refresh every 5 seconds for real-time updates
+        { refreshInterval: 5000 }
     );
 
-    // Convert API events to notifications
     const apiNotifications = pendingEvents.map(eventToNotification);
 
-    // Merge real-time STOMP notifications with API notifications, removing duplicates by eventId
     const allNotifications = [...realtimeNotifications, ...apiNotifications];
     const uniqueNotifications = allNotifications.reduce((acc, notification) => {
-        // If notification has eventId, use it as unique key; otherwise use id
         const key = notification.eventId ? `event-${notification.eventId}` : notification.id;
         if (!acc.has(key)) {
             acc.set(key, notification);
@@ -90,10 +86,8 @@ export function useStompNotifications(): UseStompNotificationsReturn {
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         .slice(0, MAX_NOTIFICATIONS);
 
-    // Unread count is the number of PENDING events (from API)
     const unreadCount = pendingEvents.length;
 
-    // Debug log for merged notifications
     useEffect(() => {
         console.log('[useStompNotifications] Merged notifications:', {
             realtimeCount: realtimeNotifications.length,
@@ -111,24 +105,20 @@ export function useStompNotifications(): UseStompNotificationsReturn {
             console.log('[NOTIFICATION] Updated real-time notifications list:', updated);
             return updated;
         });
-        // Note: unreadCount is now calculated from pendingEvents.length, not managed manually
     }, []);
 
     const markAsRead = useCallback((id: string) => {
         setRealtimeNotifications(prev =>
             prev.map(n => n.id === id ? { ...n, read: true } : n)
         );
-        // Note: marking as read doesn't affect unreadCount (which is PENDING count)
     }, []);
 
     const markAllAsRead = useCallback(() => {
         setRealtimeNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        // Note: marking as read doesn't affect unreadCount (which is PENDING count)
     }, []);
 
     const clearNotifications = useCallback(() => {
         setRealtimeNotifications([]);
-        // Note: clearing notifications doesn't affect unreadCount (which is PENDING count)
     }, []);
 
     const sendTestMessage = useCallback(() => {

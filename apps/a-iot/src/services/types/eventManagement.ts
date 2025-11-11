@@ -14,6 +14,9 @@ export interface Event {
     latitude: number,
     updatedAt: string,
     updatedBy: string,
+    siteName: string,
+    sensorDescription: string,
+    profileDescription: string
 }
 
 export interface EventsQueryParams {

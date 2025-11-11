@@ -4,6 +4,7 @@ import { Notification, SensorAlarmPayload } from "../services/types";
 import { useState } from 'react';
 import { useUpdateEventStatus } from '../services/hooks';
 import { useNavigate } from 'react-router-dom';
+import { getLevelInfo } from '../pages/events/utils/timeUtils';
 
 interface NotificationPanelProps {
     notifications: Notification[];
@@ -105,7 +106,7 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
     return (
         <div
             onClick={handleClick}
-            className={`bg-white rounded-2xl p-4 outline outline-offset-[-1px] outline-neutral-200 cursor-pointer hover:bg-gray-50 transition-colors ${
+            className={`bg-white rounded-2xl p-5 outline outline-offset-[-1px] outline-neutral-200 cursor-pointer hover:bg-gray-50 transition-colors ${
                 !notification.read ? 'bg-blue-50/30' : ''
             }`}
         >
@@ -113,7 +114,7 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center flex-1 min-w-0">
                     <span className="text-sm font-bold text-zinc-800 truncate">
-                        {(notification.payload as SensorAlarmPayload).profileDescription || (notification.payload as SensorAlarmPayload).sensorDescription || '센서'} {(notification.payload as SensorAlarmPayload).level || notification.level}발생
+                        {(notification.payload as SensorAlarmPayload).profileDescription || (notification.payload as SensorAlarmPayload).sensorDescription || '센서'} {getLevelInfo((notification.payload as SensorAlarmPayload).level || notification.level || '').text} 발생
                     </span>
                 </div>
                 <span className="text-xs text-neutral-400 whitespace-nowrap ml-2">
@@ -121,19 +122,22 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
                 </span>
             </div>
             <div className="flex justify-between items-center">
-                <img
-                    src={getLevelIconPath()}
-                    alt={notification.level || 'notification'}
-                    className="w-7 h-7 flex-shrink-0"
-                />
-                <div className="space-y-1">
-                    <div className="text-sm text-zinc-800">
-                        {(notification.payload as SensorAlarmPayload).siteName || '알 수 없음'}
-                    </div>
-                    <div className={`text-xs ${getLevelColor(notification.level)}`}>
-                        {(notification.payload as SensorAlarmPayload).sensorDescription || ''}: {notification.payload.deviceId}
+                <div className="flex gap-2.5 items-center">
+                    <img
+                        src={getLevelIconPath()}
+                        alt={notification.level || 'notification'}
+                        className="w-7 h-7 flex-shrink-0"
+                    />
+                    <div className="space-y-1">
+                        <div className="text-sm text-zinc-800 m-0">
+                            {(notification.payload as SensorAlarmPayload).siteName || '알 수 없음'}
+                        </div>
+                        <div className={`text-xs ${getLevelColor(notification.level)}`}>
+                            {(notification.payload as SensorAlarmPayload).sensorDescription || ''}: {notification.payload.deviceId}
+                        </div>
                     </div>
                 </div>
+
 
                 {showActionButton && (
                     <div className="ml-1 mt-3">
