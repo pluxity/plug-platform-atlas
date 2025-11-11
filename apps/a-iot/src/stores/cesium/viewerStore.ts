@@ -51,6 +51,21 @@ export const useViewerStore = create<ViewerFactory>(() => ({
   createViewer: (container: HTMLElement, options?: ViewerOptions) => {
     Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_ACCESS_TOKEN || ''
 
+    // Cesium 에러 로그 억제
+    const originalConsoleError = console.error
+    console.error = (...args: any[]) => {
+      const message = args[0]?.toString() || ''
+      // 3D Tile 관련 에러만 필터링
+      if (
+        message.includes('A 3D tile failed to load') ||
+        message.includes('implicitCoordinates') ||
+        message.includes('Cesium3DTileset')
+      ) {
+        return // 에러 무시
+      }
+      originalConsoleError.apply(console, args)
+    }
+
     const mergedOptions = { ...DEFAULT_VIEWER_OPTIONS, ...options }
 
     const viewer = new CesiumViewer(container, mergedOptions)

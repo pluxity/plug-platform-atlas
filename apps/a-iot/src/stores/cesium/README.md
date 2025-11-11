@@ -46,19 +46,27 @@ useEffect(() => {
 }, [])
 ```
 
-### 2. Tileset 로딩
+### 2. Imagery & Terrain 초기화
 
 ```tsx
-import { useTilesetStore, ION_ASSETS } from '../../stores/cesium'
+import { useViewerStore } from '../../stores/cesium'
 
-const { loadIonTileset, loadAllIonTilesets } = useTilesetStore()
+const { initializeResources } = useViewerStore()
 
-await loadIonTileset(viewer, ION_ASSETS.GOOGLE_PHOTOREALISTIC_3D_TILES)
+await initializeResources(viewer)
+```
+
+### 3. Tileset 로딩
+
+```tsx
+import { useTilesetStore } from '../../stores/cesium'
+
+const { loadAllIonTilesets } = useTilesetStore()
 
 const tilesets = await loadAllIonTilesets(viewer)
 ```
 
-### 3. 자동 숨김 설정
+### 4. 자동 숨김 설정
 
 카메라 거리에 따라 tileset 자동 표시/숨김:
 
@@ -71,7 +79,7 @@ const cleanup = setupTilesetsAutoHide(viewer, tilesets, 2000)
 return () => cleanup()
 ```
 
-### 4. 높이 오프셋 적용
+### 5. 높이 오프셋 적용
 
 ```tsx
 import { useTilesetStore, TILESET_HEIGHT_OFFSETS } from '../../stores/cesium'
@@ -138,10 +146,7 @@ export default function MapDashboard() {
         }
         viewerInstance.camera.setView({ destination, orientation })
 
-        await loadIonTileset(viewerInstance, ION_ASSETS.GOOGLE_PHOTOREALISTIC_3D_TILES, {
-          maximumScreenSpaceError: 64,
-          skipLevelOfDetail: true,
-        })
+        await initializeResources(viewerInstance)
 
         const tilesets = await loadAllIonTilesets(viewerInstance)
         const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, 2000)
@@ -374,23 +379,194 @@ viewer.scene.fog.screenSpaceErrorFactor = 2.0
 4. **높이 오프셋**: Tileset이 지형과 안 맞으면 오프셋 조정
 5. **카메라 거리 threshold**: 사용 사례에 따라 조정 (기본 2000m)
 
-## 마커 및 카메라 제어
+## 마커 관리
 
-마커와 카메라 제어는 별도 store로 분리되어 있습니다:
+### markerStore
+
+마커 생성 및 관리:
 
 ```tsx
-import { useCameraStore, useMarkerStore } from '../../stores/cesium'
+import { useMarkerStore } from '../../stores/cesium'
+import { HeightReference } from 'cesium'
 
-const { focusOn, flyToPosition } = useCameraStore()
-const { addMarker, removeMarker } = useMarkerStore()
+const { addMarker, removeMarker, clearAllMarkers } = useMarkerStore()
 
-focusOn(viewer, { lon: 127.1114, lat: 37.3948 }, 1500)
 addMarker(viewer, {
-  id: 'marker-1',
+  id: 'park-1',
   lon: 127.1114,
   lat: 37.3948,
-  label: 'My Location',
+  height: 20,
+  image: '/images/icons/map/park.png',
+  width: 45,
+  heightValue: 55,
+  label: '공원 이름',
+  labelColor: '#000000',
+  heightReference: HeightReference.RELATIVE_TO_GROUND,
+  disableDepthTest: true,
+  disableScaleByDistance: true,
 })
 ```
 
-자세한 내용은 기존 README 참조.
+**MarkerOptions:**
+- `id`: 마커 고유 ID
+- `lon`, `lat`: 좌표
+- `height`: 지면으로부터 높이 (기본 1m)
+- `image`: 아이콘 이미지 경로
+- `width`, `heightValue`: 아이콘 크기
+- `label`: 라벨 텍스트 (SUIT 폰트 사용)
+- `labelColor`: 라벨 색상 (검은색 글씨, 흰색 테두리)
+- `heightReference`: 높이 참조 (기본 RELATIVE_TO_GROUND)
+- `disableDepthTest`: 다른 객체에 가려지지 않음
+- `disableScaleByDistance`: 거리에 따른 크기 변화 비활성화
+
+## SVG 마커 시스템
+
+### 개요
+
+SVG 마커 시스템은 `public/images/icons/markers/` 디렉토리의 SVG 파일들을 동적으로 색상 변경하여 사용하는 시스템입니다.
+
+### 주요 기능
+
+1. **SVG 파일 자동 캐싱**: 앱 시작 시 모든 SVG 파일을 메모리에 로드
+2. **색상 변경된 SVG 캐싱**: SVG + 색상 조합을 캐싱하여 메모리 효율 극대화
+3. **동적 색상 변경**: 런타임에 마커 색상 변경 가능
+4. **깜빡임 효과**: 마커에 blink 효과 적용/해제 가능
+
+### 사용 가능한 SVG 마커
+
+```tsx
+import { SVG_MARKERS } from '../../utils/svgMarkerUtils'
+
+SVG_MARKERS.FIRE          // fire.svg
+SVG_MARKERS.TEMPERATURE   // temperature.svg
+SVG_MARKERS.DISPLACEMENT  // displacement.svg
+```
+
+### 초기화
+
+```tsx
+import { preloadAllMarkerSvgs } from '../../utils/svgMarkerUtils'
+
+useEffect(() => {
+  preloadAllMarkerSvgs()
+}, [])
+```
+
+### SVG 마커 생성
+
+```tsx
+import { createColoredSvgDataUrl, SVG_MARKERS } from '../../utils/svgMarkerUtils'
+import { useMarkerStore } from '../../stores/cesium'
+
+const { addMarker } = useMarkerStore()
+
+const imageUrl = createColoredSvgDataUrl(SVG_MARKERS.FIRE, '#FF0000')
+
+addMarker(viewer, {
+  id: 'fire-sensor-1',
+  lon: 127.114416,
+  lat: 37.294320,
+  height: 10,
+  image: imageUrl,
+  width: 44,
+  heightValue: 53,
+  label: '화재 센서 1',
+  labelColor: '#000000',
+  heightReference: HeightReference.RELATIVE_TO_GROUND,
+  disableDepthTest: true,
+  disableScaleByDistance: true,
+})
+```
+
+### 동적 색상 변경
+
+```tsx
+import { useMarkerStore } from '../../stores/cesium'
+import { SVG_MARKERS } from '../../utils/svgMarkerUtils'
+
+const { changeMarkerColor } = useMarkerStore()
+
+changeMarkerColor(viewer, 'fire-sensor-1', SVG_MARKERS.FIRE, '#FF0000')
+```
+
+### 깜빡임 효과
+
+```tsx
+import { useMarkerStore } from '../../stores/cesium'
+
+const { startMarkerBlink, stopMarkerBlink } = useMarkerStore()
+
+startMarkerBlink(viewer, 'fire-sensor-1', 800)
+
+stopMarkerBlink(viewer, 'fire-sensor-1')
+```
+
+**Parameters:**
+- `viewer`: Cesium Viewer 인스턴스
+- `markerId`: 마커 ID
+- `duration`: 깜빡임 주기 (밀리초, 기본값: 1000ms)
+
+### 전체 예시: 이벤트 발생 시나리오
+
+```tsx
+import { useMarkerStore } from '../../stores/cesium'
+import { createColoredSvgDataUrl, SVG_MARKERS } from '../../utils/svgMarkerUtils'
+
+const { addMarker, changeMarkerColor, startMarkerBlink } = useMarkerStore()
+
+const sensors = [
+  { id: 'fire-1', svgName: SVG_MARKERS.FIRE, lon: 127.11, lat: 37.29, name: '화재센서 1' },
+  { id: 'fire-2', svgName: SVG_MARKERS.FIRE, lon: 127.12, lat: 37.30, name: '화재센서 2' },
+]
+
+sensors.forEach(sensor => {
+  const imageUrl = createColoredSvgDataUrl(sensor.svgName, '#11C208')
+  addMarker(viewer, {
+    id: sensor.id,
+    lon: sensor.lon,
+    lat: sensor.lat,
+    height: 10,
+    image: imageUrl,
+    width: 44,
+    heightValue: 53,
+    label: sensor.name,
+    labelColor: '#000000',
+    heightReference: HeightReference.RELATIVE_TO_GROUND,
+    disableDepthTest: true,
+    disableScaleByDistance: true,
+  })
+})
+
+function handleFireEvent(sensorId: string) {
+  changeMarkerColor(viewer, sensorId, SVG_MARKERS.FIRE, '#FF0000')
+  startMarkerBlink(viewer, sensorId, 800)
+}
+
+handleFireEvent('fire-1')
+```
+
+### 메모리 효율
+
+- **SVG 원본**: 각 SVG 파일당 1번만 fetch
+- **색상 변경된 SVG**: 같은 색상 조합은 캐시에서 재사용
+- **예시**: 100개의 빨간 화재 센서를 만들어도 메모리는 1개분만 사용
+
+### 주의사항
+
+1. `preloadAllMarkerSvgs()`를 먼저 호출해야 함
+2. SVG 파일은 `public/images/icons/markers/` 디렉토리에 위치
+3. Blink 효과를 위해 `viewer.scene.requestRenderMode = false` 설정 필요
+4. Blink 리스너는 자동으로 정리되지만, 수동으로 중지하려면 `stopMarkerBlink` 호출
+
+## 카메라 제어
+
+### cameraStore
+
+```tsx
+import { useCameraStore } from '../../stores/cesium'
+
+const { focusOn, flyToPosition } = useCameraStore()
+
+focusOn(viewer, wktPolygon, 500)
+flyToPosition(viewer, { lon: 127.1114, lat: 37.3948, height: 1500 })
+```

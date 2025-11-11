@@ -18,6 +18,7 @@
     "@plug-atlas/ui": "workspace:*",
     "@plug-atlas/web-core": "workspace:*",
     "@radix-ui/react-slot": "^1.1.1",
+    "@stomp/stompjs": "^7.2.1",
     "cesium": "^1.125.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

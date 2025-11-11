@@ -32,15 +32,15 @@ export type SiteResponse = z.infer<typeof SiteResponseSchema>
 /**
  * Device Type (for Feature)
  */
-export const DeviceTypeResponseSchema = z.object({
+export const FeatureDeviceTypeResponseSchema = z.object({
   id: z.number(),
   objectId: z.string(),
   description: z.string().optional(),
   version: z.string().optional(),
-  profiles: z.array(ProfileResponseSchema).optional(), 
+  profiles: z.array(ProfileResponseSchema).optional(),
 })
 
-export type DeviceTypeResponse = z.infer<typeof DeviceTypeResponseSchema>
+export type FeatureDeviceTypeResponse = z.infer<typeof FeatureDeviceTypeResponseSchema>
 
 /**
  * Query Metadata (for time-series)
@@ -118,9 +118,9 @@ export const FeatureResponseSchema = z.object({
   latitude: z.number().optional(),
   batteryLevel: z.number().optional(),
   eventStatus: z.string().optional(),
-  height: z.number().optional(),      
+  height: z.number().optional(),
   siteResponse: SiteResponseSchema.optional(),
-  deviceTypeResponse: DeviceTypeResponseSchema.optional(),
+  deviceTypeResponse: FeatureDeviceTypeResponseSchema.optional(),
   active: z.boolean().optional(),
 })
 
