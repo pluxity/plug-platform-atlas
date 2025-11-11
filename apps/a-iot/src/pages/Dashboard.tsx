@@ -66,11 +66,6 @@ export default function Dashboard() {
 
   const batteryAlarmColumns: Column<FeatureResponse>[] = [
     {
-      key: 'id',
-      header: '번호',
-      cell: (value) => value ? String(value) : '-',
-    },
-    {
       key: 'name',
       header: '장치 이름',
       cell: (value) => value ? String(value) : '-',
@@ -97,13 +92,6 @@ export default function Dashboard() {
   }
 
   const eventColumns: Column<Event>[] = [
-    {
-      key: 'eventName',
-      header: '이벤트명',
-      cell: (value) => (
-        value ? String(value) : '-'
-      ),
-    },
     {
       key: 'deviceId',
       header: '디바이스 ID',
@@ -371,8 +359,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
+          <div className="grid grid-cols-5 gap-4">
+            <Card className="col-span-3">
               <CardHeader>
                 <CardTitle className="text-lg">이벤트 현황</CardTitle>
                 <CardDescription>최근 발생한 이벤트를 확인할 수 있습니다. (최대 50개)</CardDescription>
@@ -392,7 +380,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="col-span-2">
               <CardHeader>
                 <CardTitle className="text-lg">장치 배터리 알람</CardTitle>
                 <CardDescription>배터리 잔량이 20% 이하인 장치를 확인할 수 있습니다.</CardDescription>
