@@ -27,7 +27,8 @@ export {
   useEvents,
   useInfiniteEvents,
   useUpdateEventStatus,
-  useEventsTimeSeries
+  useEventsTimeSeries,
+  useEvent
 } from './useEventsManagement.ts'
 
 // Site hooks
@@ -60,3 +61,7 @@ export {
 export {
   useStompNotifications,
 } from './useStompNotifications'
+
+export {
+  useInitialNotifications,
+} from './useInitialNotifications'

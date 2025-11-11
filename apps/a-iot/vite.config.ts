@@ -23,11 +23,10 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://dev.pluxity.com',
+        target: 'http://dev.pluxity.com/aiot',
         changeOrigin: true,
         secure: false,
-        ws: true, // Enable WebSocket proxying
-        rewrite: (path) => path.replace(/^\/api/, '/aiot/api'), // Rewrite /api to /aiot/api
+        ws: true,
       },
     },
   },

@@ -18,8 +18,8 @@ import {
   CollapsibleTrigger,
 } from '@plug-atlas/ui'
 import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../constants/menu'
-import { useAuthStore } from '../stores'
-import { useStompNotifications } from '../services/hooks'
+import { useAuthStore, useNotificationStore } from '../stores'
+import { useStompNotifications, useInitialNotifications } from '../services/hooks'
 import NotificationPop from './NotificationPop'
 
 export default function AppSideMenu() {
@@ -28,17 +28,20 @@ export default function AppSideMenu() {
   const logout = useAuthStore((state) => state.logout)
   const [notificationOpen, setNotificationOpen] = useState(false)
 
-  const {
-    notifications,
-    unreadCount,
-    isConnected,
-    markAsRead,
-  } = useStompNotifications()
+  // Initialize notification store with PENDING events
+  useInitialNotifications()
 
-  // Auto-open popup when new notification arrives
+  // Connect to STOMP WebSocket
+  const { isConnected } = useStompNotifications()
+
+  // Get notifications from store
+  const notifications = useNotificationStore((state) => state.notifications)
+  const unreadCount = useNotificationStore((state) => state.unreadCount)
+  const markAsRead = useNotificationStore((state) => state.markAsRead)
+
   const prevUnreadCount = useRef(0)
   useEffect(() => {
-    if (unreadCount > prevUnreadCount.current) {
+    if (unreadCount > prevUnreadCount.current && unreadCount > 0) {
       setNotificationOpen(true)
     }
     prevUnreadCount.current = unreadCount

@@ -6,6 +6,7 @@ export interface ConnectionErrorPayload {
 }
 
 export interface SensorAlarmPayload {
+    eventId?: number;
     deviceId: string;
     eventName?: string;
     fieldKey?: string;

@@ -1,8 +1,6 @@
 import { Bell } from 'lucide-react';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@plug-atlas/ui';
 import { Notification, SensorAlarmPayload } from "../services/types";
-import { useState } from 'react';
-import { useUpdateEventStatus } from '../services/hooks';
 import { useNavigate } from 'react-router-dom';
 import { getLevelInfo } from '../pages/events/utils/timeUtils';
 
@@ -50,12 +48,6 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
         ? (notification.payload as SensorAlarmPayload)
         : null;
 
-    const [currentStatus, setCurrentStatus] = useState<string>(
-        payload?.status || ''
-    );
-
-    const { trigger: updateStatus, isMutating: isUpdating } = useUpdateEventStatus();
-
     const handleClick = () => {
         if (!notification.read && onMarkAsRead) {
             onMarkAsRead(notification.id);
@@ -63,24 +55,6 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
 
         if (notification.eventId) {
             navigate(`/events?eventId=${notification.eventId}`);
-        }
-    };
-
-    const handleAction = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-
-        if (notification.type !== 'sensor-alarm' || !notification.eventId) {
-            return;
-        }
-
-        try {
-            await updateStatus({
-                eventId: notification.eventId,
-                status: { result: 'WORKING' }
-            });
-            setCurrentStatus('WORKING');
-        } catch (error) {
-            // Silent error handling - status update failure will be handled by SWR
         }
     };
 
@@ -98,9 +72,6 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
                 return '/images/icons/notification/caution.svg';
         }
     };
-
-    const showActionButton = notification.type === 'sensor-alarm' &&
-                             (currentStatus === 'PENDING' || currentStatus === 'WORKING');
 
     return (
         <div
@@ -120,37 +91,20 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
                     {getRelativeTime(notification.timestamp)}
                 </span>
             </div>
-            <div className="flex justify-between items-center">
-                <div className="flex gap-2.5 items-center">
-                    <img
-                        src={getLevelIconPath()}
-                        alt={notification.level || 'notification'}
-                        className="w-7 h-7 flex-shrink-0"
-                    />
-                    <div className="space-y-1">
-                        <div className="text-sm text-zinc-800 m-0">
-                            {payload?.siteName || '알 수 없음'}
-                        </div>
-                        <div className={`text-xs ${getLevelColor(notification.level)}`}>
-                            {payload?.sensorDescription || ''}: {notification.payload.deviceId}
-                        </div>
+            <div className="flex gap-2.5 items-center">
+                <img
+                    src={getLevelIconPath()}
+                    alt={notification.level || 'notification'}
+                    className="w-7 h-7 flex-shrink-0"
+                />
+                <div className="space-y-1">
+                    <div className="text-sm text-zinc-800 m-0">
+                        {payload?.siteName || '알 수 없음'}
+                    </div>
+                    <div className={`text-xs ${getLevelColor(notification.level)}`}>
+                        {payload?.sensorDescription || ''}: {notification.payload.deviceId}
                     </div>
                 </div>
-
-
-                {showActionButton && (
-                    <div className="ml-1 mt-3">
-                        <Button
-                            size="sm"
-                            variant={currentStatus === 'PENDING' ? 'default' : 'secondary'}
-                            onClick={handleAction}
-                            disabled={currentStatus === 'WORKING' || isUpdating}
-                            className="h-7 px-3 text-xs"
-                        >
-                            {isUpdating ? '처리 중...' : currentStatus === 'WORKING' ? '조치 중' : '조치하기'}
-                        </Button>
-                    </div>
-                )}
             </div>
         </div>
     );

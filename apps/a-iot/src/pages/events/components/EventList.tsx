@@ -3,7 +3,7 @@ import { Card, Button, Dialog, DialogTrigger } from '@plug-atlas/ui';
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import EventDetailModal from './modal/EventDetailModal.tsx';
 import type { Event } from '../../../services/types';
-import { useUpdateEventStatus } from '../../../services/hooks';
+import { useUpdateEventStatus, useEvent } from '../../../services/hooks';
 import { getStatusInfo, getLevelInfo } from "../utils/timeUtils.ts";
 import { useSearchParams } from 'react-router-dom';
 
@@ -154,12 +154,14 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     const eventIdFromUrl = searchParams.get('eventId');
     const targetEventId = eventIdFromUrl ? parseInt(eventIdFromUrl) : null;
 
-    // Debug log
-    useEffect(() => {
-        if (targetEventId) {
-            console.log('[EventList] Opening modal for eventId:', targetEventId);
+    // Fetch individual event if not in the current list
+    const { data: fetchedEvent, isLoading: isFetchingEvent } = useEvent(
+        targetEventId || 0,
+        {
+            revalidateOnFocus: false,
+            revalidateOnReconnect: false
         }
-    }, [targetEventId]);
+    );
 
     const handleStatusUpdate = () => {
         if (onRefresh) {
@@ -189,8 +191,18 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     };
 
     const filteredEvents = useMemo(() => {
-        return events.filter(event => event.level !== 'NORMAL');
-    }, [events]);
+        let eventList = events.filter(event => event.level !== 'NORMAL');
+
+        // Add fetched event if it's not in the list
+        if (fetchedEvent && targetEventId) {
+            const exists = eventList.some(e => e.eventId === targetEventId);
+            if (!exists) {
+                eventList = [fetchedEvent, ...eventList];
+            }
+        }
+
+        return eventList;
+    }, [events, fetchedEvent, targetEventId]);
 
     const sortedEvents = useMemo(() => {
         if (!sortField || !sortDirection) return filteredEvents;
