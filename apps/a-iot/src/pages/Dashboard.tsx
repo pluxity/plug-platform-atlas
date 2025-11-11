@@ -6,6 +6,9 @@ import { useCctvList } from '../services/hooks/useCctv'
 import { FeatureResponse, useFeatures } from '@plug-atlas/web-core'
 import { useAdminUsers } from '@plug-atlas/api-hooks'
 import CesiumMap from '../components/CesiumMap'
+import { useEvents } from '../services/hooks/useEventsManagement'
+import type { Event } from '../services/types'
+import { getStatusInfo, getLevelInfo } from './events/utils/timeUtils'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'parks'>('overview')
@@ -15,6 +18,9 @@ export default function Dashboard() {
   const { data: cctvs = [] } = useCctvList()
   const { data: sensors = [] } = useFeatures()
   const { data: users = [] } = useAdminUsers()
+  const { data: events = [] } = useEvents(
+    selectedSiteId ? { siteId: parseInt(selectedSiteId)} : undefined
+  )
 
   const handleSiteSelect = (siteId: string) => {
     setActiveTab('parks')
@@ -80,10 +86,75 @@ export default function Dashboard() {
     },
   ]
 
+  const getStatusStyle = (status: string) => {
+    if (status === 'PENDING') {
+      return 'bg-red-100 text-red-800 border-l-4 border-red-600'
+    }
+    if (status === 'WORKING') {
+      return 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-600'
+    }
+    return 'bg-green-100 text-green-800 border-l-4 border-green-600'
+  }
+
+  const eventColumns: Column<Event>[] = [
+    {
+      key: 'eventName',
+      header: '이벤트명',
+      cell: (value, row) => (
+        <div className="font-medium text-sm text-gray-900">
+          {value ? String(value) : `이벤트 #${row.eventId}`}
+        </div>
+      ),
+    },
+    {
+      key: 'deviceId',
+      header: '디바이스 ID',
+      cell: (value) => (
+        <div className="text-sm text-gray-700">
+          {value ? String(value) : '-'}
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: '상태',
+      cell: (value, row) => {
+        const statusInfo = getStatusInfo(String(value))
+        const StatusIcon = statusInfo.icon
+        return (
+          <div className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium ${getStatusStyle(row.status)}`}>
+            <StatusIcon className="h-3.5 w-3.5" />
+            <span>{statusInfo.text}</span>
+          </div>
+        )
+      },
+    },
+    {
+      key: 'level',
+      header: '심각도',
+      cell: (value) => {
+        const levelInfo = getLevelInfo(String(value))
+        return (
+          <div className={`inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-sm shadow-sm ${levelInfo.color}`}>
+            <span>{levelInfo.text}</span>
+          </div>
+        )
+      },
+    },
+  ]
+
+  const filteredEvents = useMemo(() => {
+    if (!selectedSiteId) return []
+    return events
+      .filter(event => event.status && event.level && event.level !== 'NORMAL')
+      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+      .slice(0, 50)
+  }, [events, selectedSiteId])
+
   return (
     <>
       <div className="mb-6">
-        <Tabs value={activeTab} onValueChange={(value) => {
+      <Tabs value={activeTab} onValueChange={(value) => {
           if (value === 'overview' || value === 'parks') {
             setActiveTab(value)
             if (value === 'overview') {
@@ -152,6 +223,8 @@ export default function Dashboard() {
                     <p className="text-xs text-gray-800">{stat.description}</p>
                   </CardContent>
                 </Card>
+
+                
               )
             })}
           </div>
@@ -173,25 +246,46 @@ export default function Dashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">이벤트 현황</CardTitle>
+                <CardDescription>최근 발생한 이벤트를 확인할 수 있습니다. (최대 50개)</CardDescription>
               </CardHeader>
               <CardContent>
+                {filteredEvents.length === 0 ? (
+                  <div className="flex items-center justify-center h-32 text-gray-500">
+                    이벤트가 없습니다.
+                  </div>
+                ) : (
+                  <DataTable
+                    className="max-h-[300px] overflow-y-auto"
+                    columns={eventColumns}
+                    data={filteredEvents}
+                  />
+                )}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">장치 배터리 알람</CardTitle>
-                <CardDescription>배터리 잔량이 20% 이하인 장치</CardDescription>
+                <CardDescription>배터리 잔량이 20% 이하인 장치를 확인할 수 있습니다.</CardDescription>
               </CardHeader>
               <CardContent>
-                <DataTable
-                  className="max-h-[300px] overflow-y-auto"
-                  columns={batteryAlarmColumns}
-                  data={
-                    sensors
-                    .filter(sensor => sensor.batteryLevel && sensor.batteryLevel < 100)
-                    .sort((a, b) => a.id - b.id)}
-                />
+                {(() => {
+                  const lowBatterySensors = sensors
+                    .filter(sensor => sensor.batteryLevel && sensor.batteryLevel <= 20)
+                    .sort((a, b) => a.id - b.id);
+                  
+                  return lowBatterySensors.length === 0 ? (
+                    <div className="min-h-[300px] flex items-center justify-center text-gray-500">
+                      배터리 잔량이 20% 이하인 장치가 없습니다.
+                    </div>
+                  ) : (
+                    <DataTable
+                      className="min-h-[300px] max-h-[300px] overflow-y-auto"
+                      columns={batteryAlarmColumns}
+                      data={lowBatterySensors}
+                    />
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>
