@@ -41,6 +41,14 @@ export type {
     EventCollectInterval
 } from './eventManagement'
 
+export type {
+    ConnectionErrorPayload,
+    SensorAlarmPayload,
+    NotificationType,
+    Notification,
+    NotificationStore
+} from './notification'
+
 // Site types
 export type {
   Site,

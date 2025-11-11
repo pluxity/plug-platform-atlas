@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, Button, Dialog, DialogTrigger } from '@plug-atlas/ui';
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import EventDetailModal from './modal/EventDetailModal.tsx';
 import type { Event } from '../../../services/types';
 import { useUpdateEventStatus } from '../../../services/hooks';
 import { getStatusInfo, getLevelInfo } from "../utils/timeUtils.ts";
+import { useSearchParams } from 'react-router-dom';
 
 type SortField = 'occurredAt' | 'level' | 'status';
 type SortDirection = 'asc' | 'desc' | null;
@@ -22,11 +23,21 @@ interface EventRowProps {
     onStatusUpdate: () => void;
 }
 
-function EventRow({ event, onStatusUpdate }: EventRowProps) {
-    const [isOpen, setIsOpen] = useState(false);
+interface EventRowInternalProps extends EventRowProps {
+    initialOpen?: boolean;
+    onClose?: () => void;
+}
+
+function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: EventRowInternalProps) {
+    const [isOpen, setIsOpen] = useState(initialOpen);
     const statusInfo = getStatusInfo(event.status);
     const levelInfo = getLevelInfo(event.level);
     const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
+
+    // Sync with initialOpen prop
+    useEffect(() => {
+        setIsOpen(initialOpen);
+    }, [initialOpen]);
 
     const handleStatusAction = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -48,6 +59,9 @@ function EventRow({ event, onStatusUpdate }: EventRowProps) {
         // Refresh list when modal closes
         if (!open) {
             onStatusUpdate();
+            if (onClose) {
+                onClose();
+            }
         }
     };
 
@@ -133,13 +147,30 @@ function EventRow({ event, onStatusUpdate }: EventRowProps) {
 }
 
 export default function EventList({ events, isLoading, hasMore, onLoadMore, onRefresh }: EventListProps) {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [sortField, setSortField] = useState<SortField | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+    const eventIdFromUrl = searchParams.get('eventId');
+    const targetEventId = eventIdFromUrl ? parseInt(eventIdFromUrl) : null;
+
+    // Debug log
+    useEffect(() => {
+        if (targetEventId) {
+            console.log('[EventList] Opening modal for eventId:', targetEventId);
+        }
+    }, [targetEventId]);
 
     const handleStatusUpdate = () => {
         if (onRefresh) {
             onRefresh();
         }
+    };
+
+    const handleModalClose = () => {
+        // Remove eventId from URL when modal closes
+        searchParams.delete('eventId');
+        setSearchParams(searchParams);
     };
 
     const handleSort = (field: SortField) => {
@@ -255,6 +286,8 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
                                 key={event.eventId}
                                 event={event}
                                 onStatusUpdate={handleStatusUpdate}
+                                initialOpen={targetEventId === event.eventId}
+                                onClose={handleModalClose}
                             />
                         ))}
                     </div>
