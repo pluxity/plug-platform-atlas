@@ -30,8 +30,8 @@ export const useImageryStore = create<ImageryStore>((set) => ({
     }
 
     try {
-      const defaultAssetId = Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID) || 2
-      const satelliteAssetId = Number(import.meta.env.VITE_CESIUM_SATELLITE_ASSET_ID) || 3
+      const defaultAssetId = Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID) || 4
+      const satelliteAssetId = Number(import.meta.env.VITE_CESIUM_SATELLITE_ASSET_ID) || 2
       const assetId = providerType === 'ion-satellite' ? satelliteAssetId : defaultAssetId
 
       const newProvider = await IonImageryProvider.fromAssetId(assetId)
@@ -47,7 +47,7 @@ export const useImageryStore = create<ImageryStore>((set) => ({
         const fallback = await IonImageryProvider.fromAssetId(2)
         if (!viewer.isDestroyed()) {
           imageryLayers.addImageryProvider(fallback)
-          set({ currentProvider: 'ion-default' })
+          set({ currentProvider: 'ion-satellite' })
         }
       } catch (fallbackError) {
         console.error('Failed to load fallback imagery:', fallbackError)

@@ -81,11 +81,13 @@ export default function CesiumMap({
 
         await initializeResources(viewerInstance, viewerInitOptions)
 
-        const imageryProvider = viewerInitOptions?.imageryProvider || 'ion-satellite'
-        if (imageryProvider === 'ion-satellite') {
-          setCurrentProvider('ion-satellite')
-        } else if (imageryProvider === 'ion-default') {
+        const imageryProvider = viewerInitOptions?.imageryProvider
+        if (imageryProvider === 'ion-default') {
           setCurrentProvider('ion-default')
+        } else if (imageryProvider === 'ion-satellite') {
+          setCurrentProvider('ion-satellite')
+        } else if (!imageryProvider) {
+          setCurrentProvider('ion-satellite')
         }
 
         if (viewerInitOptions?.load3DTiles !== false) {

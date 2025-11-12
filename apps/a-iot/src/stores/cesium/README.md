@@ -87,7 +87,7 @@ import type { ViewerInitOptions } from '../../stores/cesium'
 
 ### 3. 지도 레이어 전환
 
-CesiumMap 컴포넌트는 좌측 상단에 지도 레이어 전환 버튼을 제공합니다:
+CesiumMap 컴포넌트는 우측 상단에 지도 레이어 전환 버튼을 제공합니다:
 
 ```tsx
 import { useImageryStore } from '../../stores/cesium'
