@@ -666,3 +666,39 @@ export const DeviceManagement: Story = {
     )
   },
 }
+
+export const WithStickyHeader: Story = {
+  render: () => {
+    const generateUsers = (count: number): User[] => {
+      const roles: User['role'][] = ['admin', 'user', 'moderator']
+      const names = ['김철수', '이영희', '박민수', '정지은', '최동욱', '한소희', '윤서연', '강민준']
+      return Array.from({ length: count }, (_, i) => ({
+        id: i + 1,
+        name: `${names[i % names.length]}${Math.floor(i / names.length) + 1}`,
+        email: `user${i + 1}@example.com`,
+        role: roles[i % roles.length] || 'user',
+      }))
+    }
+
+    const manyUsers = generateUsers(50)
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold mb-2">고정 헤더 테이블</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            아래로 스크롤해도 헤더가 상단에 고정되어 표시됩니다.
+          </p>
+        </div>
+        <DataTable
+          data={manyUsers}
+          columns={userColumnsWithBadge}
+          stickyHeader
+          maxHeight={400}
+          selectable
+          getRowId={(user) => String(user.id)}
+        />
+      </div>
+    )
+  },
+}

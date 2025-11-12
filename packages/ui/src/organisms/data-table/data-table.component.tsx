@@ -18,6 +18,8 @@ export interface DataTableProps<T> {
   selectedRows?: number[]
   onSelectionChange?: (selectedIndexes: number[]) => void
   getRowId?: (row: T, index: number) => string
+  maxHeight?: number
+  stickyHeader?: boolean
 }
 
 function DataTable<T>({
@@ -31,6 +33,8 @@ function DataTable<T>({
   selectedRows = [],
   onSelectionChange,
   getRowId,
+  maxHeight,
+  stickyHeader = false,
 }: DataTableProps<T>) {
   const hasActions = onRowEdit || onRowDelete
 
@@ -57,10 +61,13 @@ function DataTable<T>({
 
   return (
     <div className={className}>
-      <div className="border-y border-[#bbbecf]">
+      <div
+        className={cn("border-y border-[#bbbecf]", maxHeight && "overflow-y-auto")}
+        style={maxHeight ? { maxHeight: `${maxHeight}px` } : undefined}
+      >
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[#bbbecf] bg-[#dfe4eb]">
+            <tr className={cn("border-b border-[#bbbecf] bg-[#dfe4eb]", stickyHeader && "sticky top-0 z-10")}>
               {selectable && (
                 <th className="h-[34px] px-4 py-2 text-center align-middle font-medium w-12 border-r border-[#bbbecf]">
                   <input
