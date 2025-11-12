@@ -24,6 +24,12 @@ export interface ViewerOptions {
   maximumRenderTimeChange?: number
 }
 
+export interface ViewerInitOptions {
+  imageryProvider?: 'ion-default' | 'ion-satellite' | number
+  loadTerrain?: boolean
+  load3DTiles?: boolean
+}
+
 const DEFAULT_VIEWER_OPTIONS: ViewerOptions = {
   animation: false,
   baseLayerPicker: false,
@@ -42,9 +48,9 @@ const DEFAULT_VIEWER_OPTIONS: ViewerOptions = {
 
 interface ViewerFactory {
   createViewer: (container: HTMLElement, options?: ViewerOptions) => CesiumViewer
-  setupImagery: (viewer: CesiumViewer, assetId?: number) => Promise<void>
+  setupImagery: (viewer: CesiumViewer, provider?: 'ion-default' | 'ion-satellite' | number) => Promise<void>
   setupTerrain: (viewer: CesiumViewer, assetId?: number) => Promise<void>
-  initializeResources: (viewer: CesiumViewer) => Promise<void>
+  initializeResources: (viewer: CesiumViewer, initOptions?: ViewerInitOptions) => Promise<void>
 }
 
 export const useViewerStore = create<ViewerFactory>(() => ({
@@ -114,17 +120,25 @@ export const useViewerStore = create<ViewerFactory>(() => ({
     return viewer
   },
 
-  setupImagery: async (viewer: CesiumViewer, assetId?: number) => {
+  setupImagery: async (viewer: CesiumViewer, provider?: 'ion-default' | 'ion-satellite' | number) => {
     if (viewer.isDestroyed()) return
 
-    const imageryAssetId = assetId || Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID)
+    let assetId: number
+
+    if (typeof provider === 'number') {
+      assetId = provider
+    } else if (provider === 'ion-default') {
+      assetId = Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID) || 4
+    } else if (provider === 'ion-satellite') {
+      assetId = Number(import.meta.env.VITE_CESIUM_SATELLITE_ASSET_ID) || 2
+    } else {
+      assetId = Number(import.meta.env.VITE_CESIUM_SATELLITE_ASSET_ID) || 2
+    }
 
     try {
-      if (imageryAssetId) {
-        const imageryProvider = await IonImageryProvider.fromAssetId(imageryAssetId)
-        if (!viewer.isDestroyed()) {
-          viewer.imageryLayers.addImageryProvider(imageryProvider)
-        }
+      const imageryProvider = await IonImageryProvider.fromAssetId(assetId)
+      if (!viewer.isDestroyed()) {
+        viewer.imageryLayers.addImageryProvider(imageryProvider)
       }
     } catch (error) {
       if (!viewer.isDestroyed() && viewer.imageryLayers.length === 0) {
@@ -158,12 +172,22 @@ export const useViewerStore = create<ViewerFactory>(() => ({
     }
   },
 
-  initializeResources: async (viewer: CesiumViewer) => {
+  initializeResources: async (viewer: CesiumViewer, initOptions?: ViewerInitOptions) => {
     const { setupImagery, setupTerrain } = useViewerStore.getState()
 
-    await Promise.all([
-      setupImagery(viewer),
-      setupTerrain(viewer),
-    ])
+    const {
+      imageryProvider = 'ion-satellite',
+      loadTerrain = true,
+    } = initOptions || {}
+
+    const promises: Promise<void>[] = []
+
+    promises.push(setupImagery(viewer, imageryProvider))
+
+    if (loadTerrain) {
+      promises.push(setupTerrain(viewer))
+    }
+
+    await Promise.all(promises)
   },
 }))
