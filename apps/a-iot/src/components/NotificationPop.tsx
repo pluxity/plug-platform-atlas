@@ -4,6 +4,7 @@ import { Button, Popover, PopoverContent, PopoverTrigger, Dialog } from '@plug-a
 import { Notification, Event } from "../services/types";
 import { getLevelInfo } from '../pages/events/utils/timeUtils';
 import EventDetailModal from '../pages/events/components/modal/EventDetailModal';
+import { useNotificationStore } from '../stores/notificationStore';
 
 interface NotificationPanelProps {
     notifications: Notification[];
@@ -126,6 +127,7 @@ export default function NotificationPop({
 }: NotificationPanelProps) {
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const addNotification = useNotificationStore((state) => state.addNotification);
 
     const handleItemClick = (event: Event) => {
         setSelectedEvent(event);
@@ -135,6 +137,17 @@ export default function NotificationPop({
     const handleDialogClose = () => {
         setIsDialogOpen(false);
         setSelectedEvent(null);
+    };
+
+    const handleStatusUpdate = () => {
+        if (selectedEvent) {
+            const updatedEvent = { ...selectedEvent, status: 'IN_PROGRESS' as const };
+            const notification = notifications.find(n => n.eventId === selectedEvent.eventId);
+            if (notification) {
+                addNotification({ ...notification, payload: updatedEvent });
+            }
+            setSelectedEvent(updatedEvent);
+        }
     };
 
     return (
@@ -195,9 +208,7 @@ export default function NotificationPop({
                 {selectedEvent && (
                     <EventDetailModal
                         event={selectedEvent}
-                        onStatusUpdate={() => {
-                            // Refresh logic if needed
-                        }}
+                        onStatusUpdate={handleStatusUpdate}
                     />
                 )}
             </Dialog>
