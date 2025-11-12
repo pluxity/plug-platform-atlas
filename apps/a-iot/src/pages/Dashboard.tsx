@@ -1,6 +1,7 @@
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Column, DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
-import { TreePine, Camera, Radio, Users, Map } from 'lucide-react'
+import { TreePine, Camera, Radio, Users } from 'lucide-react'
 import { useState, useMemo } from 'react'
+import { useSvgIcon } from '../services/hooks/useSvgIcon'
 import { useSites } from '../services/hooks/useSite'
 import { useCctvList } from '../services/hooks/useCctv'
 import { FeatureResponse, useFeatures } from '@plug-atlas/web-core'
@@ -33,8 +34,8 @@ export default function Dashboard() {
         title: '전체 공원',
         value: sites.length,
         icon: TreePine,
+        iconImage: '/images/icons/dashboard/park.png',
         description: '관리 중인 공원 수',
-        iconColor: 'text-green-600',
         iconBg: 'bg-green-100',
       },
       {
@@ -42,7 +43,7 @@ export default function Dashboard() {
         value: cctvs.length,
         icon: Camera,
         description: '운영 중인 CCTV',
-        iconColor: 'text-blue-600',
+        iconImage: '/images/icons/dashboard/cctv.png',
         iconBg: 'bg-blue-100',
       },
       {
@@ -50,7 +51,7 @@ export default function Dashboard() {
         value: sensors.length,
         icon: Radio,
         description: '설치된 센서',
-        iconColor: 'text-yellow-600',
+        iconImage: '/images/icons/dashboard/sensor.png',
         iconBg: 'bg-yellow-100',
       },
       {
@@ -58,7 +59,7 @@ export default function Dashboard() {
         value: users.length,
         icon: Users,
         description: '등록된 관리자',
-        iconColor: 'text-purple-600',
+        iconImage: '/images/icons/dashboard/user.png',
         iconBg: 'bg-purple-100',
       },
     ]
@@ -217,10 +218,46 @@ export default function Dashboard() {
     ).sort((a, b) => a.name.localeCompare(b.name))
   }, [selectedSiteId, sensors])
 
+  const overviewIcon = useSvgIcon({
+    path: '/images/icons/dashboard/tab_overview.svg',
+    defaultColor: '#BBBFCF',
+    activeColor: 'currentColor',
+  })
+
+  const parkIcon = useSvgIcon({
+    path: '/images/icons/dashboard/tab_park.svg',
+    defaultColor: '#BBBFCF',
+    activeColor: 'currentColor',
+  })
+
+  const OverviewIcon = ({ isActive }: { isActive: boolean }) => {
+    const coloredSvg = overviewIcon.getColoredSvg(isActive)
+    if (!coloredSvg) return null
+    
+    return (
+      <div 
+        className={`flex items-center justify-center size-5 ${isActive ? 'text-primary' : ''}`}
+        dangerouslySetInnerHTML={{ __html: coloredSvg }}
+      />
+    )
+  }
+
+  const ParkIcon = ({ isActive }: { isActive: boolean }) => {
+    const coloredSvg = parkIcon.getColoredSvg(isActive)
+    if (!coloredSvg) return null
+    
+    return (
+      <div 
+        className={`flex items-center justify-center size-5 ${isActive ? 'text-primary' : ''}`}
+        dangerouslySetInnerHTML={{ __html: coloredSvg }}
+      />
+    )
+  }
+
   return (
     <>
       <div className="mb-6">
-        <Tabs className="shadow-lg inline-flex rounded-lg" value={activeTab} onValueChange={(value) => {
+        <Tabs className="shadow-md inline-flex rounded-xl" value={activeTab} onValueChange={(value) => {
           if (value === 'overview' || value === 'parks') {
             setActiveTab(value)
             if (value === 'overview') {
@@ -228,18 +265,18 @@ export default function Dashboard() {
             }
           }
         }} variant="buttons">
-          <TabsList className="justify-start gap-0 !border !border-white rounded-lg">
+          <TabsList className="justify-start gap-0 !border-white rounded-xl">
             <TabsTrigger 
               value="overview" 
-              icon={<Map className={`size-4 ${activeTab === 'overview' ? 'text-primary' : 'text-gray-600'}`} />}
-              className={`border-0 rounded-none !bg-white/80 hover:!bg-transparent data-[state=active]:!bg-white/80 data-[state=active]:!shadow-none`}
+              icon={<OverviewIcon isActive={activeTab === 'overview'} />}
+              className={`rounded-l-xl rounded-r-none rounded-bl-xl rounded-tr-none border-0 data-[state=active]:bg-white/80 data-[state=active]:shadow-none ${activeTab === 'overview' ? 'text-primary' : 'text-gray-600'}`}
             >
               <span className={`${activeTab === 'overview' ? 'text-primary' : 'text-gray-600'}`}>전체보기</span>
             </TabsTrigger>
             <TabsTrigger 
               value="parks" 
-              icon={<TreePine className={`size-4 ${activeTab === 'parks' ? 'text-primary' : 'text-gray-600'}`} />}
-              className={`!border-0 !border-l !border-l-gray-200 rounded-l-none rounded-r-lg !bg-white/80 hover:!bg-transparent data-[state=active]:!bg-white/80 data-[state=active]:!shadow-none ${activeTab === 'parks' ? 'text-primary' : 'text-gray-600'}`}
+              icon={<ParkIcon isActive={activeTab === 'parks'} />}
+              className={`!border-0 !border-l !border-gray-200 rounded-l-none rounded-r-lg data-[state=active]:bg-white/80 data-[state=active]:shadow-none ${activeTab === 'parks' ? 'text-primary' : 'text-gray-600'}`}
             >
               <span className={`${activeTab === 'parks' ? 'text-primary' : 'text-gray-600'}`}>
                 공원별 보기
@@ -286,7 +323,6 @@ export default function Dashboard() {
           {/* 통계 카드 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((stat) => {
-              const Icon = stat.icon
               return (
                 <Card key={stat.title}>
                   <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
@@ -295,7 +331,11 @@ export default function Dashboard() {
                       <div className="text-3xl font-bold">{stat.value}</div>
                     </div>
                     <div className={`p-2.5 rounded-xl ${stat.iconBg}`}>
-                      <Icon className={`size-5 ${stat.iconColor}`} />
+                      <img 
+                        src={stat.iconImage} 
+                        alt={stat.title}
+                        className="size-5"
+                      />
                     </div>
                   </CardHeader>
                   <CardContent>

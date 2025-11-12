@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable, Dialog, DialogTrigger, Button } from '@plug-atlas/ui';
 import { Plus } from 'lucide-react';
 import { toast } from '@plug-atlas/ui';
 import SiteForm from './components/form/SiteForm';
 import DeleteConfirmation from './components/data/DeleteConfirmation.tsx';
 import { useCreateSite, useUpdateSite, useDeleteSite, useSites } from "../../../services/hooks/useSite.ts";
+import { useSearchBar, usePagination } from "../../../services/hooks";
 import { createSiteColumns } from "./components/data/SiteColumns";
 import ErrorDisplay from "../../../components/error/ErrorDisplay";
 import type {Site} from "../../../services/types/site.ts";
 import {useSiteForm} from "./components/form/useSiteForm.ts";
+import { SearchBar } from "../../../components/SearchBar";
+import { TablePagination } from "../../../components/Pagination";
 
 export default function SitePage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -92,6 +95,14 @@ export default function SitePage() {
         return <ErrorDisplay onRetry={() => mutate()} />;
     }
 
+    const { searchTerm, filteredData: searchFilteredData, handleSearch } = useSearchBar<Site>(sites, ['name']);
+
+    const { currentPage, totalPages, currentPageData, goToPage, nextPage, prevPage, resetPage } = usePagination<Site>(searchFilteredData, 5);
+
+    useEffect(() => {
+        resetPage();
+    }, [searchFilteredData.length]);
+
     const columns = createSiteColumns();
 
     return (
@@ -100,7 +111,12 @@ export default function SitePage() {
                 <h1 className="text-xl font-bold mb-1">공원 관리</h1>
                 <p className="text-sm text-gray-600">공원 목록을 관리합니다.</p>
             </div>
-            <div className="flex justify-end mb-4">
+            <div className="flex items-center justify-between mb-4 gap-2">
+                <SearchBar
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    placeholder="공원 이름으로 검색"
+                />
                 <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={resetForm}>
@@ -111,12 +127,22 @@ export default function SitePage() {
                 </Dialog>
             </div>
 
-            <DataTable
-                columns={columns}
-                data={sites}
-                onRowEdit={(site: Site) => openEditModal(site)}
-                onRowDelete={(site: Site) => openDeleteDialog(site)}
-            />
+            <div className="flex flex-col gap-4">
+                <DataTable
+                    columns={columns}
+                    data={currentPageData}
+                    onRowEdit={(site: Site) => openEditModal(site)}
+                    onRowDelete={(site: Site) => openDeleteDialog(site)}
+                />
+
+                <TablePagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={goToPage}
+                    onPrev={prevPage}
+                    onNext={nextPage}
+                />
+            </div>
 
             <SiteForm
                 isOpen={isCreateModalOpen}

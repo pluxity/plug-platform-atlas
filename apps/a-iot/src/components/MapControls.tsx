@@ -49,8 +49,9 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
         variant="outline"
         size="icon"
         title="확대"
+        className="bg-white/70 backdrop-blur-md shadow-xl hover:bg-white/80 hover:shadow-2xl transition-all"
       >
-        <Plus />
+        <Plus className="text-gray-900 stroke-2 drop-shadow-sm transition-colors" />
       </Button>
 
       <Button
@@ -59,8 +60,9 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
         variant="outline"
         size="icon"
         title="축소"
+        className="bg-white/70 backdrop-blur-md shadow-xl hover:bg-white/80 hover:shadow-2xl transition-all"
       >
-        <Minus />
+        <Minus className="text-gray-900 stroke-2 drop-shadow-sm transition-colors" />
       </Button>
 
       {homePosition && (
@@ -70,8 +72,9 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
           variant="outline"
           size="icon"
           title="홈으로"
+          className="bg-white/70 backdrop-blur-md shadow-sm hover:bg-white/80 hover:shadow-2xl transition-all"
         >
-          <Home />
+          <Home className="text-gray-900 stroke-2 drop-shadow-sm transition-colors" />
         </Button>
       )}
 
@@ -81,9 +84,11 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
         variant="outline"
         size="icon"
         title="3D 레이어"
-        className={seongnamVisible ? 'bg-blue-100 border-blue-300' : ''}
+        className={`bg-white/70 backdrop-blur-md shadow-sm hover:bg-white/80 hover:shadow-2xl transition-all ${
+          seongnamVisible ? 'bg-blue-100/80' : ''
+        }`}
       >
-        <Layers className={seongnamVisible ? 'text-blue-600' : ''} />
+        <Layers className={`stroke-2 drop-shadow-sm transition-colors ${seongnamVisible ? 'text-blue-600 hover:text-blue-700' : 'text-gray-900 hover:text-gray-950'}`} />
       </Button>
     </div>
   )

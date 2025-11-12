@@ -174,7 +174,7 @@ const AddActionHistoryForm: React.FC<{ eventId: number; onSuccess: () => void }>
           <CollapsibleTrigger asChild>
             <Button
               size="sm"
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 w-full"
             >
               <Plus className="h-3.5 w-3.5" />
               조치 추가
