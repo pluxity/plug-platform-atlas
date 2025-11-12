@@ -161,15 +161,12 @@ export const intervalOptions = [
 export const formatTimestampByInterval = (timestamp: string, interval: string): string => {
     switch (interval) {
         case 'HOUR':
-            // Keep as is
             return timestamp;
 
         case 'DAY':
-            // Format: "2025-11-01" -> keep as is
             return timestamp;
 
         case 'WEEK':
-            // Format: "2025-42" -> "10월 2째주"
             if (timestamp.includes('-')) {
                 const parts = timestamp.split('-');
                 if (parts.length === 2 && parts[0] && parts[1]) {
@@ -177,7 +174,6 @@ export const formatTimestampByInterval = (timestamp: string, interval: string): 
                     const weekStr = parts[1];
                     const weekNum = parseInt(weekStr);
 
-                    // Calculate the date of the first day of this week
                     const jan1 = new Date(parseInt(year), 0, 1);
                     const daysToFirstMonday = (8 - jan1.getDay()) % 7;
                     const firstMonday = new Date(parseInt(year), 0, 1 + daysToFirstMonday);
@@ -193,7 +189,6 @@ export const formatTimestampByInterval = (timestamp: string, interval: string): 
             return timestamp;
 
         case 'MONTH':
-            // Format: "2025-10" -> "11월"
             if (timestamp.includes('-')) {
                 const parts = timestamp.split('-');
                 if (parts.length === 2 && parts[1]) {

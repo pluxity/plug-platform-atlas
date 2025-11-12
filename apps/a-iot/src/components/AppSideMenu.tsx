@@ -37,7 +37,17 @@ export default function AppSideMenu() {
   const markAsRead = useNotificationStore((state) => state.markAsRead)
 
   const prevUnreadCount = useRef(0)
+  const isInitialLoad = useRef(true)
+
   useEffect(() => {
+    // Skip opening popup on initial load
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false
+      prevUnreadCount.current = unreadCount
+      return
+    }
+
+    // Only open if unread count increased (new notification arrived)
     if (unreadCount > prevUnreadCount.current && unreadCount > 0) {
       setNotificationOpen(true)
     }

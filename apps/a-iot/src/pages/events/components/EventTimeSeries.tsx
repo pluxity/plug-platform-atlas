@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@plug-atlas/ui';
+import { Card, CardContent } from '@plug-atlas/ui';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TimeSeriesData } from "../../../services/types";
 import { formatTimestampByInterval } from '../utils/timeUtils';
@@ -36,19 +36,16 @@ export default function EventTimeSeries({ data, isLoading, interval }: EventTime
 
     const chartData = data.timestamps.map((timestamp, index) => ({
         timestamp: formatTimestampByInterval(timestamp, interval),
-        미조치: data.metrics?.pendingCnt?.values[index] || 0,
-        진행중: data.metrics?.workingCnt?.values[index] || 0,
-        완료: data.metrics?.completedCnt?.values[index] || 0,
+        미조치: data.metrics?.activeCnt?.values[index] || 0,
+        진행중: data.metrics?.inProgressCnt?.values[index] || 0,
+        완료: data.metrics?.resolvedCnt?.values[index] || 0,
     }));
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="text-base font-semibold">이벤트 추이</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
                 <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                         <XAxis
                             dataKey="timestamp"
@@ -60,6 +57,7 @@ export default function EventTimeSeries({ data, isLoading, interval }: EventTime
                             style={{ fontSize: '12px' }}
                         />
                         <Tooltip
+                            cursor={{ fill: 'transparent' }}
                             contentStyle={{
                                 backgroundColor: '#ffffff',
                                 border: '1px solid #e5e7eb',
