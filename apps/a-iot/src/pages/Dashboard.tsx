@@ -1,7 +1,6 @@
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Column, DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
 import { TreePine, Camera, Radio, Users } from 'lucide-react'
 import { useState, useMemo } from 'react'
-import { useSvgIcon } from '../services/hooks/useSvgIcon'
 import { useSites } from '../services/hooks/useSite'
 import { useCctvList } from '../services/hooks/useCctv'
 import { FeatureResponse, useFeatures } from '@plug-atlas/web-core'
@@ -218,38 +217,30 @@ export default function Dashboard() {
     ).sort((a, b) => a.name.localeCompare(b.name))
   }, [selectedSiteId, sensors])
 
-  const overviewIcon = useSvgIcon({
-    path: '/images/icons/dashboard/tab_overview.svg',
-    defaultColor: '#BBBFCF',
-    activeColor: 'currentColor',
-  })
-
-  const parkIcon = useSvgIcon({
-    path: '/images/icons/dashboard/tab_park.svg',
-    defaultColor: '#BBBFCF',
-    activeColor: 'currentColor',
-  })
-
   const OverviewIcon = ({ isActive }: { isActive: boolean }) => {
-    const coloredSvg = overviewIcon.getColoredSvg(isActive)
-    if (!coloredSvg) return null
+    const iconPath = isActive 
+      ? '/images/icons/dashboard/active_tab_overview.png'
+      : '/images/icons/dashboard/tab_overview.png'
     
     return (
-      <div 
-        className={`flex items-center justify-center size-5 ${isActive ? 'text-primary' : ''}`}
-        dangerouslySetInnerHTML={{ __html: coloredSvg }}
+      <img 
+        src={iconPath}
+        alt="전체보기"
+        className="size-5"
       />
     )
   }
 
   const ParkIcon = ({ isActive }: { isActive: boolean }) => {
-    const coloredSvg = parkIcon.getColoredSvg(isActive)
-    if (!coloredSvg) return null
+    const iconPath = isActive 
+      ? '/images/icons/dashboard/active_tab_park.png'
+      : '/images/icons/dashboard/tab_park.png'
     
     return (
-      <div 
-        className={`flex items-center justify-center size-5 ${isActive ? 'text-primary' : ''}`}
-        dangerouslySetInnerHTML={{ __html: coloredSvg }}
+      <img 
+        src={iconPath}
+        alt="공원별 보기"
+        className="size-5"
       />
     )
   }
