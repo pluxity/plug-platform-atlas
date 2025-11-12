@@ -1,8 +1,9 @@
 import { useRef, useEffect, useState } from 'react'
 import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference } from 'cesium'
-import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD } from '../stores/cesium'
+import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../stores/cesium'
 import { SiteResponse, FeatureResponse, type FeatureDeviceTypeResponse } from '@plug-atlas/web-core'
 import MapControls from './MapControls'
+import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
 import { preloadAllMarkerSvgs, createColoredSvgDataUrl, SVG_MARKERS, type SvgMarkerType } from '../utils/svgMarkerUtils'
 import type { Event } from '../services/types'
@@ -15,6 +16,7 @@ interface CesiumMapProps {
   sensors?: FeatureResponse[]
   events?: Event[]
   className?: string
+  viewerInitOptions?: ViewerInitOptions
 }
 
 export default function CesiumMap({
@@ -24,7 +26,8 @@ export default function CesiumMap({
   onSiteSelect,
   sensors = [],
   events = [],
-  className = ''
+  className = '',
+  viewerInitOptions
 }: CesiumMapProps) {
   const cesiumContainerRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<CesiumViewer | null>(null)
@@ -37,6 +40,7 @@ export default function CesiumMap({
   const { addMarker, clearAllMarkers, changeMarkerColor } = useMarkerStore()
   const { clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
   const { focusOn } = useCameraStore()
+  const { setCurrentProvider } = useImageryStore()
   
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
 
@@ -75,17 +79,28 @@ export default function CesiumMap({
         }
         viewerInstance.camera.setView({ destination, orientation })
 
-        await initializeResources(viewerInstance)
+        await initializeResources(viewerInstance, viewerInitOptions)
 
-        const tilesets = await loadAllIonTilesets(viewerInstance)
-        const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, TILESET_AUTO_HIDE_THRESHOLD)
-        cleanupFunctions.push(tilesetsCleanup)
+        const imageryProvider = viewerInitOptions?.imageryProvider
+        if (imageryProvider === 'ion-default') {
+          setCurrentProvider('ion-default')
+        } else if (imageryProvider === 'ion-satellite') {
+          setCurrentProvider('ion-satellite')
+        } else if (!imageryProvider) {
+          setCurrentProvider('ion-satellite')
+        }
 
-        const seongnamTileset = await loadSeongnamTileset(viewerInstance)
-        if (seongnamTileset) {
-          applyHeightOffset(seongnamTileset, TILESET_HEIGHT_OFFSETS.SEONGNAM)
-          seongnamTileset.show = false
-          setSeongnamTilesetRef(seongnamTileset)
+        if (viewerInitOptions?.load3DTiles !== false) {
+          const tilesets = await loadAllIonTilesets(viewerInstance)
+          const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, TILESET_AUTO_HIDE_THRESHOLD)
+          cleanupFunctions.push(tilesetsCleanup)
+
+          const seongnamTileset = await loadSeongnamTileset(viewerInstance)
+          if (seongnamTileset) {
+            applyHeightOffset(seongnamTileset, TILESET_HEIGHT_OFFSETS.SEONGNAM)
+            seongnamTileset.show = false
+            setSeongnamTilesetRef(seongnamTileset)
+          }
         }
 
         setIsLoading(false)
@@ -328,11 +343,16 @@ export default function CesiumMap({
     <div className={`relative w-full h-[600px] rounded-lg overflow-hidden ${className}`}>
       <div ref={cesiumContainerRef} className="w-full h-full" />
 
+      <MapLayerSelector
+        viewer={viewerRef.current}
+        className="absolute top-4 right-4 z-10"
+      />
+
       <MapControls
         viewer={viewerRef.current}
         homePosition={DEFAULT_CAMERA_POSITION}
         onToggleSeongnamTileset={handleToggleSeongnamTileset}
-        className="absolute bottom-4 right-4 z-10"
+        className="absolute top-1/2 right-4 -translate-y-1/2 z-10"
       />
 
       {isLoading && (

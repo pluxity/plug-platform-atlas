@@ -82,10 +82,10 @@ export default function Dashboard() {
   ]
 
   const getStatusStyle = (status: string) => {
-    if (status === 'ACTIVE') {
+    if (status === 'PENDING') {
       return 'bg-red-100 text-red-800 border-l-4 border-red-600'
     }
-    if (status === 'IN_PROGRESS') {
+    if (status === 'WORKING') {
       return 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-600'
     }
     return 'bg-green-100 text-green-800 border-l-4 border-green-600'
