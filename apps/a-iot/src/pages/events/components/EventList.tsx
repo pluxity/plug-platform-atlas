@@ -34,7 +34,6 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
     const levelInfo = getLevelInfo(event.level);
     const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
 
-    // Sync with initialOpen prop
     useEffect(() => {
         setIsOpen(initialOpen);
     }, [initialOpen]);
@@ -154,8 +153,7 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     const eventIdFromUrl = searchParams.get('eventId');
     const targetEventId = eventIdFromUrl ? parseInt(eventIdFromUrl) : null;
 
-    // Fetch individual event if not in the current list
-    const { data: fetchedEvent, isLoading: isFetchingEvent } = useEvent(
+    const { data: fetchedEvent} = useEvent(
         targetEventId || 0,
         {
             revalidateOnFocus: false,
@@ -170,14 +168,12 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     };
 
     const handleModalClose = () => {
-        // Remove eventId from URL when modal closes
         searchParams.delete('eventId');
         setSearchParams(searchParams);
     };
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
-            // Cycle through: asc -> desc -> null
             if (sortDirection === 'asc') {
                 setSortDirection('desc');
             } else if (sortDirection === 'desc') {
@@ -193,7 +189,6 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     const filteredEvents = useMemo(() => {
         let eventList = events.filter(event => event.level !== 'NORMAL');
 
-        // Add fetched event if it's not in the list
         if (fetchedEvent && targetEventId) {
             const exists = eventList.some(e => e.eventId === targetEventId);
             if (!exists) {

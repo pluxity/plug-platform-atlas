@@ -43,7 +43,6 @@ export type {
 
 export type {
     ConnectionErrorPayload,
-    SensorAlarmPayload,
     NotificationType,
     Notification,
     NotificationStore
