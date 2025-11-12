@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, DatePicker, Button } from '@plug-atlas/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, DatePicker, Button, Badge } from '@plug-atlas/ui';
 import { useInfiniteEvents, useSites } from '../../../services/hooks';
 import { statusOptions, levelOptions, sensorTypeOptions, formatDate, startOfDay, endOfDay } from '../utils/timeUtils.ts';
 import EventList from './EventList.tsx';
-import type { EventStatus, EventLevel, SensorType } from '../../../services/types';
+import { type EventStatus, type EventLevel, type SensorType } from '../../../services/types';
 import { type DateRange } from 'react-day-picker';
-import { X } from 'lucide-react';
+import { X, XIcon } from 'lucide-react';
 
 export default function EventListSection() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
@@ -28,11 +28,38 @@ export default function EventListSection() {
 
     const hasActiveFilters = dateRange !== undefined || listStatusFilter !== 'all' || listLevelFilter !== 'all' || listSensorTypeFilter !== 'all' || listSiteFilter !== 'all';
 
+    const activeFiltersCount =
+        (dateRange !== undefined ? 1 : 0) +
+        (listStatusFilter !== 'all' ? 1 : 0) +
+        (listLevelFilter !== 'all' ? 1 : 0) +
+        (listSensorTypeFilter !== 'all' ? 1 : 0) +
+        (listSiteFilter !== 'all' ? 1 : 0);
+
     const handleResetFilters = () => {
         setDateRange(undefined);
         setListStatusFilter('all');
         setListLevelFilter('all');
         setListSensorTypeFilter('all');
+        setListSiteFilter('all');
+    };
+
+    const handleRemoveDateFilter = () => {
+        setDateRange(undefined);
+    };
+
+    const handleRemoveStatusFilter = () => {
+        setListStatusFilter('all');
+    };
+
+    const handleRemoveLevelFilter = () => {
+        setListLevelFilter('all');
+    };
+
+    const handleRemoveSensorTypeFilter = () => {
+        setListSensorTypeFilter('all');
+    };
+
+    const handleRemoveSiteFilter = () => {
         setListSiteFilter('all');
     };
 
@@ -111,20 +138,94 @@ export default function EventListSection() {
                             ))}
                         </SelectContent>
                     </Select>
-
-                    {hasActiveFilters && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleResetFilters}
-                            className="text-gray-600 hover:text-gray-900"
-                        >
-                            <X className="h-4 w-4 mr-1" />
-                            필터 초기화
-                        </Button>
-                    )}
                 </div>
             </div>
+
+            {activeFiltersCount > 0 && (
+                <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <span className="text-sm font-medium text-gray-700">적용된 필터:</span>
+
+                    {dateRange && (
+                        <Badge variant="secondary" className="gap-1">
+                            {dateRange.from && formatDate(dateRange.from, 'yyyy-MM-dd')}
+                            {dateRange.to && ` ~ ${formatDate(dateRange.to, 'yyyy-MM-dd')}`}
+                            <Button
+                                onClick={handleRemoveDateFilter}
+                                className="rounded-full h-4 w-4 !p-0 text-xs"
+                                variant="ghost"
+                                aria-label="날짜 필터 제거"
+                            >
+                                <XIcon className="size-3" />
+                            </Button>
+                        </Badge>
+                    )}
+
+                    {listStatusFilter !== 'all' && (
+                        <Badge variant="secondary" className="gap-1">
+                            {statusOptions.find(o => o.value === listStatusFilter)?.label}
+                            <Button
+                                onClick={handleRemoveStatusFilter}
+                                className="rounded-full h-4 w-4 !p-0 text-xs"
+                                variant="ghost"
+                                aria-label="상태 필터 제거"
+                            >
+                                <XIcon className="size-3" />
+                            </Button>
+                        </Badge>
+                    )}
+
+                    {listLevelFilter !== 'all' && (
+                        <Badge variant="secondary" className="gap-1">
+                            {levelOptions.find(o => o.value === listLevelFilter)?.label}
+                            <Button
+                                onClick={handleRemoveLevelFilter}
+                                className="rounded-full h-4 w-4 !p-0 text-xs"
+                                variant="ghost"
+                                aria-label="심각도 필터 제거"
+                            >
+                                <XIcon className="size-3" />
+                            </Button>
+                        </Badge>
+                    )}
+
+                    {listSensorTypeFilter !== 'all' && (
+                        <Badge variant="secondary" className="gap-1">
+                            {sensorTypeOptions.find(o => o.value === listSensorTypeFilter)?.label}
+                            <Button
+                                onClick={handleRemoveSensorTypeFilter}
+                                className="rounded-full h-4 w-4 !p-0 text-xs"
+                                variant="ghost"
+                                aria-label="센서 타입 필터 제거"
+                            >
+                                <XIcon className="size-3" />
+                            </Button>
+                        </Badge>
+                    )}
+
+                    {listSiteFilter !== 'all' && (
+                        <Badge variant="secondary" className="gap-1">
+                            {sites?.find(s => s.id.toString() === listSiteFilter)?.name}
+                            <Button
+                                onClick={handleRemoveSiteFilter}
+                                className="rounded-full h-4 w-4 !p-0 text-xs"
+                                variant="ghost"
+                                aria-label="공원 필터 제거"
+                            >
+                                <XIcon className="size-3" />
+                            </Button>
+                        </Badge>
+                    )}
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResetFilters}
+                        className="ml-auto"
+                    >
+                        모두 지우기
+                    </Button>
+                </div>
+            )}
 
             <EventList
                 events={events}
