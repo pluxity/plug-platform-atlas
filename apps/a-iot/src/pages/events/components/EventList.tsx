@@ -55,7 +55,6 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
 
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
-        // Refresh list when modal closes
         if (!open) {
             onStatusUpdate();
             if (onClose) {

@@ -14,39 +14,34 @@ const eventToNotification = (event: Event): Notification => {
         timestamp: new Date(event.occurredAt),
         level: event.level as Notification['level'],
         payload: {
+            eventId: event.eventId,
             deviceId: event.deviceId,
+            objectId: event.objectId,
+            occurredAt: event.occurredAt,
+            minValue: event.minValue,
+            maxValue: event.maxValue,
+            status: event.status,
             eventName: event.eventName,
             fieldKey: event.fieldKey,
             guideMessage: event.guideMessage,
-            lat: event.latitude,
-            lon: event.longitude,
+            longitude: event.longitude,
+            latitude: event.latitude,
+            updatedAt: event.updatedAt,
+            updatedBy: event.updatedBy,
+            value: event.value,
             level: event.level,
-            maxValue: event.maxValue,
-            message: event.guideMessage,
-            minValue: event.minValue,
-            objectId: event.objectId,
+            siteId: event.siteId,
+            siteName: event.siteName,
             sensorDescription: event.sensorDescription,
-            sensorType: 'Unknown',
-            siteId: 0,
-            status: event.status as 'PENDING' | 'WORKING' | 'RESOLVED',
-            timestamp: event.occurredAt,
-            unit: '',
-            value: event.minValue,
             profileDescription: event.profileDescription,
-            siteName: event.siteName
         },
         read: false,
     };
 };
 
-/**
- * Hook to load initial PENDING events on mount
- * Only fetches once if not already initialized
- */
 export function useInitialNotifications() {
     const { isInitialized, setInitialized, setNotifications } = useNotificationStore();
 
-    // Only fetch if not initialized (don't use refreshInterval)
     const { data: pendingEvents, isLoading } = useEvents(
         { status: 'PENDING' },
         {
@@ -57,7 +52,6 @@ export function useInitialNotifications() {
     );
 
     useEffect(() => {
-        // Only load initial data once
         if (!isInitialized && pendingEvents && pendingEvents.length > 0 && !isLoading) {
             const notifications = pendingEvents.map(eventToNotification);
             setNotifications(notifications);

@@ -1,12 +1,12 @@
 import {useEffect, useRef, useState} from 'react';
 import {Client, IMessage, StompSubscription} from '@stomp/stompjs';
-import type {ConnectionErrorPayload, Notification, SensorAlarmPayload} from '../types';
+import type {ConnectionErrorPayload, Notification, Event} from '../types';
 import {useNotificationStore} from '../../stores';
 
 const getWebSocketUrl = () => {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.host;
-  return `${protocol}//${host}/api/stomp/platform`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    return `${protocol}//${host}/api/stomp/platform`;
 };
 
 const STOMP_ENDPOINT = getWebSocketUrl();
@@ -33,40 +33,38 @@ export function useStompNotifications(): UseStompNotificationsReturn {
 
                 const sensorAlarmSub = client.subscribe('/queue/sensor-alarm', (message: IMessage) => {
                     try {
-                        const payload: SensorAlarmPayload = JSON.parse(message.body);
+                        const payload: Event = JSON.parse(message.body);
                         const notification: Notification = {
                             id: `sensor-${Date.now()}-${Math.random()}`,
                             type: 'sensor-alarm',
                             title: payload.eventName || '센서 알람',
                             siteName: payload.siteName || payload.sensorDescription,
-                            message: payload.message || payload.guideMessage || '',
-                            timestamp: payload.timestamp ? new Date(payload.timestamp) : new Date(),
+                            message: payload.guideMessage || '',
+                            timestamp: payload.occurredAt ? new Date(payload.occurredAt) : new Date(),
                             level: payload.level as Notification['level'],
                             payload,
                         };
                         addNotification(notification);
                     } catch (error) {
-                        // Silent error handling
                     }
                 });
                 subscriptionsRef.current.push(sensorAlarmSub);
 
                 const userSensorAlarmSub = client.subscribe('/user/queue/sensor-alarm', (message: IMessage) => {
                     try {
-                        const payload: SensorAlarmPayload = JSON.parse(message.body);
+                        const payload: Event = JSON.parse(message.body);
                         const notification: Notification = {
                             id: `sensor-${Date.now()}-${Math.random()}`,
                             type: 'sensor-alarm',
                             title: payload.eventName || '센서 알람',
                             siteName: payload.siteName || payload.sensorDescription,
-                            message: payload.message || payload.guideMessage || '',
-                            timestamp: payload.timestamp ? new Date(payload.timestamp) : new Date(),
+                            message: payload.guideMessage || '',
+                            timestamp: payload.occurredAt ? new Date(payload.occurredAt) : new Date(),
                             level: payload.level as Notification['level'],
                             payload,
                         };
                         addNotification(notification);
                     } catch (error) {
-                        // Silent error handling
                     }
                 });
                 subscriptionsRef.current.push(userSensorAlarmSub);
@@ -86,7 +84,6 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                         };
                         addNotification(notification);
                     } catch (error) {
-                        // Silent error handling
                     }
                 });
                 subscriptionsRef.current.push(connectionErrorSub);
@@ -95,7 +92,6 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                 setIsConnected(false);
             },
             onStompError: () => {
-                // Silent error handling
             },
         });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import { Building2, LogOut, ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import {
@@ -28,13 +28,10 @@ export default function AppSideMenu() {
   const logout = useAuthStore((state) => state.logout)
   const [notificationOpen, setNotificationOpen] = useState(false)
 
-  // Initialize notification store with PENDING events
   useInitialNotifications()
 
-  // Connect to STOMP WebSocket
   const { isConnected } = useStompNotifications()
 
-  // Get notifications from store
   const notifications = useNotificationStore((state) => state.notifications)
   const unreadCount = useNotificationStore((state) => state.unreadCount)
   const markAsRead = useNotificationStore((state) => state.markAsRead)
