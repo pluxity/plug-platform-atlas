@@ -119,12 +119,6 @@ const ActionHistoryItem: React.FC<ActionHistoryItemProps> = ({ history, eventId,
               <span className="text-xs text-gray-500">
                 작성자: {history.createdBy || '작성자 없음'}
               </span>
-              {/*{history.files && (*/}
-              {/*  <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">*/}
-              {/*    <FileText className="h-3 w-3" />*/}
-              {/*    <span>첨부파일</span>*/}
-              {/*  </div>*/}
-              {/*)}*/}
             </div>
             <span className="text-xs text-gray-500">
               {history.createdAt ? new Date(history.createdAt).toLocaleString('ko-KR') : 'N/A'}

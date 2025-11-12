@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DialogContent, DialogHeader, DialogTitle, Button } from '@plug-atlas/ui';
 import { AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
-import { getStatusInfo } from '../../utils/timeUtils.ts';
+import { getStatusInfo, getLevelInfo } from '../../utils/timeUtils.ts';
 import type { Event } from '../../../../services/types';
 import { useUpdateEventStatus } from '../../../../services/hooks';
 import ActionHistorySection from "./ActionHistoryItem.tsx";
@@ -16,6 +16,10 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
   getStatusInfo(event.status);
   const [localEvent, setLocalEvent] = useState(event);
   const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
+
+  useEffect(() => {
+    setLocalEvent(event);
+  }, [event]);
 
   const handleStatusAction = async () => {
     if (localEvent.status === 'ACTIVE') {
@@ -48,7 +52,7 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
-            이벤트 상세 정보 #{localEvent.eventId}
+            {localEvent.profileDescription || localEvent.sensorDescription || '센서'} {getLevelInfo(localEvent.level).text} 발생
           </DialogTitle>
         </DialogHeader>
 
@@ -154,63 +158,143 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
               </div>
             )}
           </div>
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">이벤트 발생 위치</h3>
+            <EventLocationMap
+                longitude={localEvent.longitude}
+                latitude={localEvent.latitude}
+                eventName={localEvent.eventName}
+            />
+          </div>
 
-          <div className="space-y-4 bg-gray-50/50 p-5 rounded-lg border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">이벤트 정보</h3>
+          <div className="space-y-4 bg-gradient-to-br from-gray-50 to-gray-100/50 p-6 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-700 uppercase tracking-wide">이벤트 정보</h3>
+              <span className={`px-3 py-1 text-xs font-semibold ${getLevelInfo(localEvent.level).color}`}>
+                {getLevelInfo(localEvent.level).text}
+              </span>
+            </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">이벤트명</label>
-                <p className="mt-1.5 text-base text-gray-900">{localEvent.eventName || 'N/A'}</p>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">디바이스 ID</label>
-                <p className="mt-1.5 text-base text-gray-900">{localEvent.deviceId || 'N/A'}</p>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">필드키</label>
-                <p className="mt-1.5 text-base text-gray-900 font-mono">{localEvent.fieldKey || 'N/A'}</p>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">발생 시간</label>
-                <p className="mt-1.5 text-base text-gray-900">
-                  {localEvent.occurredAt ? new Date(localEvent.occurredAt).toLocaleString('ko-KR') : 'N/A'}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="space-y-5">
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
                 <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">최소값</label>
-                  <p className="mt-1.5 text-base text-gray-900">{localEvent.minValue !== undefined ? localEvent.minValue : 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">최대값</label>
-                  <p className="mt-1.5 text-base text-gray-900">{localEvent.maxValue !== undefined ? localEvent.maxValue : 'N/A'}</p>
+                  <label className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-1.5 block">디바이스 ID</label>
+                  <p className="flex items-center gap-2 text-sm text-gray-900 leading-relaxed">
+                    <span className="text-sm font-semibold text-gray-900">{localEvent.sensorDescription || 'N/A'}</span>
+                    <span className="text-sm text-gray-900 font-mono">{localEvent.deviceId || 'N/A'}</span>
+                  </p>
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">가이드 메시지</label>
-                <p className="mt-1.5 text-base text-gray-900">{localEvent.guideMessage || 'N/A'}</p>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                <label className="font-medium text-gray-700 uppercase tracking-wide mb-6 block">센서 측정값 범위</label>
+
+                <div className="mb-8 text-center">
+                  <div className="inline-block">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">현재 측정값</div>
+                    <div className="relative">
+                      <div className="text-5xl font-bold text-red-600 tabular-nums">
+                        {localEvent.value !== undefined && localEvent.value !== null
+                          ? localEvent.value.toFixed(6).replace(/\.?0+$/, '')
+                          : 'N/A'}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">단위: {localEvent.fieldKey?.split('_').pop() || '-'}</div>
+                  </div>
+                </div>
+
+                {localEvent.minValue !== undefined && localEvent.maxValue !== undefined && localEvent.value !== undefined && (
+                  <div className="space-y-4">
+                    <div className="relative px-2">
+                      <div className="relative h-4 bg-gradient-to-r from-blue-400 via-yellow-400 to-red-400 rounded-full shadow-inner">
+                        <div className="absolute inset-y-0 left-0 w-1 bg-blue-700 rounded-l-full"></div>
+                        <div className="absolute inset-y-0 right-0 w-1 bg-red-700 rounded-r-full"></div>
+                        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-white/60"></div>
+                      </div>
+
+                      {(() => {
+                        const range = localEvent.maxValue - localEvent.minValue;
+                        const position = range > 0
+                          ? ((localEvent.value - localEvent.minValue) / range) * 100
+                          : 50;
+                        const clampedPosition = Math.max(0, Math.min(100, position));
+
+                        return (
+                          <>
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 bg-white border-3 border-gray-800 rounded-full shadow-lg z-10 transition-all duration-300"
+                              style={{ left: `${clampedPosition}%` }}
+                            >
+                              <div className="absolute inset-0 bg-gray-800 rounded-full animate-ping opacity-20"></div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2">
+                      <div className="flex flex-col items-start">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                          <span className="text-xs font-medium text-gray-500 uppercase">최소 임계값</span>
+                        </div>
+                        <div className="text-xl font-bold text-blue-600 tabular-nums">{localEvent.minValue}</div>
+                      </div>
+
+                      <div className="flex flex-col items-end">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium text-gray-500 uppercase">최대 임계값</span>
+                          <div className="w-3 h-3 bg-red-600 rounded-full"></div>
+                        </div>
+                        <div className="font-bold text-red-600 tabular-nums">{localEvent.maxValue}</div>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const levelInfo = getLevelInfo(localEvent.level);
+                      let statusMessage = '';
+
+                      if (localEvent.value < localEvent.minValue) {
+                        statusMessage = `${levelInfo.text} - 임계값보다 낮음`;
+                      } else if (localEvent.value > localEvent.maxValue) {
+                        statusMessage = `${levelInfo.text} - 임계값 초과`;
+                      } else {
+                        statusMessage = `${levelInfo.text} - 정상 범위`;
+                      }
+
+                      return (
+                        <div className={`mt-4 px-4 py-3 rounded-lg border ${levelInfo.color} !border-l-1 text-sm font-medium text-center`}>
+                          {statusMessage}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-gray-100">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-gray-500">필드키:</span>
+                    <span className="font-mono text-gray-700 font-medium">{localEvent.fieldKey || 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-gray-500">발생시간:</span>
+                    <span className="text-gray-700 font-medium">
+                      {localEvent.occurredAt ? new Date(localEvent.occurredAt).toLocaleString('ko-KR', {
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 'N/A'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">이벤트 발생 위치</h3>
-            <EventLocationMap
-              longitude={localEvent.longitude}
-              latitude={localEvent.latitude}
-              eventName={localEvent.eventName}
-            />
-          </div>
-
-          <div className="space-y-4">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">조치 기록</h3>
-            <ActionHistorySection eventId={event.eventId} />
+            <ActionHistorySection eventId={localEvent.eventId} />
           </div>
         </div>
       </DialogContent>

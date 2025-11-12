@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { Bell } from 'lucide-react';
-import { Button, Popover, PopoverContent, PopoverTrigger } from '@plug-atlas/ui';
+import { Button, Popover, PopoverContent, PopoverTrigger, Dialog } from '@plug-atlas/ui';
 import { Notification, Event } from "../services/types";
-import { useNavigate } from 'react-router-dom';
 import { getLevelInfo } from '../pages/events/utils/timeUtils';
+import EventDetailModal from '../pages/events/components/modal/EventDetailModal';
 
 interface NotificationPanelProps {
     notifications: Notification[];
@@ -41,9 +42,15 @@ const getRelativeTime = (date: Date): string => {
     return `${diffDays}일 전`;
 };
 
-function NotificationItem({ notification, onMarkAsRead }: { notification: Notification; onMarkAsRead?: (id: string) => void }) {
-    const navigate = useNavigate();
-
+function NotificationItem({
+    notification,
+    onMarkAsRead,
+    onItemClick
+}: {
+    notification: Notification;
+    onMarkAsRead?: (id: string) => void;
+    onItemClick: (event: Event) => void;
+}) {
     const payload = notification.type === 'sensor-alarm'
         ? (notification.payload as Event)
         : null;
@@ -53,8 +60,8 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
             onMarkAsRead(notification.id);
         }
 
-        if (notification.eventId) {
-            navigate(`/events?eventId=${notification.eventId}`);
+        if (payload) {
+            onItemClick(payload);
         }
     };
 
@@ -102,7 +109,7 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
                         {payload?.siteName || '알 수 없음'}
                     </div>
                     <div className={`text-xs ${getLevelColor(notification.level)}`}>
-                        {payload?.sensorDescription || ''}: {notification.payload.deviceId}
+                        {payload?.sensorDescription || ''}: {payload?.deviceId || ''}
                     </div>
                 </div>
             </div>
@@ -117,56 +124,83 @@ export default function NotificationPop({
     onOpenChange,
     onMarkAsRead,
 }: NotificationPanelProps) {
+    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const handleItemClick = (event: Event) => {
+        setSelectedEvent(event);
+        setIsDialogOpen(true);
+    };
+
+    const handleDialogClose = () => {
+        setIsDialogOpen(false);
+        setSelectedEvent(null);
+    };
+
     return (
-        <Popover open={open} onOpenChange={onOpenChange}>
-            <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-8 relative">
-                    <Bell className="size-4" />
-                    {unreadCount > 0 && (
-                        <span className="absolute top-0 -right-1 size-4 flex items-center justify-center p-0 text-[10px] bg-red-600 text-white rounded-full">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                    )}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent
-                side="right"
-                align="start"
-                className="w-96 p-3.5 bg-gray-100 rounded-2xl border-0 relative left-10 top-[-4px] shadow-[-4px_8px_15px_0px_rgba(0,0,0,0.15)]"
-            >
-                <svg
-                    width="21"
-                    height="25"
-                    viewBox="0 0 21 25"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="absolute -left-5 top-3 z-30"
+        <>
+            <Popover open={open} onOpenChange={onOpenChange}>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-8 relative">
+                        <Bell className="size-4" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-0 -right-1 size-4 flex items-center justify-center p-0 text-[10px] bg-red-600 text-white rounded-full">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                    side="right"
+                    align="start"
+                    className="w-96 p-3.5 bg-gray-100 rounded-2xl border-0 relative left-10 top-[-4px] shadow-[-4px_8px_15px_0px_rgba(0,0,0,0.15)]"
                 >
-                    <path d="M0 12.1243L21 -8.7738e-05V24.2486L0 12.1243Z" fill="#EFF1F4"/>
-                </svg>
+                    <svg
+                        width="21"
+                        height="25"
+                        viewBox="0 0 21 25"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="absolute -left-5 top-3 z-30"
+                    >
+                        <path d="M0 12.1243L21 -8.7738e-05V24.2486L0 12.1243Z" fill="#EFF1F4"/>
+                    </svg>
 
-                <div className="flex flex-col">
+                    <div className="flex flex-col">
 
-                    <div className="relative">
-                        <div className="max-h-[540px] overflow-y-auto space-y-2.5 scrollbar-thin">
-                            {notifications.length === 0 ? (
-                                <div className="min-h-48 bg-white rounded-2xl flex flex-col items-center justify-center text-gray-400">
-                                    <Bell className="size-10 mb-2" />
-                                    <p className="text-sm">알림이 없습니다</p>
-                                </div>
-                            ) : (
-                                notifications.map((notification) => (
-                                    <NotificationItem
-                                        key={notification.id}
-                                        notification={notification}
-                                        onMarkAsRead={onMarkAsRead}
-                                    />
-                                ))
-                            )}
+                        <div className="relative">
+                            <div className="max-h-[540px] overflow-y-auto space-y-2.5 scrollbar-thin">
+                                {notifications.length === 0 ? (
+                                    <div className="min-h-48 bg-white rounded-2xl flex flex-col items-center justify-center text-gray-400">
+                                        <Bell className="size-10 mb-2" />
+                                        <p className="text-sm">알림이 없습니다</p>
+                                    </div>
+                                ) : (
+                                    notifications.map((notification) => (
+                                        <NotificationItem
+                                            key={notification.id}
+                                            notification={notification}
+                                            onMarkAsRead={onMarkAsRead}
+                                            onItemClick={handleItemClick}
+                                        />
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </PopoverContent>
-        </Popover>
+                </PopoverContent>
+            </Popover>
+
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+                {selectedEvent && (
+                    <EventDetailModal
+                        event={selectedEvent}
+                        onStatusUpdate={() => {
+                            // Refresh logic if needed
+                        }}
+                    />
+                )}
+            </Dialog>
+        </>
     );
 }
