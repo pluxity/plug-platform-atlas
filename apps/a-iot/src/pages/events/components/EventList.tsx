@@ -67,12 +67,12 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     }, [events, fetchedEvent, targetEventId]);
 
     // Auto-open dialog if URL has eventId
-    useMemo(() => {
+    useEffect(() => {
         if (targetEventId && fetchedEvent && !isDialogOpen) {
             setSelectedEvent(fetchedEvent);
             setIsDialogOpen(true);
         }
-    }, [targetEventId, fetchedEvent]);
+    }, [targetEventId, fetchedEvent, isDialogOpen]);
 
     const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
 
