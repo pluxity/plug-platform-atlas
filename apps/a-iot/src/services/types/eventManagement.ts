@@ -5,15 +5,17 @@ export interface Event {
     occurredAt: string,
     minValue: number,
     maxValue: number,
-    status: string,
-    level: string,
-    eventName: string,
+    status: EventStatus,
     fieldKey: string,
     guideMessage: string,
     longitude: number,
     latitude: number,
     updatedAt: string,
     updatedBy: string,
+    value: number,
+    level: EventLevel,
+    eventName: string,
+    siteId: number,
     siteName: string,
     sensorDescription: string,
     profileDescription: string
@@ -65,7 +67,7 @@ export interface EventStatusRequest {
     result: EventStatus;
 }
 
-export type EventStatus = 'PENDING' | 'WORKING' | 'COMPLETED';
+export type EventStatus = 'ACTIVE' | 'IN_PROGRESS' | 'RESOLVED';
 export type EventLevel = 'NORMAL' | 'WARNING' | 'CAUTION' | 'DANGER' | 'DISCONNECTED';
 export type SensorType = 'TEMPERATURE_HUMIDITY' | 'FIRE' | 'DISPLACEMENT_GAUGE';
 export type EventCollectInterval = 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';

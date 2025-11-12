@@ -3,7 +3,7 @@ import { Card, Button, Dialog, DialogTrigger } from '@plug-atlas/ui';
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import EventDetailModal from './modal/EventDetailModal.tsx';
 import type { Event } from '../../../services/types';
-import { useUpdateEventStatus } from '../../../services/hooks';
+import { useUpdateEventStatus, useEvent } from '../../../services/hooks';
 import { getStatusInfo, getLevelInfo } from "../utils/timeUtils.ts";
 import { useSearchParams } from 'react-router-dom';
 
@@ -34,18 +34,17 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
     const levelInfo = getLevelInfo(event.level);
     const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
 
-    // Sync with initialOpen prop
     useEffect(() => {
         setIsOpen(initialOpen);
     }, [initialOpen]);
 
     const handleStatusAction = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (event.status === 'PENDING') {
+        if (event.status === 'ACTIVE') {
             try {
                 await updateStatus({
                     eventId: event.eventId,
-                    status: { result: 'WORKING' }
+                    status: { result: 'IN_PROGRESS' }
                 });
                 onStatusUpdate();
             } catch (error) {
@@ -56,7 +55,6 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
 
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
-        // Refresh list when modal closes
         if (!open) {
             onStatusUpdate();
             if (onClose) {
@@ -66,10 +64,10 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
     };
 
     const getStatusStyle = () => {
-        if (event.status === 'PENDING') {
+        if (event.status === 'ACTIVE') {
             return 'bg-red-100 text-red-800 border-l-4 border-red-600';
         }
-        if (event.status === 'WORKING') {
+        if (event.status === 'IN_PROGRESS') {
             return 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-600';
         }
         return 'bg-green-100 text-green-800 border-l-4 border-green-600';
@@ -122,7 +120,7 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
                     </div>
 
                     <div className="w-48 flex items-center justify-center">
-                        {event.status === 'PENDING' ? (
+                        {event.status === 'ACTIVE' ? (
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -154,12 +152,13 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     const eventIdFromUrl = searchParams.get('eventId');
     const targetEventId = eventIdFromUrl ? parseInt(eventIdFromUrl) : null;
 
-    // Debug log
-    useEffect(() => {
-        if (targetEventId) {
-            console.log('[EventList] Opening modal for eventId:', targetEventId);
+    const { data: fetchedEvent} = useEvent(
+        targetEventId || 0,
+        {
+            revalidateOnFocus: false,
+            revalidateOnReconnect: false
         }
-    }, [targetEventId]);
+    );
 
     const handleStatusUpdate = () => {
         if (onRefresh) {
@@ -168,14 +167,12 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     };
 
     const handleModalClose = () => {
-        // Remove eventId from URL when modal closes
         searchParams.delete('eventId');
         setSearchParams(searchParams);
     };
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
-            // Cycle through: asc -> desc -> null
             if (sortDirection === 'asc') {
                 setSortDirection('desc');
             } else if (sortDirection === 'desc') {
@@ -189,8 +186,17 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     };
 
     const filteredEvents = useMemo(() => {
-        return events.filter(event => event.level !== 'NORMAL');
-    }, [events]);
+        let eventList = events.filter(event => event.level !== 'NORMAL');
+
+        if (fetchedEvent && targetEventId) {
+            const exists = eventList.some(e => e.eventId === targetEventId);
+            if (!exists) {
+                eventList = [fetchedEvent, ...eventList];
+            }
+        }
+
+        return eventList;
+    }, [events, fetchedEvent, targetEventId]);
 
     const sortedEvents = useMemo(() => {
         if (!sortField || !sortDirection) return filteredEvents;
@@ -207,7 +213,7 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
                 aValue = levelOrder[a.level as keyof typeof levelOrder] || 0;
                 bValue = levelOrder[b.level as keyof typeof levelOrder] || 0;
             } else if (sortField === 'status') {
-                const statusOrder = { 'PENDING': 3, 'WORKING': 2, 'COMPLETED': 1 };
+                const statusOrder = { 'ACTIVE': 3, 'IN_PROGRESS': 2, 'RESOLVED': 1 };
                 aValue = statusOrder[a.status as keyof typeof statusOrder] || 0;
                 bValue = statusOrder[b.status as keyof typeof statusOrder] || 0;
             }

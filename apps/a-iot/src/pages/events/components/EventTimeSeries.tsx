@@ -36,7 +36,7 @@ export default function EventTimeSeries({ data, isLoading, interval }: EventTime
 
     const chartData = data.timestamps.map((timestamp, index) => ({
         timestamp: formatTimestampByInterval(timestamp, interval),
-        대기중: data.metrics?.pendingCnt?.values[index] || 0,
+        미조치: data.metrics?.pendingCnt?.values[index] || 0,
         진행중: data.metrics?.workingCnt?.values[index] || 0,
         완료: data.metrics?.completedCnt?.values[index] || 0,
     }));
@@ -71,7 +71,7 @@ export default function EventTimeSeries({ data, isLoading, interval }: EventTime
                             wrapperStyle={{ fontSize: '14px' }}
                         />
                         <Bar
-                            dataKey="대기중"
+                            dataKey="미조치"
                             stackId="stack"
                             fill="#dc2626"
                         />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import { Building2, LogOut, ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import {
@@ -18,8 +18,8 @@ import {
   CollapsibleTrigger,
 } from '@plug-atlas/ui'
 import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../constants/menu'
-import { useAuthStore } from '../stores'
-import { useStompNotifications } from '../services/hooks'
+import { useAuthStore, useNotificationStore } from '../stores'
+import { useStompNotifications, useInitialNotifications } from '../services/hooks'
 import NotificationPop from './NotificationPop'
 
 export default function AppSideMenu() {
@@ -28,17 +28,17 @@ export default function AppSideMenu() {
   const logout = useAuthStore((state) => state.logout)
   const [notificationOpen, setNotificationOpen] = useState(false)
 
-  const {
-    notifications,
-    unreadCount,
-    isConnected,
-    markAsRead,
-  } = useStompNotifications()
+  useInitialNotifications()
 
-  // Auto-open popup when new notification arrives
+  const { isConnected } = useStompNotifications()
+
+  const notifications = useNotificationStore((state) => state.notifications)
+  const unreadCount = useNotificationStore((state) => state.unreadCount)
+  const markAsRead = useNotificationStore((state) => state.markAsRead)
+
   const prevUnreadCount = useRef(0)
   useEffect(() => {
-    if (unreadCount > prevUnreadCount.current) {
+    if (unreadCount > prevUnreadCount.current && unreadCount > 0) {
       setNotificationOpen(true)
     }
     prevUnreadCount.current = unreadCount
