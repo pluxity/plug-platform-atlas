@@ -195,9 +195,7 @@ export default function NotificationPop({
                 {selectedEvent && (
                     <EventDetailModal
                         event={selectedEvent}
-                        onStatusUpdate={() => {
-                            // Refresh logic if needed
-                        }}
+                        onStatusUpdate={handleStatusUpdate}
                     />
                 )}
             </Dialog>
