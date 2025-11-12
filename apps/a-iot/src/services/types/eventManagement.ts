@@ -67,7 +67,7 @@ export interface EventStatusRequest {
     result: EventStatus;
 }
 
-export type EventStatus = 'PENDING' | 'WORKING' | 'COMPLETED';
+export type EventStatus = 'ACTIVE' | 'IN_PROGRESS' | 'RESOLVED';
 export type EventLevel = 'NORMAL' | 'WARNING' | 'CAUTION' | 'DANGER' | 'DISCONNECTED';
 export type SensorType = 'TEMPERATURE_HUMIDITY' | 'FIRE' | 'DISPLACEMENT_GAUGE';
 export type EventCollectInterval = 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';

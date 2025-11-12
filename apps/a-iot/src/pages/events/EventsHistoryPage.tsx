@@ -18,9 +18,9 @@ export default function EventsHistoryPage() {
 
     return {
       total: events.length,
-      pending: events.filter(e => e.status === 'PENDING').length,
-      working: events.filter(e => e.status === 'WORKING').length,
-      completed: events.filter(e => e.status === 'COMPLETED').length,
+      pending: events.filter(e => e.status === 'ACTIVE').length,
+      working: events.filter(e => e.status === 'IN_PROGRESS').length,
+      completed: events.filter(e => e.status === 'RESOLVED').length,
     };
   }, [events]);
 

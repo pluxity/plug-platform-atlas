@@ -43,7 +43,7 @@ export function useInitialNotifications() {
     const { isInitialized, setInitialized, setNotifications } = useNotificationStore();
 
     const { data: pendingEvents, isLoading } = useEvents(
-        { status: 'PENDING' },
+        { status: 'ACTIVE' },
         {
             revalidateOnFocus: false,
             revalidateOnReconnect: false,

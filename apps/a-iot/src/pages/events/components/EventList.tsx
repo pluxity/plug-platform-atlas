@@ -40,11 +40,11 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
 
     const handleStatusAction = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (event.status === 'PENDING') {
+        if (event.status === 'ACTIVE') {
             try {
                 await updateStatus({
                     eventId: event.eventId,
-                    status: { result: 'WORKING' }
+                    status: { result: 'IN_PROGRESS' }
                 });
                 onStatusUpdate();
             } catch (error) {
@@ -64,10 +64,10 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
     };
 
     const getStatusStyle = () => {
-        if (event.status === 'PENDING') {
+        if (event.status === 'ACTIVE') {
             return 'bg-red-100 text-red-800 border-l-4 border-red-600';
         }
-        if (event.status === 'WORKING') {
+        if (event.status === 'IN_PROGRESS') {
             return 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-600';
         }
         return 'bg-green-100 text-green-800 border-l-4 border-green-600';
@@ -120,7 +120,7 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
                     </div>
 
                     <div className="w-48 flex items-center justify-center">
-                        {event.status === 'PENDING' ? (
+                        {event.status === 'ACTIVE' ? (
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -213,7 +213,7 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
                 aValue = levelOrder[a.level as keyof typeof levelOrder] || 0;
                 bValue = levelOrder[b.level as keyof typeof levelOrder] || 0;
             } else if (sortField === 'status') {
-                const statusOrder = { 'PENDING': 3, 'WORKING': 2, 'COMPLETED': 1 };
+                const statusOrder = { 'ACTIVE': 3, 'IN_PROGRESS': 2, 'RESOLVED': 1 };
                 aValue = statusOrder[a.status as keyof typeof statusOrder] || 0;
                 bValue = statusOrder[b.status as keyof typeof statusOrder] || 0;
             }

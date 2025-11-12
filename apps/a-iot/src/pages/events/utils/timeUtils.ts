@@ -74,11 +74,11 @@ export const getTimeRange = (range: string) => {
 
 export const getStatusInfo = (status: string) => {
     switch (status) {
-        case 'PENDING':
-            return { icon: Clock, color: 'text-yellow-600 bg-yellow-50', text: '대기중' };
-        case 'WORKING':
+        case 'ACTIVE':
+            return { icon: Clock, color: 'text-yellow-600 bg-yellow-50', text: '미조치' };
+        case 'IN_PROGRESS':
             return { icon: TrendingUp, color: 'text-blue-600 bg-blue-50', text: '진행중' };
-        case 'COMPLETED':
+        case 'RESOLVED':
             return { icon: CheckCircle, color: 'text-green-600 bg-green-50', text: '완료' };
         default:
             return { icon: AlertTriangle, color: 'text-gray-600 bg-gray-50', text: '알 수 없음' };
@@ -130,9 +130,9 @@ export const timeRangeOptions = [
 
 export const statusOptions = [
     { label: '전체 상태', value: 'all' },
-    { label: '대기중', value: 'PENDING' },
-    { label: '진행중', value: 'WORKING' },
-    { label: '완료', value: 'COMPLETED' },
+    { label: '미조치', value: 'ACTIVE' },
+    { label: '진행중', value: 'IN_PROGRESS' },
+    { label: '완료', value: 'RESOLVED' },
 ];
 
 export const levelOptions = [

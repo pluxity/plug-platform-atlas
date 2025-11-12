@@ -18,13 +18,13 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
   const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
 
   const handleStatusAction = async () => {
-    if (localEvent.status === 'PENDING') {
+    if (localEvent.status === 'ACTIVE') {
       try {
         await updateStatus({
           eventId: localEvent.eventId,
-          status: { result: 'WORKING' }
+          status: { result: 'IN_PROGRESS' }
         });
-        setLocalEvent({ ...localEvent, status: 'WORKING' });
+        setLocalEvent({ ...localEvent, status: 'IN_PROGRESS' });
         if (onStatusUpdate) {
           onStatusUpdate();
         }
@@ -35,7 +35,7 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
   };
 
   const getStepStatus = (step: string) => {
-    const steps = ['PENDING', 'WORKING', 'COMPLETED'];
+    const steps = ['ACTIVE', 'IN_PROGRESS', 'RESOLVED'];
     const currentIndex = steps.indexOf(localEvent.status);
     const stepIndex = steps.indexOf(step);
 
@@ -56,7 +56,7 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
           <div className="bg-gray-50/50 p-5 rounded-lg border border-gray-100">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">처리 상태</h3>
-              {localEvent.status === 'PENDING' && (
+              {localEvent.status === 'ACTIVE' && (
                 <Button
                   size="sm"
                   onClick={handleStatusAction}
@@ -75,28 +75,28 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
                 className="absolute top-4 left-0 h-0.5 bg-blue-400 transition-all duration-300"
                 style={{
                   left: '12%',
-                  width: localEvent.status === 'PENDING' ? '0%' : localEvent.status === 'WORKING' ? '38%' : '76%'
+                  width: localEvent.status === 'ACTIVE' ? '0%' : localEvent.status === 'IN_PROGRESS' ? '38%' : '76%'
                 }}
               />
 
               <div className="flex flex-col items-center flex-1 relative z-10">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-2 transition-colors ${
-                  getStepStatus('PENDING') === 'active'
+                  getStepStatus('ACTIVE') === 'active'
                     ? 'bg-red-100 border-2 border-red-500'
-                    : getStepStatus('PENDING') === 'completed'
+                    : getStepStatus('ACTIVE') === 'completed'
                     ? 'bg-blue-100 border-2 border-blue-500'
                     : 'bg-white border-2 border-gray-300'
                 }`}>
-                  {getStepStatus('PENDING') === 'completed' ? (
+                  {getStepStatus('ACTIVE') === 'completed' ? (
                     <CheckCircle2 className="h-4.5 w-4.5 text-blue-600" />
                   ) : (
-                    <AlertCircle className={`h-4.5 w-4.5 ${getStepStatus('PENDING') === 'active' ? 'text-red-600' : 'text-gray-400'}`} />
+                    <AlertCircle className={`h-4.5 w-4.5 ${getStepStatus('ACTIVE') === 'active' ? 'text-red-600' : 'text-gray-400'}`} />
                   )}
                 </div>
                 <p className={`text-xs font-medium ${
-                  getStepStatus('PENDING') === 'active'
+                  getStepStatus('ACTIVE') === 'active'
                     ? 'text-red-600'
-                    : getStepStatus('PENDING') === 'completed'
+                    : getStepStatus('ACTIVE') === 'completed'
                     ? 'text-gray-600'
                     : 'text-gray-400'
                 }`}>
@@ -106,22 +106,22 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
 
               <div className="flex flex-col items-center flex-1 relative z-10">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-2 transition-colors ${
-                  getStepStatus('WORKING') === 'active'
+                  getStepStatus('IN_PROGRESS') === 'active'
                     ? 'bg-yellow-100 border-2 border-yellow-500'
-                    : getStepStatus('WORKING') === 'completed'
+                    : getStepStatus('IN_PROGRESS') === 'completed'
                     ? 'bg-blue-100 border-2 border-blue-500'
                     : 'bg-white border-2 border-gray-300'
                 }`}>
-                  {getStepStatus('WORKING') === 'completed' ? (
+                  {getStepStatus('IN_PROGRESS') === 'completed' ? (
                     <CheckCircle2 className="h-4.5 w-4.5 text-blue-600" />
                   ) : (
-                    <Clock className={`h-4.5 w-4.5 ${getStepStatus('WORKING') === 'active' ? 'text-yellow-600' : 'text-gray-400'}`} />
+                    <Clock className={`h-4.5 w-4.5 ${getStepStatus('IN_PROGRESS') === 'active' ? 'text-yellow-600' : 'text-gray-400'}`} />
                   )}
                 </div>
                 <p className={`text-xs font-medium ${
-                  getStepStatus('WORKING') === 'active'
+                  getStepStatus('IN_PROGRESS') === 'active'
                     ? 'text-yellow-600'
-                    : getStepStatus('WORKING') === 'completed'
+                    : getStepStatus('IN_PROGRESS') === 'completed'
                     ? 'text-gray-600'
                     : 'text-gray-400'
                 }`}>
@@ -131,21 +131,21 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
 
               <div className="flex flex-col items-center flex-1 relative z-10">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-2 transition-colors ${
-                  getStepStatus('COMPLETED') === 'active'
+                  getStepStatus('RESOLVED') === 'active'
                     ? 'bg-green-100 border-2 border-green-500'
                     : 'bg-white border-2 border-gray-300'
                 }`}>
-                  <CheckCircle2 className={`h-4.5 w-4.5 ${getStepStatus('COMPLETED') === 'active' ? 'text-green-600' : 'text-gray-400'}`} />
+                  <CheckCircle2 className={`h-4.5 w-4.5 ${getStepStatus('RESOLVED') === 'active' ? 'text-green-600' : 'text-gray-400'}`} />
                 </div>
                 <p className={`text-xs font-medium ${
-                  getStepStatus('COMPLETED') === 'active' ? 'text-green-600' : 'text-gray-400'
+                  getStepStatus('RESOLVED') === 'active' ? 'text-green-600' : 'text-gray-400'
                 }`}>
                   완료
                 </p>
               </div>
             </div>
 
-            {localEvent.status !== 'PENDING' && localEvent.updatedBy && (
+            {localEvent.status !== 'ACTIVE' && localEvent.updatedBy && (
               <div className="mt-5 pt-4 border-t border-gray-200">
                 <span className="text-sm text-gray-600">
                   <span className="font-medium text-gray-500">담당자:</span>{' '}

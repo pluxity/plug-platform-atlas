@@ -52,11 +52,10 @@ export const useNotificationStore = create<NotificationStore>()(
 
                     newNotifications = newNotifications.slice(0, MAX_NOTIFICATIONS);
 
-                    // unreadCount = PENDING status count
                     const unreadCount = newNotifications.filter(n => {
                         if (n.type === 'sensor-alarm' && n.payload) {
                             const payload = n.payload as any;
-                            return payload.status === 'PENDING';
+                            return payload.status === 'ACTIVE';
                         }
                         return false;
                     }).length;
@@ -79,11 +78,10 @@ export const useNotificationStore = create<NotificationStore>()(
                         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
                         .slice(0, MAX_NOTIFICATIONS);
 
-                    // unreadCount = PENDING status count
                     const unreadCount = sorted.filter(n => {
                         if (n.type === 'sensor-alarm' && n.payload) {
                             const payload = n.payload as any;
-                            return payload.status === 'PENDING';
+                            return payload.status === 'ACTIVE';
                         }
                         return false;
                     }).length;
@@ -100,11 +98,10 @@ export const useNotificationStore = create<NotificationStore>()(
                     const updated = state.notifications.map(n =>
                         n.id === id ? { ...n, read: true } : n
                     );
-                    // unreadCount = PENDING status count (not affected by read field)
                     const unreadCount = updated.filter(n => {
                         if (n.type === 'sensor-alarm' && n.payload) {
                             const payload = n.payload as any;
-                            return payload.status === 'PENDING';
+                            return payload.status === 'ACTIVE';
                         }
                         return false;
                     }).length;
@@ -115,11 +112,10 @@ export const useNotificationStore = create<NotificationStore>()(
             markAllAsRead: () => {
                 set((state) => {
                     const updated = state.notifications.map(n => ({ ...n, read: true }));
-                    // unreadCount = PENDING status count (not affected by read field)
                     const unreadCount = updated.filter(n => {
                         if (n.type === 'sensor-alarm' && n.payload) {
                             const payload = n.payload as any;
-                            return payload.status === 'PENDING';
+                            return payload.status === 'ACTIVE';
                         }
                         return false;
                     }).length;
@@ -140,11 +136,10 @@ export const useNotificationStore = create<NotificationStore>()(
 
             updateUnreadCount: () => {
                 set((state) => {
-                    // unreadCount = PENDING status count
                     const unreadCount = state.notifications.filter(n => {
                         if (n.type === 'sensor-alarm' && n.payload) {
                             const payload = n.payload as any;
-                            return payload.status === 'PENDING';
+                            return payload.status === 'ACTIVE';
                         }
                         return false;
                     }).length;
