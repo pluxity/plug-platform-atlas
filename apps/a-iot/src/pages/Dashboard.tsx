@@ -220,7 +220,7 @@ export default function Dashboard() {
   return (
     <>
       <div className="mb-6">
-      <Tabs value={activeTab} onValueChange={(value) => {
+        <Tabs className="shadow-lg inline-flex rounded-lg" value={activeTab} onValueChange={(value) => {
           if (value === 'overview' || value === 'parks') {
             setActiveTab(value)
             if (value === 'overview') {
@@ -228,12 +228,23 @@ export default function Dashboard() {
             }
           }
         }} variant="buttons">
-          <TabsList className="justify-start">
-            <TabsTrigger value="overview" icon={<Map className="size-4" />}>
-              전체보기
+          <TabsList className="justify-start gap-0 !border !border-white rounded-lg">
+            <TabsTrigger 
+              value="overview" 
+              icon={<Map className={`size-4 ${activeTab === 'overview' ? 'text-primary' : 'text-gray-600'}`} />}
+              className={`border-0 rounded-none !bg-white/80 hover:!bg-transparent data-[state=active]:!bg-white/80 data-[state=active]:!shadow-none`}
+            >
+              <span className={`${activeTab === 'overview' ? 'text-primary' : 'text-gray-600'}`}>전체보기</span>
             </TabsTrigger>
-            <TabsTrigger value="parks" icon={<TreePine className="size-4" />}>
-              공원별 보기
+            <TabsTrigger 
+              value="parks" 
+              icon={<TreePine className={`size-4 ${activeTab === 'parks' ? 'text-primary' : 'text-gray-600'}`} />}
+              className={`!border-0 !border-l !border-l-gray-200 rounded-l-none rounded-r-lg !bg-white/80 hover:!bg-transparent data-[state=active]:!bg-white/80 data-[state=active]:!shadow-none ${activeTab === 'parks' ? 'text-primary' : 'text-gray-600'}`}
+            >
+              <span className={`${activeTab === 'parks' ? 'text-primary' : 'text-gray-600'}`}>
+                공원별 보기
+              </span>
+              
             </TabsTrigger>
           </TabsList> 
         </Tabs>
@@ -241,7 +252,7 @@ export default function Dashboard() {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
             <span>지도 보기</span>
             {activeTab === 'parks' && (
               <Select value={selectedSiteId || ''} onValueChange={setSelectedSiteId}>
@@ -280,15 +291,15 @@ export default function Dashboard() {
                 <Card key={stat.title}>
                   <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                     <div className="space-y-0.5">
-                      <CardTitle className="font-medium text-lg text-gray-800">{stat.title}</CardTitle>
-                      <div className="text-2xl font-bold">{stat.value}</div>
+                      <CardTitle className="font-medium text-xl text-gray-800">{stat.title}</CardTitle>
+                      <div className="text-3xl font-bold">{stat.value}</div>
                     </div>
                     <div className={`p-2.5 rounded-xl ${stat.iconBg}`}>
                       <Icon className={`size-5 ${stat.iconColor}`} />
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-xs text-gray-800">{stat.description}</p>
+                    <p className="text-sm text-gray-800">{stat.description}</p>
                   </CardContent>
                 </Card>          
               )
@@ -302,7 +313,7 @@ export default function Dashboard() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{sites.find(site => site.id.toString() === selectedSiteId)?.name} | 전체 장치 현황</CardTitle>
+              <CardTitle className="text-xl font-bold">{sites.find(site => site.id.toString() === selectedSiteId)?.name} | 전체 장치 현황</CardTitle>
             </CardHeader>
             <CardContent className="flex gap-4">
              <div className="w-1/6">
@@ -363,7 +374,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-5 gap-4">
             <Card className="col-span-3">
               <CardHeader>
-                <CardTitle className="text-lg">이벤트 현황</CardTitle>
+                <CardTitle className="text-xl font-bold">이벤트 현황</CardTitle>
                 <CardDescription>최근 발생한 이벤트를 확인할 수 있습니다. (최대 50개)</CardDescription>
               </CardHeader>
               <CardContent>
@@ -384,7 +395,7 @@ export default function Dashboard() {
 
             <Card className="col-span-2">
               <CardHeader>
-                <CardTitle className="text-lg">장치 배터리 알람</CardTitle>
+                <CardTitle className="text-xl font-bold">장치 배터리 알람</CardTitle>
                 <CardDescription>배터리 잔량이 20% 이하인 장치를 확인할 수 있습니다.</CardDescription>
               </CardHeader>
               <CardContent>

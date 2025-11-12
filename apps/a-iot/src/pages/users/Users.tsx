@@ -7,6 +7,7 @@ import { UserResponse } from '@plug-atlas/types';
 import { useSearchBar, usePagination } from '../../services/hooks';
 import { SearchBar } from '../../components/SearchBar';
 import { TablePagination } from '../../components/Pagination';
+import { Plus } from 'lucide-react';
 
 export default function Users() {
   const { data, mutate: mutateUsers } = useAdminUsers();
@@ -157,7 +158,10 @@ export default function Users() {
             onChange={handleSearch}
             placeholder="이름, 아이디, 부서, 전화번호로 검색"
           />
-          <Button onClick={handleCreateUser}>사용자 추가하기</Button>
+          <Button onClick={handleCreateUser}>
+            <Plus className="h-4 w-4" />
+            사용자 추가
+          </Button>
       </div>
       <div className="flex flex-col gap-4">
           <DataTable

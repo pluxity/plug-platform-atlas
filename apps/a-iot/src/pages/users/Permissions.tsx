@@ -8,6 +8,7 @@ import PermissionEditDialog from './dialogs/PermissionEditDialog';
 import { useSearchBar, usePagination } from '../../services/hooks';
 import { SearchBar } from '../../components/SearchBar';
 import { TablePagination } from '../../components/Pagination';
+import { Plus } from 'lucide-react';
 
 export default function Permissions() {
   const { data, mutate: mutatePermissions } = usePermissions();
@@ -205,7 +206,8 @@ export default function Permissions() {
               placeholder="권한 이름, 설명으로 검색"
             />
             <Button onClick={() => setIsCreateDialogOpen(true)}>
-              권한 추가하기
+              <Plus className="h-4 w-4" />
+              권한 추가
             </Button>
           </div>
 

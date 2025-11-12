@@ -95,26 +95,28 @@ export default function SitePage() {
     const columns = createSiteColumns();
 
     return (
-        <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
+        <div className="space-y-8">
+            <div>
+                <h1 className="text-xl font-bold mb-1">공원 관리</h1>
+                <p className="text-sm text-gray-600">공원 목록을 관리합니다.</p>
+            </div>
+            <div className="flex justify-end mb-4">
                 <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={resetForm}>
-                            <Plus className="mr-2 h-4 w-4" />
+                            <Plus className="h-4 w-4" />
                             공원 추가
                         </Button>
                     </DialogTrigger>
                 </Dialog>
             </div>
 
-            <div className="rounded-lg border bg-card">
-                <DataTable
-                    columns={columns}
-                    data={sites}
-                    onRowEdit={(site: Site) => openEditModal(site)}
-                    onRowDelete={(site: Site) => openDeleteDialog(site)}
-                />
-            </div>
+            <DataTable
+                columns={columns}
+                data={sites}
+                onRowEdit={(site: Site) => openEditModal(site)}
+                onRowDelete={(site: Site) => openDeleteDialog(site)}
+            />
 
             <SiteForm
                 isOpen={isCreateModalOpen}

@@ -175,16 +175,14 @@ export default function CCTV() {
   ]
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">CCTV 관리</h1>
-          <p className="text-muted-foreground mt-1">
-            CCTV를 등록하고 모니터링합니다.
-          </p>
-        </div>
-        <Button onClick={() => handleOpenDialog()} size="default">
-          <Plus className="w-4 h-4 mr-2" />
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-xl font-bold mb-1">CCTV 관리</h1>
+        <p className="text-sm text-gray-600">CCTV를 등록하고 모니터링합니다.</p>
+      </div>
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => handleOpenDialog()} >
+          <Plus className="w-4 h-4" />
           CCTV 등록
         </Button>
       </div>
@@ -210,7 +208,7 @@ export default function CCTV() {
               size="sm"
               className="mt-4"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4" />
               첫 CCTV 등록하기
             </Button>
           </div>

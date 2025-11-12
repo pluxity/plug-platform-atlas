@@ -7,6 +7,7 @@ import RoleEditDialog from './dialogs/RoleEditDialog';
 import { useSearchBar, usePagination } from '../../services/hooks';
 import { SearchBar } from '../../components/SearchBar';
 import { TablePagination } from '../../components/Pagination';
+import { Plus } from 'lucide-react';
 
 export default function Roles() {
   const { data: roleData, mutate: mutateRoles } = useRoles();
@@ -105,7 +106,10 @@ export default function Roles() {
           onChange={handleSearch}
           placeholder="역할 이름, 설명으로 검색"
         />
-        <Button onClick={handleCreateRole}>역할 추가하기</Button>
+        <Button onClick={handleCreateRole}>
+          <Plus className="h-4 w-4" />
+          역할 추가
+        </Button>
       </div>
       <div className="flex flex-col gap-4">
         <DataTable

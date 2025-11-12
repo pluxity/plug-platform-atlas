@@ -1,5 +1,5 @@
 import { Button } from '@plug-atlas/ui';
-import { Plus, AlertTriangle, Info, Save, X, FileEdit } from 'lucide-react';
+import { Plus, Info, Save, X, FileEdit } from 'lucide-react';
 import { DeviceProfile } from '../../../../../services/types';
 import { useEventConditionManager } from "../../handlers/useEventConditionManager.ts";
 import { createColumns } from "./CreateColumns.tsx";
@@ -77,9 +77,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
             <div className="border-b border-gray-200 mb-2">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-100 rounded-lg">
-                            <AlertTriangle className="h-6 w-6 text-orange-600" />
-                        </div>
+
                         <h2 className="text-xl font-bold text-gray-900">이벤트 조건 관리</h2>
                         {hasUnsavedChanges && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
@@ -111,7 +109,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                             </>
                         )}
                         <Button variant="default" onClick={handleAddNew}>
-                            <Plus className="h-4 w-4 mr-2" />
+                            <Plus className="h-4 w-4" />
                             새 조건 추가
                         </Button>
                     </div>
@@ -165,7 +163,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                         <p className="text-sm text-gray-600 mb-4">새 조건을 추가하여 센서 데이터 모니터링을 시작하세요.</p>
                         {profiles.length > 0 && (
                             <Button variant="default" onClick={handleAddNew}>
-                                <Plus className="h-4 w-4 mr-2" />
+                                <Plus className="h-4 w-4" />
                                 첫 조건 추가
                             </Button>
                         )}
