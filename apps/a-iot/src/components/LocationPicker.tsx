@@ -14,7 +14,6 @@ import {
   DEFAULT_CAMERA_POSITION,
 } from '../stores/cesium'
 import { Button, Spinner } from '@plug-atlas/ui'
-import MapControls from './MapControls'
 
 interface LocationPickerProps {
   lon: number
@@ -72,7 +71,11 @@ export default function LocationPicker({
 
         viewerRef.current = viewer
 
-        await initializeResources(viewer)
+        await initializeResources(viewer, {
+          imageryProvider: 'ion-default',
+          loadTerrain: false,
+          load3DTiles: false,
+        })
 
         if (!mounted) return
 
@@ -191,12 +194,6 @@ export default function LocationPicker({
           <div className="text-white text-sm font-medium">지도 로딩 중...</div>
         </div>
       )}
-
-      <MapControls
-        viewer={viewerRef.current}
-        homePosition={DEFAULT_CAMERA_POSITION}
-        className="absolute top-4 right-4 z-10"
-      />
 
       {contextMenu?.show && (
         <div

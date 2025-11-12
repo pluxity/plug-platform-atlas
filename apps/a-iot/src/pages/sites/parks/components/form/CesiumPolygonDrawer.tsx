@@ -27,7 +27,7 @@ export default function CesiumPolygonDrawer({
 
     const viewerId = useRef(`polygon-drawer-${Date.now()}`).current
 
-    const { createViewer, setupImagery } = useViewerStore()
+    const { createViewer, initializeResources } = useViewerStore()
     const { setView, focusOn } = useCameraStore()
     const {
         startDrawing,
@@ -100,7 +100,11 @@ export default function CesiumPolygonDrawer({
 
                 viewerRef.current = viewer
 
-                await setupImagery(viewer)
+                await initializeResources(viewer, {
+                    imageryProvider: 'ion-default',
+                    loadTerrain: false,
+                    load3DTiles: false,
+                })
 
                 await new Promise(resolve => setTimeout(resolve, 100))
 
