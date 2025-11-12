@@ -1,6 +1,6 @@
 import { Bell } from 'lucide-react';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@plug-atlas/ui';
-import { Notification, SensorAlarmPayload } from "../services/types";
+import { Notification, Event } from "../services/types";
 import { useNavigate } from 'react-router-dom';
 import { getLevelInfo } from '../pages/events/utils/timeUtils';
 
@@ -45,7 +45,7 @@ function NotificationItem({ notification, onMarkAsRead }: { notification: Notifi
     const navigate = useNavigate();
 
     const payload = notification.type === 'sensor-alarm'
-        ? (notification.payload as SensorAlarmPayload)
+        ? (notification.payload as Event)
         : null;
 
     const handleClick = () => {
