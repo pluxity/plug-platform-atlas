@@ -343,14 +343,14 @@ export default function CesiumMap({
 
       <MapLayerSelector
         viewer={viewerRef.current}
-        className="absolute top-4 left-4 z-10"
+        className="absolute top-4 right-4 z-10"
       />
 
       <MapControls
         viewer={viewerRef.current}
         homePosition={DEFAULT_CAMERA_POSITION}
         onToggleSeongnamTileset={handleToggleSeongnamTileset}
-        className="absolute bottom-4 right-4 z-10"
+        className="absolute top-1/2 right-4 -translate-y-1/2 z-10"
       />
 
       {isLoading && (

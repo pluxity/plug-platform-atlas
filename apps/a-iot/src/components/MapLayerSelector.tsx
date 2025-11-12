@@ -25,7 +25,7 @@ export default function MapLayerSelector({ viewer, className = '' }: MapLayerSel
   }
 
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
+    <div className={`flex flex-row gap-2 ${className}`}>
       <Button
         type="button"
         onClick={() => handleLayerSwitch('ion-default')}
