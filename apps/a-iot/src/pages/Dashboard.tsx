@@ -352,7 +352,8 @@ export default function Dashboard() {
                 <DataTable 
                   columns={featureStatusColumns}
                   data={featureStatusData}
-                  className="max-h-[260px] overflow-y-auto"
+                  maxHeight={260}
+                  stickyHeader={true}
                 />
               )}
              </div>
@@ -372,7 +373,8 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <DataTable
-                    className="max-h-[300px] overflow-y-auto"
+                    maxHeight={300}
+                    stickyHeader={true}
                     columns={eventColumns}
                     data={filteredEvents}
                   />
@@ -397,7 +399,8 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <DataTable
-                      className="min-h-[300px] max-h-[300px] overflow-y-auto"
+                      maxHeight={300}
+                      stickyHeader={true}
                       columns={batteryAlarmColumns}
                       data={lowBatterySensors}
                     />
