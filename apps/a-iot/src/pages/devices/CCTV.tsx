@@ -97,7 +97,7 @@ export default function CCTV() {
 
   useEffect(() => {
     resetPage();
-  }, [searchFilteredData.length]);
+  }, [searchFilteredData.length, resetPage]);
 
   const onSubmit = async (data: CctvCreateRequest) => {
     try {

@@ -101,7 +101,7 @@ export default function SitePage() {
 
     useEffect(() => {
         resetPage();
-    }, [searchFilteredData.length]);
+    }, [searchFilteredData.length, resetPage]);
 
     const columns = createSiteColumns();
 
