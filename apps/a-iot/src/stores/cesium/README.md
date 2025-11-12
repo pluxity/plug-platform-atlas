@@ -27,36 +27,90 @@ stores/cesium/
 
 ## 기본 사용법
 
-### 1. Viewer 생성
+### 1. Viewer 생성 및 초기화 (간단한 방법)
 
 ```tsx
-import { useViewerStore } from '../../stores/cesium'
+import { useViewerStore, type ViewerInitOptions } from '../../stores/cesium'
 
-const { createViewer } = useViewerStore()
+const { createViewer, initializeResources } = useViewerStore()
 
-useEffect(() => {
-  const containerRef = document.getElementById('cesiumContainer')
-  const viewer = createViewer(containerRef)
-
-  return () => {
-    if (viewer && !viewer.isDestroyed()) {
-      viewer.destroy()
-    }
-  }
-}, [])
-```
-
-### 2. Imagery & Terrain 초기화
-
-```tsx
-import { useViewerStore } from '../../stores/cesium'
-
-const { initializeResources } = useViewerStore()
-
+// 기본 설정 (위성 지도 + Terrain + 3D Tiles)
+const viewer = createViewer(containerRef.current)
 await initializeResources(viewer)
+
+// 커스텀 설정
+const initOptions: ViewerInitOptions = {
+  imageryProvider: 'ion-default',  // 'ion-default' | 'ion-satellite' | Asset ID (number)
+  loadTerrain: true,                // Terrain 로드 여부
+  load3DTiles: false,               // 3D Tiles 로드 여부
+}
+await initializeResources(viewer, initOptions)
 ```
 
-### 3. Tileset 로딩
+### 2. CesiumMap 컴포넌트 사용 (권장)
+
+```tsx
+import CesiumMap from '../../components/CesiumMap'
+import type { ViewerInitOptions } from '../../stores/cesium'
+
+// 예시 1: 기본 설정 (위성 지도 + Terrain + 3D Tiles)
+<CesiumMap
+  sites={sites}
+  sensors={sensors}
+  events={events}
+/>
+
+// 예시 2: 일반 지도 + 3D Tiles 없음
+<CesiumMap
+  sites={sites}
+  sensors={sensors}
+  events={events}
+  viewerInitOptions={{
+    imageryProvider: 'ion-default',
+    loadTerrain: true,
+    load3DTiles: false,
+  }}
+/>
+
+// 예시 3: 커스텀 Asset ID 사용
+<CesiumMap
+  sites={sites}
+  sensors={sensors}
+  events={events}
+  viewerInitOptions={{
+    imageryProvider: 12345,  // 커스텀 Ion Asset ID
+    loadTerrain: false,
+    load3DTiles: false,
+  }}
+/>
+```
+
+### 3. 지도 레이어 전환
+
+CesiumMap 컴포넌트는 좌측 상단에 지도 레이어 전환 버튼을 제공합니다:
+
+```tsx
+import { useImageryStore } from '../../stores/cesium'
+
+// MapLayerSelector 컴포넌트가 자동으로 포함됨
+// 사용자가 버튼을 클릭하면 일반 지도 ↔ 위성 지도 전환
+
+const { switchImageryLayer } = useImageryStore()
+
+// 프로그래밍 방식으로 전환
+await switchImageryLayer(viewer, 'ion-satellite')  // 위성 지도
+await switchImageryLayer(viewer, 'ion-default')    // 일반 지도
+```
+
+**환경변수 설정:**
+```bash
+# Asset ID 4 = 일반 지도
+# Asset ID 2 = 위성 지도
+VITE_CESIUM_GOOGLE_MAP_ASSET_ID=4
+VITE_CESIUM_SATELLITE_ASSET_ID=2
+```
+
+### 4. Tileset 로딩
 
 ```tsx
 import { useTilesetStore } from '../../stores/cesium'
@@ -238,6 +292,60 @@ const cleanup = setupCameraDistanceLOD(viewer, [
 
 return () => cleanup()
 ```
+
+## ViewerInitOptions 상세
+
+```typescript
+interface ViewerInitOptions {
+  imageryProvider?: 'ion-default' | 'ion-satellite' | number
+  loadTerrain?: boolean
+  load3DTiles?: boolean
+}
+```
+
+### imageryProvider (기본값: 'ion-satellite')
+
+지도 이미지 레이어 설정:
+
+- `'ion-default'`: 일반 지도 (환경변수 `VITE_CESIUM_GOOGLE_MAP_ASSET_ID`, 기본 4)
+- `'ion-satellite'`: 위성 지도 (환경변수 `VITE_CESIUM_SATELLITE_ASSET_ID`, 기본 2)
+- `number`: 커스텀 Cesium Ion Asset ID
+
+**예시:**
+```tsx
+// 일반 지도
+viewerInitOptions={{ imageryProvider: 'ion-default' }}
+
+// 위성 지도
+viewerInitOptions={{ imageryProvider: 'ion-satellite' }}
+
+// 커스텀 Asset ID
+viewerInitOptions={{ imageryProvider: 3830184 }}
+```
+
+### loadTerrain (기본값: true)
+
+3D 지형 데이터 로드 여부:
+
+- `true`: Cesium World Terrain 로드 (환경변수 `VITE_CESIUM_TERRAIN_ASSET_ID`)
+- `false`: 평면 지형 사용 (Ellipsoid)
+
+**사용 시나리오:**
+- 3D 지형이 필요 없는 2D 지도 → `false`
+- 산악 지형 표현 필요 → `true`
+
+### load3DTiles (기본값: true)
+
+3D Tileset (건물, 구조물) 로드 여부:
+
+- `true`: Ion 3D Tiles + 로컬 Tileset 로드
+- `false`: 3D Tiles 로드 안 함
+
+**사용 시나리오:**
+- 마커/폴리곤만 필요한 간단한 지도 → `false`
+- 실제 건물/지형 표현 필요 → `true`
+
+**주의:** `load3DTiles`는 `ViewerInitOptions`에서 설정하고, `CesiumMap` 컴포넌트 내부에서 처리됩니다.
 
 ## API 레퍼런스
 
