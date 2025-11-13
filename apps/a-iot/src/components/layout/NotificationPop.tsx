@@ -4,7 +4,7 @@ import { Button, Popover, PopoverContent, PopoverTrigger, Dialog } from '@plug-a
 import { Notification, Event } from "../../services/types";
 import { getLevelInfo } from '../../pages/main/events/utils/levelUtils.ts';
 import EventDetailModal from '../../pages/main/events/components/modal/EventDetailModal.tsx';
-import { useNotificationStore } from '../../stores/notificationStore.ts';
+import { useNotificationStore } from '../../stores';
 
 interface NotificationPanelProps {
     notifications: Notification[];
