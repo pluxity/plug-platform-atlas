@@ -17,8 +17,17 @@ export default function EventLocationMap({ longitude, latitude, eventName }: Eve
   const { addMarker, clearAllMarkers } = useMarkerStore();
   const { focusOn } = useCameraStore();
 
+  // Validate coordinates
+  const hasValidCoordinates =
+    longitude !== undefined &&
+    longitude !== null &&
+    latitude !== undefined &&
+    latitude !== null &&
+    !isNaN(longitude) &&
+    !isNaN(latitude);
+
   useEffect(() => {
-    if (!cesiumContainerRef.current) return;
+    if (!cesiumContainerRef.current || !hasValidCoordinates) return;
 
     if (viewerRef.current && !viewerRef.current.isDestroyed()) {
       return;
@@ -28,7 +37,7 @@ export default function EventLocationMap({ longitude, latitude, eventName }: Eve
 
     const initViewer = async () => {
       try {
-        if (!mounted) return;
+        if (!mounted || !hasValidCoordinates) return;
 
         setIsInitialized(false);
 
@@ -78,7 +87,20 @@ export default function EventLocationMap({ longitude, latitude, eventName }: Eve
       }
       setIsInitialized(false);
     };
-  }, [longitude, latitude]);
+  }, [longitude, latitude, hasValidCoordinates]);
+
+  if (!hasValidCoordinates) {
+    return (
+      <div className="relative">
+        <div className="w-full h-[300px] rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p className="text-sm">위치 정보가 없습니다.</p>
+            <p className="text-xs mt-1">경도: {longitude || 'N/A'}, 위도: {latitude || 'N/A'}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">

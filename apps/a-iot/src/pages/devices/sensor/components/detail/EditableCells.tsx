@@ -12,17 +12,19 @@ interface EditableFieldKeyProps {
     value: string;
     onChange: (value: string) => void;
     profiles: DeviceProfile[];
+    isMissing?: boolean;
 }
 
 export const EditableFieldKey: React.FC<EditableFieldKeyProps> = ({
     value,
     onChange,
-    profiles
+    profiles,
+    isMissing = false
 }) => {
     return (
         <div className="space-y-1">
             <Select value={value} onValueChange={onChange}>
-                <SelectTrigger>
+                <SelectTrigger className={isMissing ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Field Key 선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -119,6 +121,14 @@ interface EditableConditionProps {
     row: EventCondition;
     onChange: (field: keyof EventCondition, value: any) => void;
     profiles: DeviceProfile[];
+    requiredStatus?: {
+        fieldKey: boolean;
+        level: boolean;
+        booleanValue: boolean;
+        thresholdValue: boolean;
+        leftValue: boolean;
+        rightValue: boolean;
+    };
 }
 
 const safeParseFloat = (value: string): number | undefined => {
@@ -130,15 +140,16 @@ const safeParseFloat = (value: string): number | undefined => {
 export const EditableCondition: React.FC<EditableConditionProps> = ({
     row,
     onChange,
-    profiles
+    profiles,
+    requiredStatus
 }) => {
     const isBoolean = isBooleanProfile(profiles, row.fieldKey || '');
 
     if (isBoolean) {
         return (
             <div className="space-y-2">
-                <Select 
-                    value={row.booleanValue !== undefined ? row.booleanValue.toString() : ''} 
+                <Select
+                    value={row.booleanValue !== undefined ? row.booleanValue.toString() : ''}
                     onValueChange={(value: string) => {
                         const boolValue = value === 'true';
                         onChange('booleanValue', boolValue);
@@ -146,7 +157,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         onChange('thresholdValue', boolValue ? 1 : 0);
                     }}
                 >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className={`w-full ${requiredStatus?.booleanValue ? 'border-red-500' : ''}`}>
                         <SelectValue placeholder="값 선택" />
                     </SelectTrigger>
                     <SelectContent>
@@ -180,7 +191,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
     if (row.conditionType === 'RANGE') {
         const profile = getProfileByFieldKey(profiles, row.fieldKey || '');
         const unit = profile?.fieldUnit;
-        
+
         const hasRangeError = row.leftValue !== undefined && row.rightValue !== undefined &&
                              row.leftValue >= row.rightValue;
 
@@ -193,7 +204,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         value={row.leftValue ?? ''}
                         onChange={(e) => onChange('leftValue', safeParseFloat(e.target.value))}
                         placeholder="최소값"
-                        className={`w-24 text-sm ${hasRangeError ? 'border-red-500 focus:border-red-500' : ''}`}
+                        className={`w-24 text-sm ${hasRangeError || requiredStatus?.leftValue ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
                     <span className="text-xs text-gray-500 w-10">≤ 값 ≤</span>
                     <Input
@@ -202,7 +213,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         value={row.rightValue ?? ''}
                         onChange={(e) => onChange('rightValue', safeParseFloat(e.target.value))}
                         placeholder="최대값"
-                        className={`w-24 text-sm ${hasRangeError ? 'border-red-500 focus:border-red-500' : ''}`}
+                        className={`w-24 text-sm ${hasRangeError || requiredStatus?.rightValue ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
                     {unit && (
                         <span className="text-xs text-gray-500 font-medium">
@@ -231,7 +242,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                     value={row.thresholdValue ?? ''}
                     onChange={(e) => onChange('thresholdValue', safeParseFloat(e.target.value))}
                     placeholder="기준값"
-                    className="w-24 text-sm"
+                    className={`w-24 text-sm ${requiredStatus?.thresholdValue ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
                 {unit && (
                     <span className="text-xs text-gray-500 font-medium">
@@ -258,8 +269,8 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
 const getLevelText = (level: EventCondition['level']): string => {
     switch (level) {
         case 'NORMAL': return '정상';
-        case 'WARNING': return '경고';
         case 'CAUTION': return '주의';
+        case 'WARNING': return '경고';
         case 'DANGER': return '위험';
         case 'DISCONNECTED': return '연결끊김';
         default: return level;

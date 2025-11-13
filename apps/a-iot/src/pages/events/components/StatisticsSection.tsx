@@ -22,7 +22,6 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
     const [interval, setInterval] = useState<EventCollectInterval>('HOUR');
     const [chartSiteFilter, setChartSiteFilter] = useState('all');
 
-    // Date states for different intervals
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(today);
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [selectedMonth, setSelectedMonth] = useState<string>((today.getMonth() + 1).toString());
@@ -31,7 +30,6 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
 
     const { data: sites } = useSites();
 
-    // Auto-set date range to recent 7 days when interval is DAY
     useEffect(() => {
         if (interval === 'DAY' && !dateRange) {
             const today = new Date();
@@ -44,7 +42,6 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
         }
     }, [interval]);
 
-    // Validate DAY interval range (max 7 days)
     const dayRangeExceeded = useMemo(() => {
         if (interval !== 'DAY' || !dateRange?.from || !dateRange?.to) return false;
         const diffInMs = dateRange.to.getTime() - dateRange.from.getTime();
@@ -112,7 +109,6 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
         ...(chartSiteFilter !== 'all' && { siteId: parseInt(chartSiteFilter) })
     });
 
-    // Generate year options (current year ± 5 years)
     const yearOptions = useMemo(() => {
         const currentYear = new Date().getFullYear();
         const years = [];
@@ -122,7 +118,6 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
         return years;
     }, []);
 
-    // Month options
     const monthOptions = [
         { value: '1', label: '1월' },
         { value: '2', label: '2월' },
@@ -141,11 +136,10 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold flex items-center gap-2">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
                     통계 및 차트
                 </h2>
                 <div className="flex gap-2">
-                    {/* 1. Interval selector - comes first */}
                     <Select value={interval} onValueChange={(value) => setInterval(value as EventCollectInterval)}>
                         <SelectTrigger className="w-24">
                             <SelectValue />
@@ -159,7 +153,6 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
                         </SelectContent>
                     </Select>
 
-                    {/* 2. Date picker based on interval */}
                     {interval === 'HOUR' && (
                         <DatePicker
                             mode="single"
@@ -236,7 +229,6 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
                         </Select>
                     )}
 
-                    {/* 3. Site filter */}
                     <Select value={chartSiteFilter} onValueChange={setChartSiteFilter}>
                         <SelectTrigger className="w-36">
                             <SelectValue placeholder="공원" />

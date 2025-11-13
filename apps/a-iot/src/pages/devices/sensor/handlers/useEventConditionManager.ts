@@ -5,9 +5,11 @@ import {
     validateConditionData,
     isBooleanProfile,
     getConditionConfigByProfile,
-    formatConditionSummary
+    formatConditionSummary,
+    ValidationResult
 } from "./EventConditionUtils";
 import { useEventConditionMutations, useEventConditions } from "../../../../services/hooks";
+import { toast } from "@plug-atlas/ui";
 
 export const useEventConditionManager = (objectId: string, profiles: DeviceProfile[]) => {
     const [editingData, setEditingData] = useState<EventCondition[]>([]);
@@ -31,32 +33,46 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
     };
 
     const sortConditions = (conditions: EventCondition[]): EventCondition[] => {
-        return [...conditions].sort((a, b) => {
+        // 새 조건(id가 없는 것)과 기존 조건 분리
+        const newConditions = conditions.filter(c => !c.id);
+        const existingConditions = conditions.filter(c => c.id);
+
+        // 기존 조건만 정렬
+        const sortedExisting = existingConditions.sort((a, b) => {
             const fieldKeyCompare = (a.fieldKey || '').localeCompare(b.fieldKey || '');
             if (fieldKeyCompare !== 0) {
                 return fieldKeyCompare;
             }
-            
+
             return getLevelPriority(a.level) - getLevelPriority(b.level);
         });
+
+        // 새 조건을 최상단에 배치
+        return [...newConditions, ...sortedExisting];
     };
 
     const validationState = useMemo(() => {
         const allErrors: string[] = [];
+        const conditionValidations = new Map<number, ValidationResult>();
         let hasErrors = false;
 
-        for (const condition of editingData) {
+        editingData.forEach((condition, index) => {
             const validation = validateConditionData(condition, profiles, editingData);
+            conditionValidations.set(index, validation);
             if (!validation.isValid) {
                 hasErrors = true;
                 allErrors.push(...validation.errors);
             }
-        }
+        });
+
+        // 중복 제거: Set을 사용하여 고유한 에러 메시지만 유지
+        const uniqueErrors = Array.from(new Set(allErrors));
 
         return {
             isValid: !hasErrors,
-            errors: allErrors,
-            hasConditions: editingData.length > 0
+            errors: uniqueErrors,
+            hasConditions: editingData.length > 0,
+            conditionValidations
         };
     }, [editingData, profiles]);
 
@@ -128,16 +144,18 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             }
 
             updated[index] = updatedCondition;
-            
-            if (field === 'fieldKey' || field === 'level') {
+
+            // 새 조건이 아닌 경우에만 fieldKey나 level 변경 시 정렬
+            const isNewCondition = !updatedCondition.id;
+            if (!isNewCondition && (field === 'fieldKey' || field === 'level')) {
                 const sortedUpdated = sortConditions(updated);
                 setHasUnsavedChanges(checkForChanges(sortedUpdated));
                 return sortedUpdated;
             }
-            
+
             const hasChanges = checkForChanges(updated);
             setHasUnsavedChanges(hasChanges);
-            
+
             return updated;
         });
     };
@@ -147,12 +165,12 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             ...createDefaultCondition(objectId),
             id: undefined
         };
-        
+
         setEditingData(prev => {
-            const updated = [...prev, newCondition];
-            const sortedUpdated = sortConditions(updated);
-            setHasUnsavedChanges(checkForChanges(sortedUpdated));
-            return sortedUpdated;
+            // 새 조건을 최상단에 추가
+            const updated = [newCondition, ...prev];
+            setHasUnsavedChanges(checkForChanges(updated));
+            return updated;
         });
     };
 
@@ -168,8 +186,14 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
         try {
             await deleteEventCondition(conditionId);
             await refetch();
+            toast.success("삭제 완료", {
+                description: "이벤트 조건이 삭제되었습니다.",
+            });
         } catch (error) {
             console.error('조건 삭제 실패:', error);
+            toast.error("삭제 실패", {
+                description: "이벤트 조건 삭제 중 오류가 발생했습니다.",
+            });
         }
     };
 
@@ -182,8 +206,14 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
 
             setHasUnsavedChanges(false);
             await refetch();
+            toast.success("저장 완료", {
+                description: "모든 이벤트 조건이 저장되었습니다.",
+            });
         } catch (error) {
             console.error('조건 저장 실패:', error);
+            toast.error("저장 실패", {
+                description: "이벤트 조건 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
+            });
         }
     };
 

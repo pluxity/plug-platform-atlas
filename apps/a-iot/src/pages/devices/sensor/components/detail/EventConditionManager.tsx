@@ -1,5 +1,5 @@
-import { Button } from '@plug-atlas/ui';
-import { Plus, Info, Save, X, FileEdit } from 'lucide-react';
+import { Button, Toaster } from '@plug-atlas/ui';
+import { Plus, AlertTriangle, Info, Save, X, FileEdit, AlertCircle } from 'lucide-react';
 import { DeviceProfile } from '../../../../../services/types';
 import { useEventConditionManager } from "../../handlers/useEventConditionManager.ts";
 import { createColumns } from "./CreateColumns.tsx";
@@ -73,11 +73,15 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
     };
 
     return (
-        <div className="bg-white">
-            <div className="border-b border-gray-200 mb-2">
+        <>
+            <Toaster />
+            <div className="bg-white">
+                <div className="border-b border-gray-200 mb-2">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                            <AlertTriangle className="h-6 w-6 text-orange-600" />
+                        </div>
                         <h2 className="text-xl font-bold text-gray-900">이벤트 조건 관리</h2>
                         {hasUnsavedChanges && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
@@ -86,15 +90,35 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                         )}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-3">
+                        {!hasUnsavedChanges && conditionsData.length > 0 && (
+                            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                                <Info className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                                <span className="text-xs text-gray-600">
+                                    변경된 내용이 없습니다
+                                </span>
+                            </div>
+                        )}
+
+                        {hasUnsavedChanges && !validationState.isValid && (
+                            <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                                <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-red-600">
+                                        필수 항목을 입력해주세요
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         {hasUnsavedChanges && (
                             <>
                                 <Button
                                     variant="default"
                                     onClick={handleSaveAll}
                                     disabled={!canSave}
-                                    className={`${canSave 
-                                        ? 'bg-green-600 hover:bg-green-700' 
+                                    className={`${canSave
+                                        ? 'bg-green-600 hover:bg-green-700'
                                         : 'bg-gray-400 cursor-not-allowed'
                                     }`}
                                     title={!canSave ? '유효성 검사를 통과해야 저장할 수 있습니다' : ''}
@@ -109,7 +133,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                             </>
                         )}
                         <Button variant="default" onClick={handleAddNew}>
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-4 w-4 mr-2" />
                             새 조건 추가
                         </Button>
                     </div>
@@ -163,7 +187,7 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                         <p className="text-sm text-gray-600 mb-4">새 조건을 추가하여 센서 데이터 모니터링을 시작하세요.</p>
                         {profiles.length > 0 && (
                             <Button variant="default" onClick={handleAddNew}>
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-4 w-4 mr-2" />
                                 첫 조건 추가
                             </Button>
                         )}
@@ -171,5 +195,6 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                 )}
             </div>
         </div>
+        </>
     );
 }
