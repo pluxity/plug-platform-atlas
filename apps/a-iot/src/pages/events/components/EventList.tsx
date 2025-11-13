@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import {useState, useMemo, useEffect} from 'react';
 import { Card, Button, Dialog, DataTable } from '@plug-atlas/ui';
 import { ChevronDown } from 'lucide-react';
 import EventDetailModal from './modal/EventDetailModal.tsx';
@@ -66,7 +66,6 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
         return eventList;
     }, [events, fetchedEvent, targetEventId]);
 
-    // Auto-open dialog if URL has eventId
     useEffect(() => {
         if (targetEventId && fetchedEvent && !isDialogOpen) {
             setSelectedEvent(fetchedEvent);
