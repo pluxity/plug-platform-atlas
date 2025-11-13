@@ -1,5 +1,5 @@
 import React from 'react'
-import AppSideMenu from './AppSideMenu'
+import AppSideMenu from './AppSideMenu.tsx'
 
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (

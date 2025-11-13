@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@plug-atlas/ui';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { ActionHistory } from '../../../../services/types';
+import { ActionHistory } from '../../../../../services/types';
 import {
   useCreateActionHistory,
   useDeleteActionHistory,
   useEventActionHistories,
   useUpdateActionHistory,
-} from '../../../../services/hooks';
+} from '../../../../../services/hooks';
 
 
 

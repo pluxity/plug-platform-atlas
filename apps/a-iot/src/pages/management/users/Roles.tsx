@@ -2,11 +2,11 @@ import { Badge, Button, DataTable, Column, toast, AlertDialog, AlertDialogConten
 import { useRoles, useDeleteRole, usePermissions, useAdminUsers } from '@plug-atlas/api-hooks';
 import type { RoleResponse } from '@plug-atlas/types';
 import { useState, useEffect } from 'react';
-import RoleCreateDialog from './dialogs/RoleCreateDialog';
-import RoleEditDialog from './dialogs/RoleEditDialog';
-import { useSearchBar, usePagination } from '../../services/hooks';
-import { SearchBar } from '../../components/SearchBar';
-import { TablePagination } from '../../components/Pagination';
+import RoleCreateDialog from './dialogs/RoleCreateDialog.tsx';
+import RoleEditDialog from './dialogs/RoleEditDialog.tsx';
+import { useSearchBar, usePagination } from '../../../services/hooks';
+import { SearchBar } from '../../../components/elements/SearchBar.tsx';
+import { TablePagination } from '../../../components/elements/Pagination.tsx';
 import { Plus } from 'lucide-react';
 
 export default function Roles() {

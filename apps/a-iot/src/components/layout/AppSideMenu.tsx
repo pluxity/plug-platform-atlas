@@ -17,10 +17,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@plug-atlas/ui'
-import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../constants/menu'
-import { useAuthStore, useNotificationStore } from '../stores'
-import { useStompNotifications, useInitialNotifications } from '../services/hooks'
-import NotificationPop from './NotificationPop'
+import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../../constants/menu.ts'
+import { useAuthStore, useNotificationStore } from '../../stores'
+import { useStompNotifications, useInitialNotifications } from '../../services/hooks'
+import NotificationPop from './NotificationPop.tsx'
 
 export default function AppSideMenu() {
   const location = useLocation()

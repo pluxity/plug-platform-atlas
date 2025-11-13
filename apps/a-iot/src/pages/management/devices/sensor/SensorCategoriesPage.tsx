@@ -6,8 +6,8 @@ import ErrorDisplay from "./components/ErrorDisplay.tsx";
 import SensorCategoryCard from "./components/category/SensorCategoryCard.tsx";
 import DeviceTypeBasicInfo from './components/detail/DeviceTypeBasicInfo.tsx';
 import EventConditionsManager from "./components/detail/EventConditionManager.tsx";
-import { DeviceType } from '../../../services/types';
-import { useDeviceTypes } from "../../../services/hooks";
+import { DeviceType } from '../../../../services/types';
+import { useDeviceTypes } from "../../../../services/hooks";
 
 export default function SensorCategoryManagementPage() {
     const { objectId } = useParams<{ objectId: string }>();

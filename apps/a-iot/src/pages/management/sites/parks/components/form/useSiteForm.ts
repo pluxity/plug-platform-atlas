@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Site, SiteCreateRequest } from '../../../../../services/types/site.ts';
+import type { Site, SiteCreateRequest } from '../../../../../../services/types/site.ts';
 
 export function useSiteForm() {
     const [formData, setFormData] = useState<SiteCreateRequest>({

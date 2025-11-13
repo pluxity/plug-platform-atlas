@@ -6,7 +6,7 @@ import {
     usePolygonStore,
     useCameraStore,
     DEFAULT_CAMERA_POSITION
-} from '../../../../../stores/cesium'
+} from '../../../../../../stores/cesium'
 import { Color, Viewer as CesiumViewer} from 'cesium'
 import { MapIcon, RotateCcw, CheckCircle, X, Info } from 'lucide-react'
 

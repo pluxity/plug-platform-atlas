@@ -1,13 +1,13 @@
 import { DataTable, Column, Badge, Button, toast, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui';
 import { useState, useEffect } from 'react';
 import { usePermissions, useDeletePermission, useRoles } from '@plug-atlas/api-hooks';
-import { usePermissionResources } from '../../services/hooks';
+import { usePermissionResources } from '../../../services/hooks';
 import { PermissionGroupResponse } from '@plug-atlas/types';
-import PermissionCreateDialog from './dialogs/PermissionCreateDialog';
-import PermissionEditDialog from './dialogs/PermissionEditDialog';
-import { useSearchBar, usePagination } from '../../services/hooks';
-import { SearchBar } from '../../components/SearchBar';
-import { TablePagination } from '../../components/Pagination';
+import PermissionCreateDialog from './dialogs/PermissionCreateDialog.tsx';
+import PermissionEditDialog from './dialogs/PermissionEditDialog.tsx';
+import { useSearchBar, usePagination } from '../../../services/hooks';
+import { SearchBar } from '../../../components/elements/SearchBar.tsx';
+import { TablePagination } from '../../../components/elements/Pagination.tsx';
 import { Plus } from 'lucide-react';
 
 export default function Permissions() {

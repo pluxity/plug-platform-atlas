@@ -1,7 +1,7 @@
 import React from 'react';
 import { z } from 'zod';
-import { DeviceProfile, EventCondition } from "../../../../services/types";
-import { EventConditionOperator, EventLevel } from "../../../../services/types/eventCondition.ts";
+import { DeviceProfile, EventCondition } from "../../../../../services/types";
+import { EventConditionOperator, EventLevel } from "../../../../../services/types/eventCondition.ts";
 
 export interface Column<T> {
     key: keyof T;

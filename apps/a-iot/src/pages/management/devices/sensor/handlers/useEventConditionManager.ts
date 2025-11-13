@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { EventCondition, DeviceProfile } from '../../../../services/types';
+import { EventCondition, DeviceProfile } from '../../../../../services/types';
 import {
     createDefaultCondition,
     validateConditionData,
@@ -7,8 +7,8 @@ import {
     getConditionConfigByProfile,
     formatConditionSummary,
     ValidationResult
-} from "./EventConditionUtils";
-import { useEventConditionMutations, useEventConditions } from "../../../../services/hooks";
+} from "./EventConditionUtils.tsx";
+import { useEventConditionMutations, useEventConditions } from "../../../../../services/hooks";
 import { toast } from "@plug-atlas/ui";
 
 export const useEventConditionManager = (objectId: string, profiles: DeviceProfile[]) => {

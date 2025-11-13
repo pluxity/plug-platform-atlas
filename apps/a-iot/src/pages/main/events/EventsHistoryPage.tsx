@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import { useEvents } from '../../services/hooks';
+import { useEvents } from '../../../services/hooks';
 import EventStatisticsSection from "./components/StatisticsSection.tsx";
 import EventListSection from "./components/EventListSection.tsx";
-import type { EventStatus } from '../../services/types';
+import type { EventStatus } from '../../../services/types';
 
 export default function EventsHistoryPage() {
   const [globalStatusFilter] = useState('all');
@@ -35,7 +35,7 @@ export default function EventsHistoryPage() {
   }
 
   return (
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-16">
         <EventStatisticsSection eventStats={eventStats} />
         <EventListSection  />
       </div>

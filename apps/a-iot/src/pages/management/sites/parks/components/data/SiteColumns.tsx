@@ -1,4 +1,4 @@
-import { Site } from '../../../../../services/types/site';
+import { Site } from '../../../../../../services/types/site.ts';
 
 export function createSiteColumns(
 ) {

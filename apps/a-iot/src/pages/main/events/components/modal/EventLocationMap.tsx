@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Viewer as CesiumViewer } from 'cesium';
-import { useViewerStore, useMarkerStore, useCameraStore } from '../../../../stores/cesium';
+import { useViewerStore, useMarkerStore, useCameraStore } from '../../../../../stores/cesium';
 
 interface EventLocationMapProps {
   longitude: number;

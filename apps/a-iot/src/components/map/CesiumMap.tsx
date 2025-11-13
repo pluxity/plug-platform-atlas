@@ -1,12 +1,12 @@
 import { useRef, useEffect, useState } from 'react'
 import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference } from 'cesium'
-import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../stores/cesium'
+import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../../stores/cesium'
 import { SiteResponse, FeatureResponse, type FeatureDeviceTypeResponse } from '@plug-atlas/web-core'
-import MapControls from './MapControls'
-import MapLayerSelector from './MapLayerSelector'
+import MapControls from './MapControls.tsx'
+import MapLayerSelector from './MapLayerSelector.tsx'
 import { Spinner } from '@plug-atlas/ui'
-import { preloadAllMarkerSvgs, createColoredSvgDataUrl, SVG_MARKERS, type SvgMarkerType } from '../utils/svgMarkerUtils'
-import type { Event } from '../services/types'
+import { preloadAllMarkerSvgs, createColoredSvgDataUrl, SVG_MARKERS, type SvgMarkerType } from '../../utils/svgMarkerUtils.ts'
+import type { Event } from '../../services/types'
 
 interface CesiumMapProps {
   sites?: SiteResponse[]

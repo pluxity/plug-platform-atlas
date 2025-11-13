@@ -1,7 +1,7 @@
 import { Viewer as CesiumViewer } from 'cesium'
 import { Map, Satellite } from 'lucide-react'
 import { Button } from '@plug-atlas/ui'
-import { useImageryStore, type ImageryProviderType } from '../stores/cesium'
+import { useImageryStore, type ImageryProviderType } from '../../stores/cesium'
 import { useState } from 'react'
 
 interface MapLayerSelectorProps {

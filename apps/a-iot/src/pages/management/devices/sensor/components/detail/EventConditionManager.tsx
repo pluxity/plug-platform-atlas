@@ -1,6 +1,6 @@
 import { Button, Toaster } from '@plug-atlas/ui';
 import { Plus, AlertTriangle, Info, Save, X, FileEdit, AlertCircle } from 'lucide-react';
-import { DeviceProfile } from '../../../../../services/types';
+import { DeviceProfile } from '../../../../../../services/types';
 import { useEventConditionManager } from "../../handlers/useEventConditionManager.ts";
 import { createColumns } from "./CreateColumns.tsx";
 import ErrorDisplay from '../ErrorDisplay.tsx';

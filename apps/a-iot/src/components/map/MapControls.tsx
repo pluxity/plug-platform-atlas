@@ -1,7 +1,7 @@
 import { Viewer as CesiumViewer } from 'cesium'
 import { Plus, Minus, Home, Layers } from 'lucide-react'
 import { Button } from '@plug-atlas/ui'
-import { useCameraStore, type CameraPosition } from '../stores/cesium'
+import { useCameraStore, type CameraPosition } from '../../stores/cesium'
 import { useState } from 'react'
 
 interface MapControlsProps {

@@ -26,12 +26,12 @@ import {
   toast,
 } from '@plug-atlas/ui'
 import type { Column } from '@plug-atlas/ui'
-import { useCctvList, useCreateCctv, useUpdateCctv, useDeleteCctv, useSearchBar, usePagination } from '../../../services/hooks'
-import type { CctvResponse, CctvCreateRequest } from '../../../services/types'
-import { cctvCreateRequestSchema } from '../../../services/types'
-import LocationPicker from '../../../components/LocationPicker.tsx'
-import { SearchBar } from '../../../components/SearchBar.tsx'
-import { TablePagination } from '../../../components/Pagination.tsx'
+import { useCctvList, useCreateCctv, useUpdateCctv, useDeleteCctv, useSearchBar, usePagination } from '../../../../services/hooks'
+import type { CctvResponse, CctvCreateRequest } from '../../../../services/types'
+import { cctvCreateRequestSchema } from '../../../../services/types'
+import LocationPicker from '../../../../components/map/LocationPicker.tsx'
+import { SearchBar } from '../../../../components/elements/SearchBar.tsx'
+import { TablePagination } from '../../../../components/elements/Pagination.tsx'
 
 export default function CCTV() {
   const { data: cctvs, mutate, isLoading } = useCctvList()

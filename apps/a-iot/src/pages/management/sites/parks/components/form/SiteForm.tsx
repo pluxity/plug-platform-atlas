@@ -1,5 +1,5 @@
 import {Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Label, DialogFooter} from '@plug-atlas/ui';
-import {SiteCreateRequest} from "../../../../../services/types/site.ts";
+import {SiteCreateRequest} from "../../../../../../services/types/site.ts";
 import CesiumPolygonDrawer from "./CesiumPolygonDrawer.tsx";
 
 interface SiteFormProps {

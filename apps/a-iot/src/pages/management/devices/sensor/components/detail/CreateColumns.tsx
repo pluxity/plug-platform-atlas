@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@plug-atlas/ui";
-import { DeviceProfile, EventCondition } from "../../../../../services/types";
-import { Column, isBooleanProfile, getRequiredFieldsStatus } from "../../handlers/EventConditionUtils";
-import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from "./EditableCells";
+import { DeviceProfile, EventCondition } from "../../../../../../services/types";
+import { Column, isBooleanProfile, getRequiredFieldsStatus } from "../../handlers/EventConditionUtils.tsx";
+import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from "./EditableCells.tsx";
 import {Bell, BellOff, Mail, MailX, Trash2, X} from "lucide-react";
 
 interface CreateColumnsProps {

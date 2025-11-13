@@ -12,7 +12,7 @@ import {
   useCameraStore,
   useMarkerStore,
   DEFAULT_CAMERA_POSITION,
-} from '../stores/cesium'
+} from '../../stores/cesium'
 import { Button, Spinner } from '@plug-atlas/ui'
 
 interface LocationPickerProps {

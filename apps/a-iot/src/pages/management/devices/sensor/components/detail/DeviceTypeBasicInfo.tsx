@@ -1,6 +1,6 @@
 import { DataTable } from '@plug-atlas/ui';
 import { Tag, FileText, Layers } from 'lucide-react';
-import {DeviceProfile, DeviceType} from "../../../../../services/types";
+import {DeviceProfile, DeviceType} from "../../../../../../services/types";
 
 interface DeviceTypeBasicInfoProps {
     deviceType: DeviceType;

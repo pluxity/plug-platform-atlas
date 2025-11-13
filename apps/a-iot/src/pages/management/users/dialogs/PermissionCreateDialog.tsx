@@ -4,8 +4,8 @@ import { PermissionGroupCreateRequest, PermissionGroupCreateRequestSchema, Resou
 import { useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { usePermissionResources, usePermissionCheckbox } from '../../../services/hooks';
-import type { PermissionResourceItem } from '../../../services/types';
+import { usePermissionResources, usePermissionCheckbox } from '../../../../services/hooks';
+import type { PermissionResourceItem } from '../../../../services/types';
 
 interface PermissionCreateDialogProps{
     isOpen: boolean;
