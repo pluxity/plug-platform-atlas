@@ -2,6 +2,7 @@ import * as React from "react"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 
 import { cn } from "../../lib/utils"
+import type { PaginationPreviousProps, PaginationNextProps } from "./pagination.types"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -69,33 +70,35 @@ function PaginationLink({
 
 function PaginationPrevious({
   className,
+  label,
   ...props
-}: PaginationLinkProps) {
+}: PaginationPreviousProps) {
   return (
     <PaginationLink
       aria-label="Go to previous page"
       size="default"
-      className={cn("gap-1 pl-2.5", className)}
+      className={cn("gap-1", label ? 'pl-2.5' : '', className)}
       {...props}
     >
       <ChevronLeft className="size-4" />
-      <span>Previous</span>
+      {label && <span>{label}</span>}
     </PaginationLink>
   )
 }
 
 function PaginationNext({
   className,
+  label,
   ...props
-}: PaginationLinkProps) {
+}: PaginationNextProps) {
   return (
     <PaginationLink
       aria-label="Go to next page"
       size="default"
-      className={cn("gap-1 pr-2.5", className)}
+      className={cn("gap-1", label ? 'pr-2.5' : '', className)}
       {...props}
     >
-      <span>Next</span>
+       {label && <span>{label}</span>}
       <ChevronRight className="size-4" />
     </PaginationLink>
   )

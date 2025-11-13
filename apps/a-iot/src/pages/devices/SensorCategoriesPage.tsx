@@ -67,7 +67,11 @@ export default function SensorCategoryManagementPage() {
     }
 
     return (
-        <div className="p-6 h-full">
+        <div className="space-y-8">
+            <div>
+                <h1 className="text-xl font-bold mb-1">센서 카테고리 관리</h1>
+                <p className="text-sm text-gray-600">센서 카테고리를 관리합니다.</p>
+            </div>
             <TwoColumnLayout leftWidth="20%" rightWidth="80%" gap={24} className="h-[calc(100vh-200px)]">
                 <TwoColumnLayout.Left className="p-0">
                     <div className="p-4 space-y-3 overflow-y-auto flex-1">

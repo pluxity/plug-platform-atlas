@@ -59,12 +59,13 @@ export const TablePagination = ({
         </PaginationItem>
 
         {visiblePages.map((page) => (
-          <PaginationItem key={page}>
+          <PaginationItem key={page} className={currentPage === page ? 'bg-accent rounded-lg' : ''}>
             <PaginationLink
-              onClick={(e) => { 
+               onClick={(e) => { 
                 e.preventDefault(); 
                 onPageChange(page);
               }}
+              className="shadow-none bg-transparent border-none"
               isActive={currentPage === page}
             >
               {page}

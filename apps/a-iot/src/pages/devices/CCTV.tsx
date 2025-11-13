@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus, Map, Copy } from 'lucide-react'
@@ -26,10 +26,12 @@ import {
   toast,
 } from '@plug-atlas/ui'
 import type { Column } from '@plug-atlas/ui'
-import { useCctvList, useCreateCctv, useUpdateCctv, useDeleteCctv } from '../../services/hooks'
+import { useCctvList, useCreateCctv, useUpdateCctv, useDeleteCctv, useSearchBar, usePagination } from '../../services/hooks'
 import type { CctvResponse, CctvCreateRequest } from '../../services/types'
 import { cctvCreateRequestSchema } from '../../services/types'
 import LocationPicker from '../../components/LocationPicker'
+import { SearchBar } from '../../components/SearchBar'
+import { TablePagination } from '../../components/Pagination'
 
 export default function CCTV() {
   const { data: cctvs, mutate, isLoading } = useCctvList()
@@ -88,6 +90,14 @@ export default function CCTV() {
     setShowMap(false)
     setIsDialogOpen(true)
   }
+
+  const { searchTerm, filteredData: searchFilteredData, handleSearch } = useSearchBar<CctvResponse>(cctvs || [], ['name']);
+
+  const { currentPage, totalPages, currentPageData, goToPage, nextPage, prevPage, resetPage } = usePagination<CctvResponse>(searchFilteredData, 5);
+
+  useEffect(() => {
+    resetPage();
+  }, [searchFilteredData.length, resetPage]);
 
   const onSubmit = async (data: CctvCreateRequest) => {
     try {
@@ -175,16 +185,19 @@ export default function CCTV() {
   ]
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">CCTV 관리</h1>
-          <p className="text-muted-foreground mt-1">
-            CCTV를 등록하고 모니터링합니다.
-          </p>
-        </div>
-        <Button onClick={() => handleOpenDialog()} size="default">
-          <Plus className="w-4 h-4 mr-2" />
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-xl font-bold mb-1">CCTV 관리</h1>
+        <p className="text-sm text-gray-600">CCTV를 등록하고 모니터링합니다.</p>
+      </div>
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <SearchBar
+          value={searchTerm}
+          onChange={handleSearch}
+          placeholder="CCTV 이름으로 검색"
+        />
+        <Button onClick={() => handleOpenDialog()} >
+          <Plus className="w-4 h-4" />
           CCTV 등록
         </Button>
       </div>
@@ -193,27 +206,22 @@ export default function CCTV() {
         <div className="flex items-center justify-center h-64">
           <div className="text-muted-foreground">로딩 중...</div>
         </div>
-      ) : cctvs && cctvs.length > 0 ? (
-        <DataTable
-          data={cctvs}
-          columns={columns}
-          onRowEdit={(row) => handleOpenDialog(row)}
-          onRowDelete={(row) => handleOpenDeleteDialog(row)}
-        />
       ) : (
-        <div className="flex items-center justify-center h-64 border border-dashed rounded-lg">
-          <div className="text-center">
-            <p className="text-muted-foreground">등록된 CCTV가 없습니다.</p>
-            <Button
-              onClick={() => handleOpenDialog()}
-              variant="outline"
-              size="sm"
-              className="mt-4"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              첫 CCTV 등록하기
-            </Button>
-          </div>
+        <div className="flex flex-col gap-4">
+          <DataTable
+            data={currentPageData}
+            columns={columns}
+            onRowEdit={(row) => handleOpenDialog(row)}
+            onRowDelete={(row) => handleOpenDeleteDialog(row)}
+          />
+
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+            onPrev={prevPage}
+            onNext={nextPage}
+          />
         </div>
       )}
 

@@ -66,7 +66,7 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
                   size="sm"
                   onClick={handleStatusAction}
                   disabled={isMutating}
-                  className="text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200"
+                  variant="outline"
                 >
                   {isMutating ? '처리 중...' : '조치하기'}
                 </Button>
