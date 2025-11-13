@@ -1,4 +1,4 @@
-import { getLevelInfo } from '../../utils/timeUtils';
+import { getLevelInfo } from '../../utils/levelUtils.ts';
 
 interface ValueRangeIndicatorProps {
   value: number;
@@ -20,7 +20,7 @@ export default function ValueRangeIndicator({ value, minValue, maxValue, level }
   } else if (value > maxValue) {
     statusMessage = `${levelInfo.text} - 임계값 초과`;
   } else {
-    statusMessage = `${levelInfo.text} - 정상 범위`;
+    statusMessage = `${levelInfo.text} - 상태 범위`;
   }
 
   return (

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { Button, Popover, PopoverContent, PopoverTrigger, Dialog } from '@plug-atlas/ui';
-import { Notification, Event } from "../services/types";
-import { getLevelInfo } from '../pages/events/utils/timeUtils';
-import EventDetailModal from '../pages/events/components/modal/EventDetailModal';
-import { useNotificationStore } from '../stores/notificationStore';
+import { Notification, Event } from "../../services/types";
+import { getLevelInfo } from '../../pages/main/events/utils/levelUtils.ts';
+import EventDetailModal from '../../pages/main/events/components/modal/EventDetailModal.tsx';
+import { useNotificationStore } from '../../stores/notificationStore.ts';
 
 interface NotificationPanelProps {
     notifications: Notification[];

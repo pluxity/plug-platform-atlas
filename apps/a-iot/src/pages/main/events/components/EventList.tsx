@@ -1,11 +1,12 @@
 import {useState, useMemo, useEffect} from 'react';
-import { Card, Button, Dialog, DataTable } from '@plug-atlas/ui';
+import { Button, Dialog, DataTable } from '@plug-atlas/ui';
 import { ChevronDown } from 'lucide-react';
 import EventDetailModal from './modal/EventDetailModal.tsx';
-import type { Event } from '../../../services/types';
+import type { Event } from '../../../../services/types';
 import type { Column } from '@plug-atlas/ui';
-import { useUpdateEventStatus, useEvent } from '../../../services/hooks';
-import { getStatusInfo, getLevelInfo } from "../utils/timeUtils.ts";
+import { useUpdateEventStatus, useEvent } from '../../../../services/hooks';
+import { getStatusInfo, getStatusBadgeStyle } from "../utils/statusUtils.ts";
+import { getLevelInfo } from "../utils/levelUtils.ts";
 import { useSearchParams } from 'react-router-dom';
 
 interface EventListProps {
@@ -114,18 +115,8 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
             header: '상태',
             cell: (_, row) => {
                 const statusInfo = getStatusInfo(row.status);
-                const getStatusStyle = () => {
-                    if (row.status === 'ACTIVE') {
-                        return 'bg-red-100 text-red-800 border-l-4 border-red-600';
-                    }
-                    if (row.status === 'IN_PROGRESS') {
-                        return 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-600';
-                    }
-                    return 'bg-green-100 text-green-800 border-l-4 border-green-600';
-                };
-
                 return (
-                    <div className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium ${getStatusStyle()}`}>
+                    <div className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium ${getStatusBadgeStyle(row.status)}`}>
                         <statusInfo.icon className="h-3.5 w-3.5" />
                         <span>{statusInfo.text}</span>
                     </div>
@@ -185,47 +176,44 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     ];
 
     return (
-        <>
-            <Card className="p-6">
-                {isLoading ? (
-                    <div className="p-8">
-                        <p className="text-center text-gray-500">이벤트 로딩 중...</p>
-                    </div>
-                ) : filteredEvents && filteredEvents.length > 0 ? (
-                    <>
-                        <DataTable
-                            data={filteredEvents}
-                            columns={columns}
-                            onRowClick={handleRowClick}
-                            getRowId={(row) => String(row.eventId)}
-                        />
-
-                        {hasMore && (
-                            <div className="border-t border-gray-200 p-4 text-center">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onLoadMore}
-                                    className="gap-1.5"
-                                >
-                                    <span>더 보기</span>
-                                    <ChevronDown className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-                    </>
-                ) : (
-                    <div className="p-8">
-                        <p className="text-center text-gray-500">이벤트가 없습니다.</p>
-                    </div>
-                )}
-            </Card>
+        <div className="pt-5">
+            {isLoading ? (
+                <div className="p-8">
+                    <p className="text-center text-gray-500">이벤트 로딩 중...</p>
+                </div>
+            ) : filteredEvents && filteredEvents.length > 0 ? (
+                <>
+                    <DataTable
+                        data={filteredEvents}
+                        columns={columns}
+                        onRowClick={handleRowClick}
+                        getRowId={(row) => String(row.eventId)}
+                    />
+                    {hasMore && (
+                        <div className="border-t border-gray-200 p-4 text-center">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onLoadMore}
+                                className="gap-1.5"
+                            >
+                                <span>더 보기</span>
+                                <ChevronDown className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </>
+            ) : (
+                <div className="p-8">
+                    <p className="text-center text-gray-500">이벤트가 없습니다.</p>
+                </div>
+            )}
 
             <Dialog open={isDialogOpen} onOpenChange={handleModalClose}>
                 {selectedEvent && (
                     <EventDetailModal event={selectedEvent} onStatusUpdate={handleStatusUpdate} />
                 )}
             </Dialog>
-        </>
+        </div>
     );
 }

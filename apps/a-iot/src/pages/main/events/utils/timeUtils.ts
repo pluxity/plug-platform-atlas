@@ -1,5 +1,3 @@
-import {AlertTriangle, CheckCircle, Clock, TrendingUp} from "lucide-react";
-
 export const formatDate = (date: Date, format: string): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -72,76 +70,12 @@ export const getTimeRange = (range: string) => {
   };
 };
 
-export const getStatusInfo = (status: string) => {
-    switch (status) {
-        case 'ACTIVE':
-            return { icon: Clock, color: 'text-yellow-600 bg-yellow-50', text: '미조치' };
-        case 'IN_PROGRESS':
-            return { icon: TrendingUp, color: 'text-blue-600 bg-blue-50', text: '진행중' };
-        case 'RESOLVED':
-            return { icon: CheckCircle, color: 'text-green-600 bg-green-50', text: '완료' };
-        default:
-            return { icon: AlertTriangle, color: 'text-gray-600 bg-gray-50', text: '알 수 없음' };
-    }
-};
-
-export const getLevelInfo = (level: string) => {
-    switch (level) {
-        case 'NORMAL':
-            return {
-                color: 'text-emerald-700 bg-emerald-50/80 border-l-4 border-emerald-500',
-                text: '정상'
-            };
-        case 'WARNING':
-            return {
-                color: 'text-amber-700 bg-amber-50/80 border-l-4 border-amber-500',
-                text: '경고'
-            };
-        case 'CAUTION':
-            return {
-                color: 'text-orange-700 bg-orange-50/80 border-l-4 border-orange-500',
-                text: '주의'
-            };
-        case 'DANGER':
-            return {
-                color: 'text-red-700 bg-red-50/80 border-l-4 border-red-600',
-                text: '위험'
-            };
-        case 'DISCONNECTED':
-            return {
-                color: 'text-purple-700 bg-purple-50/80 border-l-4 border-purple-500',
-                text: '연결끊김'
-            };
-        default:
-            return {
-                color: 'text-gray-700 bg-gray-50/80 border-l-4 border-gray-400',
-                text: '알 수 없음'
-            };
-    }
-};
-
 export const timeRangeOptions = [
     { label: '전체', value: 'all' },
     { label: '오늘', value: 'today' },
     { label: '어제', value: 'yesterday' },
     { label: '최근 7일', value: '7days' },
     { label: '최근 30일', value: '30days' },
-];
-
-export const statusOptions = [
-    { label: '전체 상태', value: 'all' },
-    { label: '미조치', value: 'ACTIVE' },
-    { label: '진행중', value: 'IN_PROGRESS' },
-    { label: '완료', value: 'RESOLVED' },
-];
-
-export const levelOptions = [
-    { label: '전체 심각도', value: 'all' },
-    { label: '정상', value: 'NORMAL' },
-    { label: '경고', value: 'WARNING' },
-    { label: '주의', value: 'CAUTION' },
-    { label: '위험', value: 'DANGER' },
-    { label: '연결끊김', value: 'DISCONNECTED' },
 ];
 
 export const sensorTypeOptions = [

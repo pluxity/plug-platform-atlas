@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { TwoColumnLayout } from '@plug-atlas/ui';
 import { Package } from 'lucide-react';
-import ErrorDisplay from "./sensor/components/ErrorDisplay.tsx";
-import SensorCategoryCard from "./sensor/components/category/SensorCategoryCard.tsx";
-import DeviceTypeBasicInfo from './sensor/components/detail/DeviceTypeBasicInfo.tsx';
-import EventConditionsManager from "./sensor/components/detail/EventConditionManager.tsx";
-import { DeviceType } from '../../services/types';
-import { useDeviceTypes } from "../../services/hooks";
+import ErrorDisplay from "./components/ErrorDisplay.tsx";
+import SensorCategoryCard from "./components/category/SensorCategoryCard.tsx";
+import DeviceTypeBasicInfo from './components/detail/DeviceTypeBasicInfo.tsx';
+import EventConditionsManager from "./components/detail/EventConditionManager.tsx";
+import { DeviceType } from '../../../services/types';
+import { useDeviceTypes } from "../../../services/hooks";
 
 export default function SensorCategoryManagementPage() {
     const { objectId } = useParams<{ objectId: string }>();

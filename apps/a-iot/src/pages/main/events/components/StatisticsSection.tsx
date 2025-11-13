@@ -2,12 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { DatePicker, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@plug-atlas/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
-import { useEventsTimeSeries, useSites } from '../../../services/hooks';
-import { intervalOptions } from '../utils/timeUtils.ts';
+import { useEventsTimeSeries, useSites } from '../../../../services/hooks';
+import { intervalOptions, formatDate, startOfDay, endOfDay } from '../utils/timeUtils.ts';
 import EventTimeSeries from './EventTimeSeries.tsx';
-import type { EventCollectInterval } from '../../../services/types';
+import type { EventCollectInterval } from '../../../../services/types';
 import { type DateRange } from 'react-day-picker';
-import { formatDate, startOfDay, endOfDay } from '../utils/timeUtils';
 
 interface StatisticsSectionProps {
     eventStats: {
@@ -134,9 +133,9 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
     ];
 
     return (
-        <div className="space-y-4">
+        <div>
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
                     통계 및 차트
                 </h2>
                 <div className="flex gap-2">

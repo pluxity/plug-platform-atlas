@@ -1,12 +1,12 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input } from '@plug-atlas/ui';
-import { DeviceProfile, EventCondition } from '../../../../../services/types';
+import { DeviceProfile, EventCondition } from '../../../../../../services/types';
 import {
-    getLevelBadge,
     getAvailableLevelsByProfile,
     isBooleanProfile,
     getProfileByFieldKey
-} from '../../handlers/EventConditionUtils';
+} from '../../handlers/EventConditionUtils.tsx';
+import { getLevelBadge } from '../../../../../main/events/utils/levelUtils.ts';
 
 interface EditableFieldKeyProps {
     value: string;

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { DialogContent, DialogHeader, DialogTitle, Button } from '@plug-atlas/ui';
 import { AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
-import { getStatusInfo, getLevelInfo } from '../../utils/timeUtils.ts';
-import type { Event } from '../../../../services/types';
-import { useUpdateEventStatus } from '../../../../services/hooks';
+import { getStatusInfo } from '../../utils/statusUtils.ts';
+import { getLevelInfo } from '../../utils/levelUtils.ts';
+import type { Event } from '../../../../../services/types';
+import { useUpdateEventStatus } from '../../../../../services/hooks';
 import ActionHistorySection from "./ActionHistoryItem.tsx";
 import EventLocationMap from './EventLocationMap.tsx';
 import ValueRangeIndicator from './ValueRangeIndicator.tsx';

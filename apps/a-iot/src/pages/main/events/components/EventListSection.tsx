@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, DatePicker, Button, Badge } from '@plug-atlas/ui';
-import { useInfiniteEvents, useSites } from '../../../services/hooks';
-import { statusOptions, levelOptions, sensorTypeOptions, formatDate, startOfDay, endOfDay } from '../utils/timeUtils.ts';
+import { useInfiniteEvents, useSites } from '../../../../services/hooks';
+import { sensorTypeOptions, formatDate, startOfDay, endOfDay } from '../utils/timeUtils.ts';
+import { statusOptions } from '../utils/statusUtils.ts';
+import { levelOptions } from '../utils/levelUtils.ts';
 import EventList from './EventList.tsx';
-import { type EventStatus, type EventLevel, type SensorType } from '../../../services/types';
+import { type EventStatus, type EventLevel, type SensorType } from '../../../../services/types';
 import { type DateRange } from 'react-day-picker';
-import { X, XIcon } from 'lucide-react';
+import { XIcon } from 'lucide-react';
 
 export default function EventListSection() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
@@ -25,8 +27,6 @@ export default function EventListSection() {
             to: formatDate(endOfDay(dateRange.to), 'yyyyMMddHHmmss')
         };
     }, [dateRange]);
-
-    const hasActiveFilters = dateRange !== undefined || listStatusFilter !== 'all' || listLevelFilter !== 'all' || listSensorTypeFilter !== 'all' || listSiteFilter !== 'all';
 
     const activeFiltersCount =
         (dateRange !== undefined ? 1 : 0) +
@@ -75,7 +75,7 @@ export default function EventListSection() {
     const { events, isLoading, hasMore, loadMore, mutate } = useInfiniteEvents(baseParams, 10);
 
     return (
-        <div className="space-y-4">
+        <div>
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">이벤트 목록</h2>
                 <div className="flex gap-2">
