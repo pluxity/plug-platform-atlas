@@ -48,9 +48,6 @@ export default function DeviceTypeBasicInfo({deviceType,}: DeviceTypeBasicInfoPr
         <div className="bg-white rounded-xl space-y-3">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200">
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                    <FileText className="h-6 w-6 text-yellow-600"/>
-                </div>
                 <h2 className="text-xl font-bold text-gray-900">{deviceType.description}</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

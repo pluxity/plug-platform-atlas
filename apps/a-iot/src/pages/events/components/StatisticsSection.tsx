@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { TrendingUp, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { DatePicker, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@plug-atlas/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
 import { useEventsTimeSeries, useSites } from '../../../services/hooks';
@@ -141,8 +141,7 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
+                <h2 className="text-xl font-bold flex items-center gap-2">
                     통계 및 차트
                 </h2>
                 <div className="flex gap-2">

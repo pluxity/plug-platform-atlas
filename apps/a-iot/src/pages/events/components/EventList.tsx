@@ -126,7 +126,6 @@ function EventRow({ event, onStatusUpdate, initialOpen = false, onClose }: Event
                                 variant="outline"
                                 onClick={handleStatusAction}
                                 disabled={isMutating}
-                                className="text-blue-600 border-blue-200 hover:bg-blue-50 shadow-sm"
                             >
                                 {isMutating ? '처리 중...' : '조치하기'}
                             </Button>

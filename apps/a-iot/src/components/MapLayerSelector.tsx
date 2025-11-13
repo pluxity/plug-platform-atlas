@@ -33,9 +33,11 @@ export default function MapLayerSelector({ viewer, className = '' }: MapLayerSel
         size="icon"
         title="기본 지도"
         disabled={isLoading}
-        className={currentProvider === 'ion-default' ? 'bg-blue-100 border-blue-300' : ''}
+        className={`bg-white/70 backdrop-blur-md shadow-sm hover:bg-white/80 hover:shadow-2xl transition-all ${
+          currentProvider === 'ion-default' ? 'bg-blue-100/80' : ''
+        }`}
       >
-        <Map className={currentProvider === 'ion-default' ? 'text-blue-600' : ''} />
+        <Map className={`stroke-2 drop-shadow-sm transition-colors ${currentProvider === 'ion-default' ? 'text-blue-600 hover:text-blue-700' : 'text-gray-900 hover:text-gray-950'}`} />
       </Button>
 
       <Button
@@ -45,9 +47,11 @@ export default function MapLayerSelector({ viewer, className = '' }: MapLayerSel
         size="icon"
         title="위성 지도"
         disabled={isLoading}
-        className={currentProvider === 'ion-satellite' ? 'bg-blue-100 border-blue-300' : ''}
+        className={`bg-white/70 text-white backdrop-blur-md shadow-sm hover:bg-white/80 hover:shadow-2xl transition-all ${
+          currentProvider === 'ion-satellite' ? 'bg-blue-100/80' : ''
+        }`}
       >
-        <Satellite className={currentProvider === 'ion-satellite' ? 'text-blue-600' : ''} />
+        <Satellite className={`stroke-2 drop-shadow-sm transition-colors ${currentProvider === 'ion-satellite' ? 'text-blue-600 hover:text-blue-700' : 'text-gray-900 hover:text-gray-950'}`} />
       </Button>
     </div>
   )

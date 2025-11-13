@@ -1,5 +1,5 @@
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Column, DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
-import { TreePine, Camera, Radio, Users, Map } from 'lucide-react'
+import { TreePine, Camera, Radio, Users } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { useSites } from '../services/hooks/useSite'
 import { useCctvList } from '../services/hooks/useCctv'
@@ -33,8 +33,8 @@ export default function Dashboard() {
         title: '전체 공원',
         value: sites.length,
         icon: TreePine,
+        iconImage: '/images/icons/dashboard/park.png',
         description: '관리 중인 공원 수',
-        iconColor: 'text-green-600',
         iconBg: 'bg-green-100',
       },
       {
@@ -42,7 +42,7 @@ export default function Dashboard() {
         value: cctvs.length,
         icon: Camera,
         description: '운영 중인 CCTV',
-        iconColor: 'text-blue-600',
+        iconImage: '/images/icons/dashboard/cctv.png',
         iconBg: 'bg-blue-100',
       },
       {
@@ -50,7 +50,7 @@ export default function Dashboard() {
         value: sensors.length,
         icon: Radio,
         description: '설치된 센서',
-        iconColor: 'text-yellow-600',
+        iconImage: '/images/icons/dashboard/sensor.png',
         iconBg: 'bg-yellow-100',
       },
       {
@@ -58,7 +58,7 @@ export default function Dashboard() {
         value: users.length,
         icon: Users,
         description: '등록된 관리자',
-        iconColor: 'text-purple-600',
+        iconImage: '/images/icons/dashboard/user.png',
         iconBg: 'bg-purple-100',
       },
     ]
@@ -217,10 +217,38 @@ export default function Dashboard() {
     ).sort((a, b) => a.name.localeCompare(b.name))
   }, [selectedSiteId, sensors])
 
+  const OverviewIcon = ({ isActive }: { isActive: boolean }) => {
+    const iconPath = isActive 
+      ? '/images/icons/dashboard/active_tab_overview.png'
+      : '/images/icons/dashboard/tab_overview.png'
+    
+    return (
+      <img 
+        src={iconPath}
+        alt="전체보기"
+        className="size-5"
+      />
+    )
+  }
+
+  const ParkIcon = ({ isActive }: { isActive: boolean }) => {
+    const iconPath = isActive 
+      ? '/images/icons/dashboard/active_tab_park.png'
+      : '/images/icons/dashboard/tab_park.png'
+    
+    return (
+      <img 
+        src={iconPath}
+        alt="공원별 보기"
+        className="size-5"
+      />
+    )
+  }
+
   return (
     <>
       <div className="mb-6">
-      <Tabs value={activeTab} onValueChange={(value) => {
+        <Tabs className="shadow-md inline-flex rounded-xl" value={activeTab} onValueChange={(value) => {
           if (value === 'overview' || value === 'parks') {
             setActiveTab(value)
             if (value === 'overview') {
@@ -228,12 +256,23 @@ export default function Dashboard() {
             }
           }
         }} variant="buttons">
-          <TabsList className="justify-start">
-            <TabsTrigger value="overview" icon={<Map className="size-4" />}>
-              전체보기
+          <TabsList className="justify-start gap-0 !border-white rounded-xl">
+            <TabsTrigger 
+              value="overview" 
+              icon={<OverviewIcon isActive={activeTab === 'overview'} />}
+              className={`rounded-l-xl rounded-r-none rounded-bl-xl rounded-tr-none border-0 data-[state=active]:bg-white/80 data-[state=active]:shadow-none ${activeTab === 'overview' ? 'text-primary' : 'text-gray-600'}`}
+            >
+              <span className={`${activeTab === 'overview' ? 'text-primary' : 'text-gray-600'}`}>전체보기</span>
             </TabsTrigger>
-            <TabsTrigger value="parks" icon={<TreePine className="size-4" />}>
-              공원별 보기
+            <TabsTrigger 
+              value="parks" 
+              icon={<ParkIcon isActive={activeTab === 'parks'} />}
+              className={`!border-0 !border-l !border-gray-200 rounded-l-none rounded-r-lg data-[state=active]:bg-white/80 data-[state=active]:shadow-none ${activeTab === 'parks' ? 'text-primary' : 'text-gray-600'}`}
+            >
+              <span className={`${activeTab === 'parks' ? 'text-primary' : 'text-gray-600'}`}>
+                공원별 보기
+              </span>
+              
             </TabsTrigger>
           </TabsList> 
         </Tabs>
@@ -241,7 +280,7 @@ export default function Dashboard() {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
             <span>지도 보기</span>
             {activeTab === 'parks' && (
               <Select value={selectedSiteId || ''} onValueChange={setSelectedSiteId}>
@@ -275,20 +314,23 @@ export default function Dashboard() {
           {/* 통계 카드 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((stat) => {
-              const Icon = stat.icon
               return (
                 <Card key={stat.title}>
                   <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                     <div className="space-y-0.5">
-                      <CardTitle className="font-medium text-lg text-gray-800">{stat.title}</CardTitle>
-                      <div className="text-2xl font-bold">{stat.value}</div>
+                      <CardTitle className="font-medium text-xl text-gray-800">{stat.title}</CardTitle>
+                      <div className="text-3xl font-bold">{stat.value}</div>
                     </div>
                     <div className={`p-2.5 rounded-xl ${stat.iconBg}`}>
-                      <Icon className={`size-5 ${stat.iconColor}`} />
+                      <img 
+                        src={stat.iconImage} 
+                        alt={stat.title}
+                        className="size-5"
+                      />
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-xs text-gray-800">{stat.description}</p>
+                    <p className="text-sm text-gray-800">{stat.description}</p>
                   </CardContent>
                 </Card>          
               )
@@ -302,7 +344,7 @@ export default function Dashboard() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{sites.find(site => site.id.toString() === selectedSiteId)?.name} | 전체 장치 현황</CardTitle>
+              <CardTitle className="text-xl font-bold">{sites.find(site => site.id.toString() === selectedSiteId)?.name} | 전체 장치 현황</CardTitle>
             </CardHeader>
             <CardContent className="flex gap-4">
              <div className="w-1/6">
@@ -363,7 +405,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-5 gap-4">
             <Card className="col-span-3">
               <CardHeader>
-                <CardTitle className="text-lg">이벤트 현황</CardTitle>
+                <CardTitle className="text-xl font-bold">이벤트 현황</CardTitle>
                 <CardDescription>최근 발생한 이벤트를 확인할 수 있습니다. (최대 50개)</CardDescription>
               </CardHeader>
               <CardContent>
@@ -384,7 +426,7 @@ export default function Dashboard() {
 
             <Card className="col-span-2">
               <CardHeader>
-                <CardTitle className="text-lg">장치 배터리 알람</CardTitle>
+                <CardTitle className="text-xl font-bold">장치 배터리 알람</CardTitle>
                 <CardDescription>배터리 잔량이 20% 이하인 장치를 확인할 수 있습니다.</CardDescription>
               </CardHeader>
               <CardContent>

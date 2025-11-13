@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AdminLayout from './components/AdminLayout'
+import DashboardLayout from './components/DashboardLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import ForbiddenPage from './pages/ForbiddenPage'
@@ -24,12 +25,22 @@ function App() {
         <Route path="/forbidden" element={<ForbiddenPage />} />
 
         <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/*"
           element={
             <ProtectedRoute>
               <AdminLayout>
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
                   <Route path="/iot-sensors" element={<IoTSensor />} />
                     <Route path="/events" element={<EventsHistoryPage />} />
 

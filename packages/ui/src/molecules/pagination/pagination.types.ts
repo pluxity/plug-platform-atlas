@@ -9,8 +9,12 @@ export interface PaginationLinkProps extends React.ComponentProps<"a"> {
   size?: "default" | "icon"
 }
 
-export interface PaginationPreviousProps extends React.ComponentProps<"a"> {}
+export interface PaginationPreviousProps extends React.ComponentProps<"a"> {
+  label?: string | null
+}
 
-export interface PaginationNextProps extends React.ComponentProps<"a"> {}
+export interface PaginationNextProps extends React.ComponentProps<"a"> {
+  label?: string | null
+}
 
 export interface PaginationEllipsisProps extends React.ComponentProps<"span"> {}

@@ -23,15 +23,6 @@ export function createSiteColumns(
             ),
         },
         {
-            key: 'location' as keyof Site,
-            header: '위치',
-            cell: (value: any) => (
-                <div className="max-w-xs truncate text-muted-foreground">
-                    {value}
-                </div>
-            ),
-        },
-        {
             key: 'createdAt' as keyof Site,
             header: '생성일',
             cell: (value: any) => (
