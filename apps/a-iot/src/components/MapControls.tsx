@@ -1,16 +1,19 @@
 import { Viewer as CesiumViewer } from 'cesium'
-import { Plus, Minus, Home } from 'lucide-react'
+import { Plus, Minus, Home, Layers } from 'lucide-react'
 import { Button } from '@plug-atlas/ui'
 import { useCameraStore, type CameraPosition } from '../stores/cesium'
+import { useState } from 'react'
 
 interface MapControlsProps {
   viewer: CesiumViewer | null
   homePosition?: CameraPosition
+  onToggleSeongnamTileset?: (visible: boolean) => void
   className?: string
 }
 
-export default function MapControls({ viewer, homePosition, className = '' }: MapControlsProps) {
+export default function MapControls({ viewer, homePosition, onToggleSeongnamTileset, className = '' }: MapControlsProps) {
   const { flyToPosition } = useCameraStore()
+  const [seongnamVisible, setSeongnamVisible] = useState(false) // 기본값 off
 
   const zoomIn = () => {
     if (!viewer || viewer.isDestroyed()) return
@@ -32,6 +35,12 @@ export default function MapControls({ viewer, homePosition, className = '' }: Ma
     flyToPosition(viewer, homePosition)
   }
 
+  const toggle3DLayers = () => {
+    const newVisible = !seongnamVisible
+    setSeongnamVisible(newVisible)
+    onToggleSeongnamTileset?.(newVisible)
+  }
+
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
       <Button
@@ -40,8 +49,9 @@ export default function MapControls({ viewer, homePosition, className = '' }: Ma
         variant="outline"
         size="icon"
         title="확대"
+        className="bg-white/70 backdrop-blur-md shadow-xl hover:bg-white/80 hover:shadow-2xl transition-all"
       >
-        <Plus />
+        <Plus className="text-gray-900 stroke-2 drop-shadow-sm transition-colors" />
       </Button>
 
       <Button
@@ -50,8 +60,9 @@ export default function MapControls({ viewer, homePosition, className = '' }: Ma
         variant="outline"
         size="icon"
         title="축소"
+        className="bg-white/70 backdrop-blur-md shadow-xl hover:bg-white/80 hover:shadow-2xl transition-all"
       >
-        <Minus />
+        <Minus className="text-gray-900 stroke-2 drop-shadow-sm transition-colors" />
       </Button>
 
       {homePosition && (
@@ -61,10 +72,24 @@ export default function MapControls({ viewer, homePosition, className = '' }: Ma
           variant="outline"
           size="icon"
           title="홈으로"
+          className="bg-white/70 backdrop-blur-md shadow-sm hover:bg-white/80 hover:shadow-2xl transition-all"
         >
-          <Home />
+          <Home className="text-gray-900 stroke-2 drop-shadow-sm transition-colors" />
         </Button>
       )}
+
+      <Button
+        type="button"
+        onClick={toggle3DLayers}
+        variant="outline"
+        size="icon"
+        title="3D 레이어"
+        className={`bg-white/70 backdrop-blur-md shadow-sm hover:bg-white/80 hover:shadow-2xl transition-all ${
+          seongnamVisible ? 'bg-blue-100/80' : ''
+        }`}
+      >
+        <Layers className={`stroke-2 drop-shadow-sm transition-colors ${seongnamVisible ? 'text-blue-600 hover:text-blue-700' : 'text-gray-900 hover:text-gray-950'}`} />
+      </Button>
     </div>
   )
 }

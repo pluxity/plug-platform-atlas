@@ -4,6 +4,7 @@ import {
   ScreenSpaceEventType,
   defined,
   Cartesian3,
+  Viewer as CesiumViewer,
 } from 'cesium'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import {
@@ -13,7 +14,6 @@ import {
   DEFAULT_CAMERA_POSITION,
 } from '../stores/cesium'
 import { Button, Spinner } from '@plug-atlas/ui'
-import MapControls from './MapControls'
 
 interface LocationPickerProps {
   lon: number
@@ -37,7 +37,9 @@ export default function LocationPicker({
   markerHeight = 32,
 }: LocationPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const viewerRef = useRef<CesiumViewer | null>(null)
   const handlerRef = useRef<ScreenSpaceEventHandler | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [contextMenu, setContextMenu] = useState<{
     show: boolean
     x: number
@@ -46,18 +48,59 @@ export default function LocationPicker({
     lat: number
   } | null>(null)
 
-  const { viewer, isLoading, initializeViewer } = useViewerStore()
+  const { createViewer, initializeResources } = useViewerStore()
   const { setView, focusOn } = useCameraStore()
   const { addMarker, removeMarker } = useMarkerStore()
 
   useEffect(() => {
-    if (!containerRef.current || viewer) return
+    if (!containerRef.current) return
+    if (viewerRef.current && !viewerRef.current.isDestroyed()) return
 
-    initializeViewer(containerRef.current)
-  }, [containerRef, viewer, initializeViewer])
+    let mounted = true
+
+    const initViewer = async () => {
+      try {
+        setIsLoading(true)
+
+        const viewer = createViewer(containerRef.current!)
+
+        if (!mounted) {
+          viewer.destroy()
+          return
+        }
+
+        viewerRef.current = viewer
+
+        await initializeResources(viewer, {
+          imageryProvider: 'ion-default',
+          loadTerrain: false,
+          load3DTiles: false,
+        })
+
+        if (!mounted) return
+
+        setIsLoading(false)
+      } catch (error) {
+        if (mounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    initViewer()
+
+    return () => {
+      mounted = false
+      if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+        viewerRef.current.destroy()
+        viewerRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
-    if (!viewer) return
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
 
     if (lon && lon !== 0 && lat && lat !== 0) {
       focusOn(viewer, { lon, lat }, 1500)
@@ -67,10 +110,11 @@ export default function LocationPicker({
         lat: DEFAULT_CAMERA_POSITION.lat - 0.05,
       })
     }
-  }, [viewer, lon, lat, setView, focusOn])
+  }, [viewerRef.current, lon, lat, setView, focusOn])
 
   useEffect(() => {
-    if (!viewer) return
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
 
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
     handlerRef.current = handler
@@ -109,10 +153,11 @@ export default function LocationPicker({
         handlerRef.current = null
       }
     }
-  }, [viewer])
+  }, [viewerRef.current])
 
   useEffect(() => {
-    if (!viewer) return
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
 
     removeMarker(viewer, 'location-marker')
 
@@ -127,7 +172,7 @@ export default function LocationPicker({
         heightValue: markerHeight,
       })
     }
-  }, [viewer, lon, lat, cctvHeight, markerImage, markerWidth, markerHeight, addMarker, removeMarker])
+  }, [viewerRef.current, lon, lat, cctvHeight, markerImage, markerWidth, markerHeight, addMarker, removeMarker])
 
   const handleSetMarker = useCallback(() => {
     if (!contextMenu) return
@@ -149,12 +194,6 @@ export default function LocationPicker({
           <div className="text-white text-sm font-medium">지도 로딩 중...</div>
         </div>
       )}
-
-      <MapControls
-        viewer={viewer}
-        homePosition={DEFAULT_CAMERA_POSITION}
-        className="absolute top-4 right-4 z-10"
-      />
 
       {contextMenu?.show && (
         <div

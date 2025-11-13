@@ -1,7 +1,7 @@
 import useSWR, { type SWRConfiguration } from 'swr'
 import useSWRMutation, { type SWRMutationConfiguration } from 'swr/mutation'
 import { useApiClient } from '@plug-atlas/api-hooks'
-import type { FeatureResponse, FeatureUpdateRequest, DataResponse } from '../types/feature'
+import type { FeatureResponse, FeatureUpdateRequest, LatestDataResponse, TimeSeriesDataResponse } from '../types/feature'
 
 type DataResponseWrapper<T> = { data: T }
 
@@ -12,9 +12,9 @@ export function useFeatures(options?: SWRConfiguration<FeatureResponse[], Error>
   const client = useApiClient()
 
   return useSWR(
-    '/features',
+    'features',
     async () => {
-      const response = await client.get<DataResponseWrapper<FeatureResponse[]>>('/features')
+      const response = await client.get<DataResponseWrapper<FeatureResponse[]>>('features')
       return response.data
     },
     options
@@ -31,9 +31,9 @@ export function useFeature(
   const client = useApiClient()
 
   return useSWR(
-    featureId ? `/features/${featureId}` : null,
+    featureId ? `features/${featureId}` : null,
     async () => {
-      const response = await client.get<DataResponseWrapper<FeatureResponse>>(`/features/${featureId}`)
+      const response = await client.get<DataResponseWrapper<FeatureResponse>>(`features/${featureId}`)
       return response.data
     },
     options
@@ -45,14 +45,14 @@ export function useFeature(
  */
 export function useFeatureLatestData(
   deviceId: string | null,
-  options?: SWRConfiguration<DataResponse, Error>
+  options?: SWRConfiguration<LatestDataResponse, Error>
 ) {
   const client = useApiClient()
 
   return useSWR(
-    deviceId ? `/features/${deviceId}/latest` : null,
+    deviceId ? `features/${deviceId}/latest` : null,
     async () => {
-      const response = await client.get<DataResponseWrapper<DataResponse>>(`/features/${deviceId}/latest`)
+      const response = await client.get<DataResponseWrapper<LatestDataResponse>>(`features/${deviceId}/latest`)
       return response.data
     },
     options
@@ -64,14 +64,14 @@ export function useFeatureLatestData(
  */
 export function useFeatureTimeSeries(
   deviceId: string | null,
-  options?: SWRConfiguration<DataResponse[], Error>
+  options?: SWRConfiguration<TimeSeriesDataResponse, Error>
 ) {
   const client = useApiClient()
 
   return useSWR(
-    deviceId ? `/features/${deviceId}/time-series` : null,
+    deviceId ? `features/${deviceId}/time-series` : null,
     async () => {
-      const response = await client.get<DataResponseWrapper<DataResponse[]>>(`/features/${deviceId}/time-series`)
+      const response = await client.get<DataResponseWrapper<TimeSeriesDataResponse>>(`features/${deviceId}/time-series`)
       return response.data
     },
     options
@@ -85,9 +85,9 @@ export function useUpdateFeature(options?: SWRMutationConfiguration<void, Error,
   const client = useApiClient()
 
   return useSWRMutation(
-    '/features',
+    'features',
     async (_key: string, { arg }: { arg: { id: number; data: FeatureUpdateRequest } }) => {
-      await client.patch(`/features/${arg.id}`, arg.data)
+      await client.put(`features/${arg.id}`, arg.data)
     },
     options
   )
@@ -100,9 +100,9 @@ export function useSyncFeatures(options?: SWRMutationConfiguration<void, Error, 
   const client = useApiClient()
 
   return useSWRMutation(
-    '/features/sync',
+    'features/sync',
     async () => {
-      await client.post('/features/sync')
+      await client.post('features/sync')
     },
     options
   )

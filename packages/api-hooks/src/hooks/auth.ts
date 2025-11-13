@@ -1,5 +1,5 @@
 import useSWRMutation, { type SWRMutationConfiguration } from 'swr/mutation'
-import { useApiClient } from '../client/context'
+import { useApiClient } from '../client'
 import type { SignInRequest, SignUpRequest } from '@plug-atlas/types'
 
 /**

@@ -30,7 +30,7 @@ export const Default: Story = {
     <Pagination>
       <PaginationContent>
         <PaginationItem>
-          <PaginationPrevious href="#" />
+          <PaginationPrevious href="#" label="이전" />
         </PaginationItem>
         <PaginationItem>
           <PaginationLink href="#">1</PaginationLink>
@@ -47,7 +47,7 @@ export const Default: Story = {
           <PaginationEllipsis />
         </PaginationItem>
         <PaginationItem>
-          <PaginationNext href="#" />
+          <PaginationNext href="#" label="다음" />
         </PaginationItem>
       </PaginationContent>
     </Pagination>

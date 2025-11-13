@@ -5,115 +5,160 @@ import {
   IonImageryProvider,
   IonResource,
   CesiumTerrainProvider,
+  CameraEventType,
 } from 'cesium'
 
-interface ViewerState {
-  viewer: CesiumViewer | null
-  isLoading: boolean
+export interface ViewerOptions {
+  animation?: boolean
+  baseLayerPicker?: boolean
+  fullscreenButton?: boolean
+  geocoder?: boolean
+  homeButton?: boolean
+  infoBox?: boolean
+  sceneModePicker?: boolean
+  selectionIndicator?: boolean
+  timeline?: boolean
+  navigationHelpButton?: boolean
+  shouldAnimate?: boolean
+  requestRenderMode?: boolean
+  maximumRenderTimeChange?: number
 }
 
-interface ViewerActions {
-  initializeViewer: (container: HTMLElement) => Promise<CesiumViewer>
-  getViewer: () => CesiumViewer | null
-  destroyViewer: () => void
-  _createViewer: (container: HTMLElement) => CesiumViewer
-  _setupCesiumResources: (viewer: CesiumViewer) => Promise<void>
+export interface ViewerInitOptions {
+  imageryProvider?: 'ion-default' | 'ion-satellite' | number
+  loadTerrain?: boolean
+  load3DTiles?: boolean
 }
 
-type ViewerStore = ViewerState & ViewerActions
+const DEFAULT_VIEWER_OPTIONS: ViewerOptions = {
+  animation: false,
+  baseLayerPicker: false,
+  fullscreenButton: false,
+  geocoder: false,
+  homeButton: false,
+  infoBox: false,
+  sceneModePicker: false,
+  selectionIndicator: false,
+  timeline: false,
+  navigationHelpButton: false,
+  shouldAnimate: true,
+  requestRenderMode: true,
+  maximumRenderTimeChange: Infinity,
+}
 
-export const useViewerStore = create<ViewerStore>((set, get) => ({
-  viewer: null,
-  isLoading: false,
+interface ViewerFactory {
+  createViewer: (container: HTMLElement, options?: ViewerOptions) => CesiumViewer
+  setupImagery: (viewer: CesiumViewer, provider?: 'ion-default' | 'ion-satellite' | number) => Promise<void>
+  setupTerrain: (viewer: CesiumViewer, assetId?: number) => Promise<void>
+  initializeResources: (viewer: CesiumViewer, initOptions?: ViewerInitOptions) => Promise<void>
+}
 
-  getViewer: () => get().viewer,
-
-  initializeViewer: async (container: HTMLElement) => {
-    const existing = get().viewer
-
-    if (existing && !existing.isDestroyed()) {
-      if (existing.container !== container) {
-        container.appendChild(existing.container)
-      }
-      return existing
-    }
-
-    set({ isLoading: true })
-
-    const viewer = get()._createViewer(container)
-    set({ viewer })
-
-    await get()._setupCesiumResources(viewer)
-
-    set({ isLoading: false })
-
-    return viewer
-  },
-
-  destroyViewer: () => {
-    const viewer = get().viewer
-    if (viewer && !viewer.isDestroyed()) {
-      viewer.destroy()
-    }
-    set({ viewer: null, isLoading: false })
-  },
-
-  _createViewer: (container: HTMLElement) => {
+export const useViewerStore = create<ViewerFactory>(() => ({
+  createViewer: (container: HTMLElement, options?: ViewerOptions) => {
     Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_ACCESS_TOKEN || ''
 
-    const viewer = new CesiumViewer(container, {
-      animation: false,
-      baseLayerPicker: false,
-      fullscreenButton: false,
-      geocoder: false,
-      homeButton: false,
-      infoBox: false,
-      sceneModePicker: false,
-      selectionIndicator: false,
-      timeline: false,
-      navigationHelpButton: false,
-      shouldAnimate: true,
-      requestRenderMode: true,
-      maximumRenderTimeChange: Infinity,
-    })
+    // Cesium 에러 로그 억제
+    const originalConsoleError = console.error
+    console.error = (...args: any[]) => {
+      const message = args[0]?.toString() || ''
+      // 3D Tile 관련 에러만 필터링
+      if (
+        message.includes('A 3D tile failed to load') ||
+        message.includes('implicitCoordinates') ||
+        message.includes('Cesium3DTileset')
+      ) {
+        return // 에러 무시
+      }
+      originalConsoleError.apply(console, args)
+    }
 
-    // viewer.imageryLayers.removeAll()
+    const mergedOptions = { ...DEFAULT_VIEWER_OPTIONS, ...options }
+
+    const viewer = new CesiumViewer(container, mergedOptions)
 
     viewer.scene.canvas.addEventListener('contextmenu', (e) => {
       e.preventDefault()
       return false
     })
 
+    const controller = viewer.scene.screenSpaceCameraController
+    controller.minimumZoomDistance = 10
+    controller.maximumZoomDistance = 50000000
+    controller.inertiaZoom = 0.3
+    controller.zoomEventTypes = [CameraEventType.WHEEL, CameraEventType.PINCH]
+
+    // Pitch/Roll 제한 이벤트 리스너
+    viewer.camera.changed.addEventListener(() => {
+      const cameraHeight = viewer.camera.positionCartographic.height
+      const maximumPitch = -0.1 // 약 -5.7도 (거의 수평)
+
+      // 높이에 따라 최대 pitch 조정
+      let adjustedMaxPitch = maximumPitch
+      if (cameraHeight < 1000) {
+        // 낮은 고도에서는 더 많이 기울일 수 있음
+        adjustedMaxPitch = -0.3 // 약 -17도
+      } else if (cameraHeight < 5000) {
+        // 중간 고도
+        adjustedMaxPitch = -0.2 // 약 -11도
+      }
+
+      const pitch = viewer.camera.pitch
+      const roll = viewer.camera.roll
+
+      // Pitch가 너무 수평이거나 Roll이 0이 아니면 조정
+      if (pitch > adjustedMaxPitch || Math.abs(roll) > 0.01) {
+        viewer.camera.setView({
+          orientation: {
+            heading: viewer.camera.heading,
+            pitch: pitch > adjustedMaxPitch ? adjustedMaxPitch : pitch,
+            roll: 0, // Roll은 항상 0으로 유지
+          },
+        })
+      }
+    })
+
     return viewer
   },
 
-  _setupCesiumResources: async (viewer: CesiumViewer) => {
+  setupImagery: async (viewer: CesiumViewer, provider?: 'ion-default' | 'ion-satellite' | number) => {
     if (viewer.isDestroyed()) return
 
-    const imageryAssetId = Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID)
-    const terrainAssetId = Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID)
+    let assetId: number
 
-    // Imagery 로딩 시도
+    if (typeof provider === 'number') {
+      assetId = provider
+    } else if (provider === 'ion-default') {
+      assetId = Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID) || 4
+    } else if (provider === 'ion-satellite') {
+      assetId = Number(import.meta.env.VITE_CESIUM_SATELLITE_ASSET_ID) || 2
+    } else {
+      assetId = Number(import.meta.env.VITE_CESIUM_SATELLITE_ASSET_ID) || 2
+    }
+
     try {
-      if (imageryAssetId) {
-        const imageryProvider = await IonImageryProvider.fromAssetId(imageryAssetId)
-        if (!viewer.isDestroyed()) {
-          viewer.imageryLayers.addImageryProvider(imageryProvider)
-        }
+      const imageryProvider = await IonImageryProvider.fromAssetId(assetId)
+      if (!viewer.isDestroyed()) {
+        viewer.imageryLayers.addImageryProvider(imageryProvider)
       }
     } catch (error) {
-      console.error('Failed to load Cesium imagery:', error)
       if (!viewer.isDestroyed() && viewer.imageryLayers.length === 0) {
         try {
           const fallbackImagery = await IonImageryProvider.fromAssetId(2)
-          viewer.imageryLayers.addImageryProvider(fallbackImagery)
+          if (!viewer.isDestroyed()) {
+            viewer.imageryLayers.addImageryProvider(fallbackImagery)
+          }
         } catch (fallbackError) {
           console.error('Failed to load fallback imagery:', fallbackError)
         }
       }
     }
+  },
 
-    // Terrain 로딩 시도
+  setupTerrain: async (viewer: CesiumViewer, assetId?: number) => {
+    if (viewer.isDestroyed()) return
+
+    const terrainAssetId = assetId || Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID)
+
     try {
       if (terrainAssetId) {
         const terrainResource = await IonResource.fromAssetId(terrainAssetId)
@@ -125,5 +170,24 @@ export const useViewerStore = create<ViewerStore>((set, get) => ({
     } catch (error) {
       console.warn('Failed to load Cesium terrain, using default ellipsoid:', error)
     }
+  },
+
+  initializeResources: async (viewer: CesiumViewer, initOptions?: ViewerInitOptions) => {
+    const { setupImagery, setupTerrain } = useViewerStore.getState()
+
+    const {
+      imageryProvider = 'ion-satellite',
+      loadTerrain = true,
+    } = initOptions || {}
+
+    const promises: Promise<void>[] = []
+
+    promises.push(setupImagery(viewer, imageryProvider))
+
+    if (loadTerrain) {
+      promises.push(setupTerrain(viewer))
+    }
+
+    await Promise.all(promises)
   },
 }))

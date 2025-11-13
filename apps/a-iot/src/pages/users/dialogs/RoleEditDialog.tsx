@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle } from '@plug-atlas/ui';
+import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from '@plug-atlas/ui';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { RoleUpdateRequest, RoleResponse, RoleUpdateRequestSchema } from '@plug-atlas/types';
@@ -23,7 +23,7 @@ export default function RoleEditDialog({ isOpen, role, onClose, onSuccess }: Rol
     useEffect(() => {
         if(role){
             editRoleForm.reset({
-                name: role.name || '',
+                name: role.name,
                 description: role.description || '',
                 permissionGroupIds: role.permissions?.map(p => p.id) || []
             })
@@ -64,7 +64,7 @@ export default function RoleEditDialog({ isOpen, role, onClose, onSuccess }: Rol
                 resetEditRoleForm();
             }
         }}>
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>역할 수정</DialogTitle>
                 </DialogHeader>
@@ -105,33 +105,35 @@ export default function RoleEditDialog({ isOpen, role, onClose, onSuccess }: Rol
 
                     <FormField>
                         <FormItem>
-                            <FormLabel htmlFor="permissionGroupIds">권한</FormLabel>
+                            <FormLabel>권한</FormLabel>
                             <Controller
                                 name="permissionGroupIds"
                                 control={editRoleForm.control}
                                 render={({ field }) => (
-                                    <FormControl className="flex gap-4">
-                                        {permissionsGroup?.map((permissionGroup) => {
-                                            const isChecked = field.value?.includes(permissionGroup.id) ?? false;
-                                            
-                                            return (
-                                                <div key={permissionGroup.id} className="flex items-center gap-2">
-                                                    <Checkbox 
-                                                        id={`edit-${permissionGroup.id.toString()}`}
-                                                        checked={isChecked}
-                                                        onCheckedChange={(checked) => {
-                                                            const currentValue = field.value || [];
-                                                            if (checked) {
-                                                                field.onChange([...currentValue, permissionGroup.id]);
-                                                            } else {
-                                                                field.onChange(currentValue.filter(id => id !== permissionGroup.id));
-                                                            }
-                                                        }}
-                                                    />
-                                                    <Label htmlFor={`edit-${permissionGroup.id.toString()}`}>{permissionGroup.name}</Label>
-                                                </div>
-                                            );
-                                        })}
+                                    <FormControl>
+                                        <div className="flex flex-wrap gap-x-6 gap-y-2 max-h-96 overflow-y-auto border rounded-lg p-4">
+                                            {permissionsGroup?.map((permissionGroup) => {
+                                                const isChecked = field.value?.includes(permissionGroup.id) ?? false;
+                                                
+                                                return (
+                                                    <div key={permissionGroup.id} className="flex items-center gap-2">
+                                                        <Checkbox 
+                                                            id={`edit-${permissionGroup.id.toString()}`}
+                                                            checked={isChecked}
+                                                            onCheckedChange={(checked) => {
+                                                                const currentValue = field.value || [];
+                                                                if (checked) {
+                                                                    field.onChange([...currentValue, permissionGroup.id]);
+                                                                } else {
+                                                                    field.onChange(currentValue.filter(id => id !== permissionGroup.id));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <Label htmlFor={`edit-${permissionGroup.id.toString()}`}>{permissionGroup.name}</Label>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </FormControl>
                                 )}
                             />
@@ -144,7 +146,7 @@ export default function RoleEditDialog({ isOpen, role, onClose, onSuccess }: Rol
 
                     <div className="flex gap-3">
                         <Button type="button" variant="outline" className="flex-1" onClick={resetEditRoleForm}>취소</Button>
-                        <Button type="submit" variant="default" className="flex-1" disabled={isUpdateRole || !editRoleForm.formState.isValid}>{isUpdateRole ? '수정중...' : '수정'}</Button>
+                        <Button type="submit" variant="default" className="flex-1" disabled={isUpdateRole || !editRoleForm.formState.isValid}>{isUpdateRole ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}</Button>
                     </div>
                 </Form>
             </DialogContent>
