@@ -1,8 +1,9 @@
-import { Button } from "@plug-atlas/ui";
+import { useState } from "react";
+import { Button, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@plug-atlas/ui";
 import { DeviceProfile, EventCondition } from "../../../../../services/types";
-import { Column, isBooleanProfile } from "../../handlers/EventConditionUtils";
+import { Column, isBooleanProfile, getRequiredFieldsStatus } from "../../handlers/EventConditionUtils";
 import { EditableCondition, EditableConditionType, EditableFieldKey, EditableLevel } from "./EditableCells";
-import {Bell, BellOff, Mail, MailX, Trash2} from "lucide-react";
+import {Bell, BellOff, Mail, MailX, Trash2, X} from "lucide-react";
 
 interface CreateColumnsProps {
     profiles: DeviceProfile[];
@@ -10,6 +11,75 @@ interface CreateColumnsProps {
     handleRemoveCondition: (index: number) => void;
     handleDelete: (conditionId: number) => Promise<void>;
 }
+
+const DeleteButton = ({
+    row,
+    index,
+    handleRemoveCondition,
+    handleDelete
+}: {
+    row: EventCondition;
+    index: number;
+    handleRemoveCondition: (index: number) => void;
+    handleDelete: (conditionId: number) => Promise<void>;
+}) => {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const isNewCondition = !row.id;
+
+    const handleClick = () => {
+        if (isNewCondition) {
+            // 새 조건은 바로 삭제
+            handleRemoveCondition(index);
+        } else {
+            // 기존 조건은 확인 다이얼로그 표시
+            setIsDialogOpen(true);
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        if (row.id) {
+            await handleDelete(row.id);
+        }
+        setIsDialogOpen(false);
+    };
+
+    return (
+        <>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClick}
+                className="text-red-600 hover:text-red-800"
+                title={isNewCondition ? "조건 취소" : "조건 삭제"}
+            >
+                {isNewCondition ? (
+                    <X className="h-3 w-3" />
+                ) : (
+                    <Trash2 className="h-3 w-3" />
+                )}
+            </Button>
+
+            <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>이벤트 조건 삭제</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            이 이벤트 조건을 정말 삭제하시겠습니까?
+                            <br />
+                            삭제된 조건은 복구할 수 없습니다.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+                            삭제
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
+    );
+};
 
 export const createColumns = ({
     profiles,
@@ -20,15 +90,17 @@ export const createColumns = ({
     {
         key: 'fieldKey',
         header: 'Field Key',
-        cell: (value: string, _row: EventCondition, index?: number) => {
+        cell: (value: string, row: EventCondition, index?: number) => {
             const currentIndex = index ?? 0;
             const currentValue = value ?? '';
+            const requiredStatus = getRequiredFieldsStatus(row, profiles);
 
             return (
                 <EditableFieldKey
                     value={currentValue}
                     onChange={(newValue: string) => handleEditDataChange(currentIndex, 'fieldKey', newValue)}
                     profiles={profiles}
+                    isMissing={requiredStatus.fieldKey}
                 />
             );
         },
@@ -79,12 +151,14 @@ export const createColumns = ({
         header: '조건',
         cell: (_value: EventCondition['operator'], row: EventCondition, index?: number) => {
             const currentIndex = index ?? 0;
+            const requiredStatus = getRequiredFieldsStatus(row, profiles);
 
             return (
                 <EditableCondition
                     row={row}
                     onChange={(field: keyof EventCondition, newValue: any) => handleEditDataChange(currentIndex, field, newValue)}
                     profiles={profiles}
+                    requiredStatus={requiredStatus}
                 />
             );
         },
@@ -141,21 +215,12 @@ export const createColumns = ({
 
             return (
                 <div className="flex gap-1">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            if (row.id) {
-                                handleDelete(row.id);
-                            } else {
-                                handleRemoveCondition(currentIndex);
-                            }
-                        }}
-                        className="text-red-600 hover:text-red-800"
-                        title="이 조건 삭제"
-                    >
-                        <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <DeleteButton
+                        row={row}
+                        index={currentIndex}
+                        handleRemoveCondition={handleRemoveCondition}
+                        handleDelete={handleDelete}
+                    />
                 </div>
             );
         },

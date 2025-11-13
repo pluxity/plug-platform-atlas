@@ -1,4 +1,5 @@
 import React from 'react';
+import { z } from 'zod';
 import { DeviceProfile, EventCondition } from "../../../../services/types";
 import { EventConditionOperator, EventLevel } from "../../../../services/types/eventCondition.ts";
 
@@ -6,6 +7,67 @@ export interface Column<T> {
     key: keyof T;
     header: string;
     cell: (value: any, row: T, index?: number) => React.ReactNode;
+}
+
+// Zod 스키마 정의
+const eventConditionBaseSchema = z.object({
+    objectId: z.string().min(1, { message: "객체 ID가 필요합니다" }),
+    fieldKey: z.string().min(1, { message: "Field Key를 선택해주세요" }),
+    level: z.enum(['NORMAL', 'WARNING', 'CAUTION', 'DANGER', 'DISCONNECTED'], {
+        message: "레벨을 선택해주세요"
+    }),
+    conditionType: z.enum(['SINGLE', 'RANGE'], {
+        message: "조건 타입을 선택해주세요"
+    }),
+    operator: z.enum(['GE', 'LE', 'BETWEEN'], {
+        message: "연산자를 선택해주세요"
+    }),
+    notificationEnabled: z.boolean(),
+    activate: z.boolean(),
+    guideMessage: z.string().optional(),
+});
+
+// Boolean 타입 조건 스키마
+const booleanConditionSchema = eventConditionBaseSchema.extend({
+    booleanValue: z.boolean({ message: "Boolean 값을 선택해주세요" }),
+    thresholdValue: z.number().optional(),
+    leftValue: z.undefined(),
+    rightValue: z.undefined(),
+});
+
+// SINGLE 조건 스키마
+const singleConditionSchema = eventConditionBaseSchema.extend({
+    conditionType: z.literal('SINGLE'),
+    thresholdValue: z.number({ message: "기준값을 입력해주세요" }),
+    booleanValue: z.undefined(),
+    leftValue: z.undefined(),
+    rightValue: z.undefined(),
+});
+
+const rangeConditionSchema = eventConditionBaseSchema.extend({
+    conditionType: z.literal('RANGE'),
+    leftValue: z.number({ message: "최소값을 입력해주세요" }),
+    rightValue: z.number({ message: "최대값을 입력해주세요" }),
+    booleanValue: z.undefined(),
+    thresholdValue: z.undefined(),
+}).refine((data) => data.leftValue < data.rightValue, {
+    message: "최소값은 최대값보다 작아야 합니다",
+    path: ["leftValue"],
+});
+
+export interface ValidationResult {
+    isValid: boolean;
+    errors: string[];
+    fieldErrors?: Record<string, string[]>;
+}
+
+export interface FieldValidationStatus {
+    fieldKey: boolean;
+    level: boolean;
+    booleanValue: boolean;
+    thresholdValue: boolean;
+    leftValue: boolean;
+    rightValue: boolean;
 }
 
 export const createDefaultCondition = (objectId: string): EventCondition => ({
@@ -23,56 +85,39 @@ export const createDefaultCondition = (objectId: string): EventCondition => ({
     guideMessage: ''
 });
 
-export interface ValidationResult {
-    isValid: boolean;
-    errors: string[];
-}
-
 export const validateConditionData = (condition: EventCondition, profiles: DeviceProfile[], allConditions?: EventCondition[]): ValidationResult => {
     const errors: string[] = [];
+    const fieldErrors: Record<string, string[]> = {};
 
-    if (!condition.fieldKey) {
-        errors.push('Field Key를 선택해주세요');
-    }
-    if (!condition.level) {
-        errors.push('레벨을 선택해주세요');
-    }
-    if (!condition.conditionType) {
-        errors.push('조건 타입을 선택해주세요');
-    }
-    if (!condition.operator) {
-        errors.push('연산자를 선택해주세요');
-    }
-
+    // Boolean 타입인지 확인
     const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
-    
+
+    // 적절한 스키마 선택 및 validation
+    let validationResult;
+
     if (isBoolean) {
-        if (condition.booleanValue === undefined) {
-            errors.push('Boolean 값을 선택해주세요');
-        }
+        validationResult = booleanConditionSchema.safeParse(condition);
+    } else if (condition.conditionType === 'RANGE') {
+        validationResult = rangeConditionSchema.safeParse(condition);
     } else {
-        if (condition.conditionType === 'SINGLE') {
-            if (condition.thresholdValue === undefined || condition.thresholdValue === null) {
-                errors.push('기준값을 입력해주세요');
-            }
-        } else if (condition.conditionType === 'RANGE') {
-            if (condition.leftValue === undefined || condition.leftValue === null) {
-                errors.push('최소값을 입력해주세요');
-            }
-            if (condition.rightValue === undefined || condition.rightValue === null) {
-                errors.push('최대값을 입력해주세요');
-            }
-            
-            if (condition.leftValue !== undefined && condition.rightValue !== undefined) {
-                if (condition.leftValue >= condition.rightValue) {
-                    errors.push('최소값은 최대값보다 작아야 합니다');
-                }
-            }
-        }
+        validationResult = singleConditionSchema.safeParse(condition);
     }
 
+    // Zod validation 오류 처리
+    if (!validationResult.success) {
+        validationResult.error.issues.forEach((err: z.ZodIssue) => {
+            const path = err.path.join('.');
+            if (!fieldErrors[path]) {
+                fieldErrors[path] = [];
+            }
+            fieldErrors[path].push(err.message);
+            errors.push(err.message);
+        });
+    }
+
+    // 중복 조건 검증
     if (allConditions && condition.fieldKey && condition.level) {
-        const duplicates = allConditions.filter(other => 
+        const duplicates = allConditions.filter(other =>
             other !== condition &&
             other.fieldKey === condition.fieldKey &&
             other.level === condition.level
@@ -83,8 +128,14 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
                 const profile = profiles.find(p => p.fieldKey === condition.fieldKey);
                 const fieldName = profile?.description || condition.fieldKey;
                 const levelName = getLevelDisplayName(condition.level);
-                
-                errors.push(`${fieldName}의 ${levelName} 레벨에 동일한 조건이 이미 존재합니다`);
+
+                const duplicateError = `${fieldName}의 ${levelName} 레벨에 동일한 조건이 이미 존재합니다`;
+                errors.push(duplicateError);
+
+                if (!fieldErrors['fieldKey']) {
+                    fieldErrors['fieldKey'] = [];
+                }
+                fieldErrors['fieldKey'].push(duplicateError);
                 break;
             }
         }
@@ -92,7 +143,8 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
 
     return {
         isValid: errors.length === 0,
-        errors
+        errors,
+        fieldErrors
     };
 };
 
@@ -136,6 +188,20 @@ const getLevelDisplayName = (level: EventLevel): string => {
 export const isBooleanProfile = (profiles: DeviceProfile[], fieldKey: string): boolean => {
     const profile = profiles.find(p => p.fieldKey === fieldKey);
     return profile?.fieldType === 'Boolean';
+};
+
+export const getRequiredFieldsStatus = (condition: EventCondition, profiles: DeviceProfile[]): FieldValidationStatus => {
+    const validation = validateConditionData(condition, profiles);
+    const fieldErrors = validation.fieldErrors || {};
+
+    return {
+        fieldKey: !!fieldErrors['fieldKey'],
+        level: !!fieldErrors['level'],
+        booleanValue: !!fieldErrors['booleanValue'],
+        thresholdValue: !!fieldErrors['thresholdValue'],
+        leftValue: !!fieldErrors['leftValue'],
+        rightValue: !!fieldErrors['rightValue'],
+    };
 };
 
 export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string): Partial<EventCondition> => {
@@ -211,8 +277,8 @@ export const getOperatorLabel = (operator: EventConditionOperator): string => {
 export const getLevelBadge = (level: EventLevel): React.ReactNode => {
     const levelConfig: Record<EventLevel, { label: string; className: string }> = {
         NORMAL: { label: '일반', className: 'bg-green-100 text-green-800' },
-        WARNING: { label: '경고', className: 'bg-yellow-100 text-yellow-800' },
-        CAUTION: { label: '주의', className: 'bg-orange-100 text-orange-800' },
+        CAUTION: { label: '주의', className: 'bg-yellow-100 text-yellow-800' },
+        WARNING: { label: '경고', className: 'bg-orange-100 text-orange-800' },
         DANGER: { label: '위험', className: 'bg-red-100 text-red-800' },
         DISCONNECTED: { label: '연결끊김', className: 'bg-gray-100 text-gray-800' }
     };
@@ -233,7 +299,7 @@ export const getAvailableLevelsByProfile = (profiles: DeviceProfile[], fieldKey:
         return ['NORMAL', 'DANGER'];
     }
     
-    return ['NORMAL', 'WARNING', 'CAUTION', 'DANGER'];
+    return ['NORMAL', 'CAUTION', 'WARNING', 'DANGER'];
 };
 
 export const getBooleanValueLabel = (value: boolean): string => {
