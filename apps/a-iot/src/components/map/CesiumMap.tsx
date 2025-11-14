@@ -239,7 +239,7 @@ export default function CesiumMap({
               lon: centerLon,
               lat: centerLat,
               height: 20,
-              image: '/images/icons/map/park.png',
+              image: '/aiot/images/icons/map/park.png',
               width: 45,
               heightValue: 55,
               label: site.name,

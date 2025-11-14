@@ -44,7 +44,7 @@ export const useMarkerStore = create<MarkerStore>(() => ({
       id: options.id,
       position: position,
       billboard: {
-        image: options.image || '/images/icons/map/marker.png',
+        image: options.image || '/aiot/images/icons/map/marker.png',
         width: options.width || 32,
         height: options.heightValue || 32,
         heightReference: options.heightReference ?? HeightReference.RELATIVE_TO_GROUND,
