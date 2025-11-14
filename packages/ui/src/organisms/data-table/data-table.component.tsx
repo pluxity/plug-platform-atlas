@@ -67,9 +67,9 @@ function DataTable<T>({
       >
         <table className="w-full">
           <thead>
-            <tr className={cn("border-b border-[#bbbecf] bg-[#dfe4eb]", stickyHeader && "sticky top-0 z-10")}>
+            <tr className={cn("border-b border-[#bbbecf] border-t-2 bg-[#dfe4eb]", stickyHeader && "sticky top-0 z-10")}>
               {selectable && (
-                <th className="h-[34px] px-4 py-2 text-center align-middle font-medium w-12 border-r border-[#bbbecf]">
+                <th className="h-[34px] px-4 py-2 text-center align-middle font-medium w-12 border-r  border-[#bbbecf]">
                   <input
                     type="checkbox"
                     checked={selectedRows.length === data.length && data.length > 0}
@@ -83,14 +83,14 @@ function DataTable<T>({
                   key={String(column.key)}
                   className={cn(
                     "h-[34px] px-4 py-2 text-center align-middle font-medium text-muted-foreground",
-                    index < columns.length - 1 && "border-r border-[#bbbecf]"
+                    index < columns.length - 1 && "border-r  border-[#bbbecf]"
                   )}
                 >
                   {column.header}
                 </th>
               ))}
               {hasActions && (
-                <th className="h-[34px] px-4 py-2 text-center align-middle font-medium text-muted-foreground border-l border-[#bbbecf]">
+                <th className="h-[34px] px-4 py-2 text-center align-middle font-medium text-muted-foreground border-l  border-[#bbbecf]">
                   액션
                 </th>
               )}
