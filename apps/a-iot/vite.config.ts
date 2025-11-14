@@ -5,6 +5,7 @@ import cesium from 'vite-plugin-cesium'
 import path from 'path'
 
 export default defineConfig({
+  base: '/aiot',
   plugins: [
     react(),
     tailwindcss(),

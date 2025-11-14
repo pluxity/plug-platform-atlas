@@ -6,7 +6,7 @@ import {useNotificationStore} from '../../stores';
 const getWebSocketUrl = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    return `${protocol}//${host}/api/stomp/platform`;
+    return `${protocol}//${host}/aiot/api/stomp/platform`;
 };
 
 const STOMP_ENDPOINT = getWebSocketUrl();
