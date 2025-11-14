@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference } from 'cesium'
+import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium'
 import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../stores/cesium'
 import { SiteResponse, FeatureResponse, type FeatureDeviceTypeResponse } from '@plug-atlas/web-core'
 import MapControls from './MapControls'
@@ -37,7 +37,7 @@ export default function CesiumMap({
 
   const { createViewer, initializeResources } = useViewerStore()
   const { loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, applyHeightOffset } = useTilesetStore()
-  const { addMarker, clearAllMarkers, changeMarkerColor } = useMarkerStore()
+  const { addMarker, clearAllMarkers, changeMarkerColor, startMarkerBlink, stopMarkerBlink, setMarkerHover } = useMarkerStore()
   const { clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
   const { focusOn } = useCameraStore()
   const { setCurrentProvider } = useImageryStore()
@@ -48,7 +48,6 @@ export default function CesiumMap({
     preloadAllMarkerSvgs()
   }, [])
 
-  // Viewer 초기화
   useEffect(() => {
     if (!cesiumContainerRef.current) return
 
@@ -170,6 +169,45 @@ export default function CesiumMap({
       }
     }
   }, [sites, isLoading, activeTab, focusOn, onSiteSelect])
+
+  // 마커 호버 인터랙션 설정
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed() || isLoading) return
+
+    const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
+
+    handler.setInputAction((movement: any) => {
+      const pickedObject = viewer.scene.pick(movement.endPosition)
+
+      if (pickedObject && pickedObject.id) {
+        const entity = pickedObject.id
+        const entityId = entity.id?.toString()
+
+        // 디바이스 마커에만 호버 효과 적용
+        if (entityId?.startsWith('device-')) {
+          setMarkerHover(viewer, entityId)
+          // 커서 변경
+          viewer.scene.canvas.style.cursor = 'pointer'
+        } else {
+          setMarkerHover(viewer, null)
+          viewer.scene.canvas.style.cursor = 'default'
+        }
+      } else {
+        setMarkerHover(viewer, null)
+        viewer.scene.canvas.style.cursor = 'default'
+      }
+    }, ScreenSpaceEventType.MOUSE_MOVE)
+
+    return () => {
+      if (!handler.isDestroyed()) {
+        handler.destroy()
+      }
+      if (!viewer.isDestroyed()) {
+        viewer.scene.canvas.style.cursor = 'default'
+      }
+    }
+  }, [isLoading, setMarkerHover])
 
   const getSvgMarkerType = (deviceType?: FeatureDeviceTypeResponse): SvgMarkerType => {
     if (!deviceType) return SVG_MARKERS.TEMPERATURE
@@ -294,7 +332,7 @@ export default function CesiumMap({
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed() || isLoading || activeTab !== 'parks' || !selectedSiteId) return
 
-    const siteSensors = sensors.filter(sensor => 
+    const siteSensors = sensors.filter(sensor =>
       sensor.siteResponse?.id?.toString() === selectedSiteId &&
       sensor.longitude &&
       sensor.latitude
@@ -307,12 +345,44 @@ export default function CesiumMap({
 
       const eventLevel = getDeviceEventLevel(sensor.deviceId)
       const color = getEventLevelColor(eventLevel)
-      
+
       changeMarkerColor(viewer, markerId, svgMarkerType, color)
     })
 
     viewer.scene.requestRender()
   }, [events, isLoading, activeTab, selectedSiteId, sensors, changeMarkerColor])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed() || isLoading || activeTab !== 'parks' || !selectedSiteId) return
+
+    const siteSensors = sensors.filter(sensor =>
+      sensor.siteResponse?.id?.toString() === selectedSiteId &&
+      sensor.longitude &&
+      sensor.latitude
+    )
+
+    const criticalMarkers = new Map<string, string>()
+    siteSensors.forEach((sensor) => {
+      const eventLevel = getDeviceEventLevel(sensor.deviceId)
+      if (eventLevel === 'DANGER' || eventLevel === 'WARNING') {
+        criticalMarkers.set(`device-${sensor.id}`, eventLevel)
+      }
+    })
+
+    criticalMarkers.forEach((eventLevel, markerId) => {
+      const duration = eventLevel === 'DANGER' ? 600 : 1000
+      startMarkerBlink(viewer, markerId, duration)
+    })
+
+    return () => {
+      if (!viewer.isDestroyed()) {
+        criticalMarkers.forEach((_, markerId) => {
+          stopMarkerBlink(viewer, markerId)
+        })
+      }
+    }
+  }, [events, isLoading, activeTab, selectedSiteId, sensors, startMarkerBlink, stopMarkerBlink])
 
   useEffect(() => {
     const viewer = viewerRef.current

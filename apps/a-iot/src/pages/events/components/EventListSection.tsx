@@ -5,7 +5,7 @@ import { statusOptions, levelOptions, sensorTypeOptions, formatDate, startOfDay,
 import EventList from './EventList.tsx';
 import { type EventStatus, type EventLevel, type SensorType } from '../../../services/types';
 import { type DateRange } from 'react-day-picker';
-import { X, XIcon } from 'lucide-react';
+import { XIcon } from 'lucide-react';
 
 export default function EventListSection() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
@@ -25,8 +25,6 @@ export default function EventListSection() {
             to: formatDate(endOfDay(dateRange.to), 'yyyyMMddHHmmss')
         };
     }, [dateRange]);
-
-    const hasActiveFilters = dateRange !== undefined || listStatusFilter !== 'all' || listLevelFilter !== 'all' || listSensorTypeFilter !== 'all' || listSiteFilter !== 'all';
 
     const activeFiltersCount =
         (dateRange !== undefined ? 1 : 0) +
