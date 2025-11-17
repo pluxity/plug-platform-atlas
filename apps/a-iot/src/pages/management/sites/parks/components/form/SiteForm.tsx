@@ -3,6 +3,7 @@ import {SiteCreateRequest} from "../../../../../../services/types/site.ts";
 import CesiumPolygonDrawer from "./CesiumPolygonDrawer.tsx";
 import {useUploadFile} from '@plug-atlas/api-hooks';
 import {useState, useRef, useEffect} from 'react';
+import { X } from 'lucide-react';
 
 interface SiteFormProps {
     isOpen: boolean;
