@@ -1,12 +1,13 @@
-import { useRef, useEffect, useState } from 'react'
-import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference } from 'cesium'
+import { useRef, useEffect, useState, useMemo } from 'react'
+import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartesian2 } from 'cesium'
+import { throttle } from 'lodash-es'
 import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../../stores/cesium'
 import { SiteResponse, FeatureResponse, type FeatureDeviceTypeResponse } from '@plug-atlas/web-core'
-import MapControls from './MapControls.tsx'
-import MapLayerSelector from './MapLayerSelector.tsx'
+import MapControls from './MapControls'
+import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
-import { preloadAllMarkerSvgs, createColoredSvgDataUrl, SVG_MARKERS, type SvgMarkerType } from '../../utils/svgMarkerUtils.ts'
 import type { Event } from '../../services/types'
+import { SVG_MARKERS, type SvgMarkerType, createColoredSvgDataUrl, preloadAllMarkerSvgs } from '../../utils/svgMarkerUtils'
 import { getAssetPath } from '../../utils/assetPath'
 
 interface CesiumMapProps {
@@ -38,18 +39,27 @@ export default function CesiumMap({
 
   const { createViewer, initializeResources } = useViewerStore()
   const { loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, applyHeightOffset } = useTilesetStore()
-  const { addMarker, clearAllMarkers, changeMarkerColor } = useMarkerStore()
+  const { addMarker, clearAllMarkers, changeMarkerColor, startMarkerBlink, stopMarkerBlink, setMarkerHover } = useMarkerStore()
   const { clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
   const { focusOn } = useCameraStore()
   const { setCurrentProvider } = useImageryStore()
   
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
 
+  const siteSensors = useMemo(() => {
+    if (activeTab !== 'parks' || !selectedSiteId) return []
+
+    return sensors.filter(sensor =>
+      sensor.siteResponse?.id?.toString() === selectedSiteId &&
+      sensor.longitude &&
+      sensor.latitude
+    )
+  }, [sensors, activeTab, selectedSiteId])
+
   useEffect(() => {
     preloadAllMarkerSvgs()
   }, [])
 
-  // Viewer 초기화
   useEffect(() => {
     if (!cesiumContainerRef.current) return
 
@@ -172,6 +182,47 @@ export default function CesiumMap({
     }
   }, [sites, isLoading, activeTab, focusOn, onSiteSelect])
 
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed() || isLoading) return
+
+    const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
+
+    const handleMouseMove = throttle((endPosition: Cartesian2) => {
+      const pickedObject = viewer.scene.pick(endPosition)
+      const entity = pickedObject?.id
+      const entityId = entity?.id?.toString()
+
+      // 센서 마커만 hover 효과 적용 (공원 마커는 제외)
+      if (entityId?.startsWith('device-')) {
+        setMarkerHover(viewer, entityId)
+        viewer.scene.canvas.style.cursor = 'pointer'
+      } else {
+        setMarkerHover(viewer, null)
+        // 공원 마커는 클릭 가능하므로 포인터 커서 유지
+        if (entityId?.startsWith('park-')) {
+          viewer.scene.canvas.style.cursor = 'pointer'
+        } else {
+          viewer.scene.canvas.style.cursor = 'default'
+        }
+      }
+    }, 100)
+
+    handler.setInputAction((movement: ScreenSpaceEventHandler.MotionEvent) => {
+      handleMouseMove(movement.endPosition)
+    }, ScreenSpaceEventType.MOUSE_MOVE)
+
+    return () => {
+      handleMouseMove.cancel()
+      if (!handler.isDestroyed()) {
+        handler.destroy()
+      }
+      if (!viewer.isDestroyed()) {
+        viewer.scene.canvas.style.cursor = 'default'
+      }
+    }
+  }, [isLoading, setMarkerHover])
+
   const getSvgMarkerType = (deviceType?: FeatureDeviceTypeResponse): SvgMarkerType => {
     if (!deviceType) return SVG_MARKERS.TEMPERATURE
     
@@ -235,7 +286,7 @@ export default function CesiumMap({
             const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2
             const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
 
-            addMarker(viewer, {
+            const entity = addMarker(viewer, {
               id: `park-${site.id}`,
               lon: centerLon,
               lat: centerLat,
@@ -249,17 +300,15 @@ export default function CesiumMap({
               disableDepthTest: true,
               disableScaleByDistance: true,
             })
+
+            // 전체보기 모드에서는 공원 이름 라벨을 항상 표시
+            if (entity.label) {
+              entity.label.show = true
+            }
           }
         }
       })
     } else if (activeTab === 'parks' && selectedSiteId) {
-      
-      const siteSensors = sensors.filter(sensor => 
-        sensor.siteResponse?.id?.toString() === selectedSiteId &&
-        sensor.longitude &&
-        sensor.latitude
-      )
-
       siteSensors.forEach((sensor) => {
         const svgMarkerType = getSvgMarkerType(sensor.deviceTypeResponse)
         const eventLevel = getDeviceEventLevel(sensor.deviceId)
@@ -293,13 +342,7 @@ export default function CesiumMap({
 
   useEffect(() => {
     const viewer = viewerRef.current
-    if (!viewer || viewer.isDestroyed() || isLoading || activeTab !== 'parks' || !selectedSiteId) return
-
-    const siteSensors = sensors.filter(sensor => 
-      sensor.siteResponse?.id?.toString() === selectedSiteId &&
-      sensor.longitude &&
-      sensor.latitude
-    )
+    if (!viewer || viewer.isDestroyed() || isLoading || siteSensors.length === 0) return
 
     siteSensors.forEach((sensor) => {
       const markerId = `device-${sensor.id}`
@@ -308,12 +351,38 @@ export default function CesiumMap({
 
       const eventLevel = getDeviceEventLevel(sensor.deviceId)
       const color = getEventLevelColor(eventLevel)
-      
+
       changeMarkerColor(viewer, markerId, svgMarkerType, color)
     })
 
     viewer.scene.requestRender()
-  }, [events, isLoading, activeTab, selectedSiteId, sensors, changeMarkerColor])
+  }, [events, isLoading, siteSensors, changeMarkerColor])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed() || isLoading || siteSensors.length === 0) return
+
+    const criticalMarkers = new Map<string, string>()
+    siteSensors.forEach((sensor) => {
+      const eventLevel = getDeviceEventLevel(sensor.deviceId)
+      if (eventLevel === 'DANGER' || eventLevel === 'WARNING') {
+        criticalMarkers.set(`device-${sensor.id}`, eventLevel)
+      }
+    })
+
+    criticalMarkers.forEach((eventLevel, markerId) => {
+      const duration = eventLevel === 'DANGER' ? 600 : 1000
+      startMarkerBlink(viewer, markerId, duration)
+    })
+
+    return () => {
+      if (!viewer.isDestroyed()) {
+        criticalMarkers.forEach((_, markerId) => {
+          stopMarkerBlink(viewer, markerId)
+        })
+      }
+    }
+  }, [events, isLoading, siteSensors, startMarkerBlink, stopMarkerBlink])
 
   useEffect(() => {
     const viewer = viewerRef.current
