@@ -6,6 +6,7 @@ import MapControls from './MapControls'
 import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
 import type { Event } from '../../services/types'
+import { SVG_MARKERS, type SvgMarkerType, createColoredSvgDataUrl, preloadAllMarkerSvgs } from '../../utils/svgMarkerUtils'
 import { getAssetPath } from '../../utils/assetPath'
 
 interface CesiumMapProps {
