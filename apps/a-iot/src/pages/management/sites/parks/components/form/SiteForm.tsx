@@ -113,7 +113,7 @@ export default function SiteForm({
                                         onClick={handleRemoveThumbnail}
                                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
                                     >
-                                        ×
+                                        <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             )}
