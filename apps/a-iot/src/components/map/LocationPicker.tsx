@@ -14,6 +14,7 @@ import {
   DEFAULT_CAMERA_POSITION,
 } from '../../stores/cesium'
 import { Button, Spinner } from '@plug-atlas/ui'
+import { getAssetPath } from '../../utils/assetPath'
 
 interface LocationPickerProps {
   lon: number
@@ -32,7 +33,7 @@ export default function LocationPicker({
   onLocationChange,
   cctvHeight = 3,
   containerHeight,
-  markerImage = '/images/icons/map/marker.png',
+  markerImage = getAssetPath('/images/icons/map/marker.png'),
   markerWidth = 32,
   markerHeight = 32,
 }: LocationPickerProps) {

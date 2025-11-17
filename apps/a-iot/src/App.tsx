@@ -17,8 +17,10 @@ import Mobius from './pages/management/system/Mobius'
 import IoTSensor from './pages/main/iot/IoTSensor.tsx'
 
 function App() {
+  const basename = import.meta.env.VITE_BASE_PATH === './' ? '/aiot' : (import.meta.env.VITE_BASE_PATH || '/')
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />

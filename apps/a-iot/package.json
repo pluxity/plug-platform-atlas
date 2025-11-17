@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:develop": "tsc -b && vite build --mode development && node scripts/post-build.js",
+    "build:staging": "tsc -b && vite build --mode staging && node scripts/post-build.js",
+    "build:production": "tsc -b && vite build --mode production && node scripts/post-build.js",
     "preview": "vite preview",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",

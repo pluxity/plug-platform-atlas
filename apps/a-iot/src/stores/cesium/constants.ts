@@ -4,7 +4,7 @@ export const ION_ASSETS = {
   GOOGLE_PHOTOREALISTIC_3D_TILES: Number(import.meta.env.VITE_CESIUM_GOOGLE_3D_TILES_ASSET_ID) || 2275207,
   TILESETS: {
     CENTER_PARK: Number(import.meta.env.VITE_CESIUM_CENTER_PARK_ASSET_ID) || 4004889,
-    YD_PARK: Number(import.meta.env.VITE_CESIUM_YD_PARK_ASSET_ID) || 4005051,
+    YD_PARK: Number(import.meta.env.VITE_CESIUM_YD_PARK_ASSET_ID) || 4005142,
   },
 } as const
 
