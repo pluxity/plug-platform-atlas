@@ -24,7 +24,7 @@ export function useSiteForm() {
         });
     };
 
-    const updateFormField = (field: keyof SiteCreateRequest, value: string) => {
+    const updateFormField = (field: keyof SiteCreateRequest, value: string | number | undefined) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 

@@ -1,13 +1,15 @@
 import {Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Label, DialogFooter} from '@plug-atlas/ui';
 import {SiteCreateRequest} from "../../../../../../services/types/site.ts";
 import CesiumPolygonDrawer from "./CesiumPolygonDrawer.tsx";
+import {useUploadFile} from '@plug-atlas/api-hooks';
+import {useState, useRef} from 'react';
 
 interface SiteFormProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     title: string;
     formData: SiteCreateRequest;
-    onFormFieldChange: (field: keyof SiteCreateRequest, value: string) => void;
+    onFormFieldChange: (field: keyof SiteCreateRequest, value: string | number | undefined) => void;
     onSubmit: () => void;
     onCancel: () => void;
     isLoading?: boolean;
@@ -26,8 +28,48 @@ export default function SiteForm({
                                      submitButtonText
                                  }: SiteFormProps) {
 
+    const {trigger: uploadFile, isMutating: isUploading} = useUploadFile();
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const handlePolygonComplete = (wktString: string) => {
         onFormFieldChange('location', wktString);
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // 이미지 미리보기 생성
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setPreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+
+        // 파일 업로드
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const thumbnailId = await uploadFile(formData);
+            onFormFieldChange('thumbnailId', thumbnailId);
+        } catch (error) {
+            console.error('파일 업로드 실패:', error);
+            // 미리보기 제거
+            setPreviewUrl(null);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+
+    const handleRemoveThumbnail = () => {
+        setPreviewUrl(null);
+        onFormFieldChange('thumbnailId', undefined);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     return (
@@ -45,6 +87,38 @@ export default function SiteForm({
                             onChange={(e) => onFormFieldChange('name', e.target.value)}
                             placeholder="공원명을 입력하세요"
                         />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="thumbnail">썸네일 이미지</Label>
+                        <div className="space-y-2">
+                            <Input
+                                ref={fileInputRef}
+                                id="thumbnail"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                disabled={isUploading}
+                            />
+                            {previewUrl && (
+                                <div className="relative w-32 h-32 border rounded-md overflow-hidden">
+                                    <img
+                                        src={previewUrl}
+                                        alt="썸네일 미리보기"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveThumbnail}
+                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            )}
+                            {isUploading && (
+                                <p className="text-sm text-muted-foreground">업로드 중...</p>
+                            )}
+                        </div>
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="description">설명</Label>
