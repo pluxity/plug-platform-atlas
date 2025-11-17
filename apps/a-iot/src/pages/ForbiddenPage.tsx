@@ -18,6 +18,9 @@ export default function ForbiddenPage() {
           <Button onClick={() => navigate(-1)} variant="outline">
             이전 페이지
           </Button>
+          <Button onClick={() => navigate('/login')} variant="outline">
+            로그인
+          </Button>
           <Button onClick={() => navigate('/')}>
             홈으로 이동
           </Button>

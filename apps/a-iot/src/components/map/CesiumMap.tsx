@@ -7,7 +7,8 @@ import MapControls from './MapControls'
 import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
 import type { Event } from '../../services/types'
-import {createColoredSvgDataUrl, preloadAllMarkerSvgs, SVG_MARKERS, SvgMarkerType} from "../../utils/svgMarkerUtils.ts";
+import { SVG_MARKERS, type SvgMarkerType, createColoredSvgDataUrl, preloadAllMarkerSvgs } from '../../utils/svgMarkerUtils'
+import { getAssetPath } from '../../utils/assetPath'
 
 interface CesiumMapProps {
   sites?: SiteResponse[]
@@ -45,7 +46,6 @@ export default function CesiumMap({
   
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
 
-  // siteSensors 필터링 로직을 useMemo로 최적화 (중복 제거)
   const siteSensors = useMemo(() => {
     if (activeTab !== 'parks' || !selectedSiteId) return []
 
@@ -182,20 +182,17 @@ export default function CesiumMap({
     }
   }, [sites, isLoading, activeTab, focusOn, onSiteSelect])
 
-  // 마커 호버 인터랙션 설정
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed() || isLoading) return
 
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
 
-    // throttle을 사용하여 성능 최적화 (100ms 간격으로 실행)
     const handleMouseMove = throttle((endPosition: Cartesian2) => {
       const pickedObject = viewer.scene.pick(endPosition)
       const entity = pickedObject?.id
       const entityId = entity?.id?.toString()
 
-      // 디바이스 마커에만 호버 효과 적용
       if (entityId?.startsWith('device-')) {
         setMarkerHover(viewer, entityId)
         viewer.scene.canvas.style.cursor = 'pointer'
@@ -210,7 +207,7 @@ export default function CesiumMap({
     }, ScreenSpaceEventType.MOUSE_MOVE)
 
     return () => {
-      handleMouseMove.cancel() // throttle 취소
+      handleMouseMove.cancel()
       if (!handler.isDestroyed()) {
         handler.destroy()
       }
@@ -288,7 +285,7 @@ export default function CesiumMap({
               lon: centerLon,
               lat: centerLat,
               height: 20,
-              image: '/aiot/images/icons/map/park.png',
+              image: getAssetPath('/images/icons/map/park.png'),
               width: 45,
               heightValue: 55,
               label: site.name,
@@ -318,8 +315,8 @@ export default function CesiumMap({
           lat: sensor.latitude!,
           height: sensor.height || 10,
           image: imageUrl,
-          width: 44,
-          heightValue: 53,
+          width: 22,
+          heightValue: 26,
           label: sensor.name || sensor.deviceId,
           labelColor: '#000000',
           heightReference: HeightReference.RELATIVE_TO_GROUND,

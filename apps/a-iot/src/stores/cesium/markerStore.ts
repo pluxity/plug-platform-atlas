@@ -13,6 +13,7 @@ import {
   ConstantProperty,
   Event,
 } from 'cesium'
+import { getAssetPath } from '../../utils/assetPath'
 import type { MarkerOptions } from './types'
 import { createColoredSvgDataUrl } from '../../utils/svgMarkerUtils'
 
@@ -46,7 +47,7 @@ const HOVER_CONFIG = {
   // 라벨 스타일
   labelFont: 'bold 14px SUIT',
   labelFillColor: Color.WHITE,
-  labelBackgroundColor: new Color(0.1, 0.4, 0.9, 0.95), // 밝은 블루 배경
+  labelBackgroundColor: new Color(0.1, 0.4, 0.9, 0.95), // 블루 배경
   labelBackgroundPadding: new Cartesian2(10, 5),
 } as const
 
@@ -77,7 +78,6 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
       options.height ?? DEFAULT_MARKER_CONFIG.heightOffset
     )
 
-    const markerWidth = options.width || DEFAULT_MARKER_CONFIG.width
     const markerHeight = options.heightValue || DEFAULT_MARKER_CONFIG.height
 
     const scaleByDistance = options.disableScaleByDistance
@@ -97,9 +97,9 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
       id: options.id,
       position: position,
       billboard: {
-        image: options.image || '/aiot/images/icons/map/marker.png',
-        width: markerWidth,
-        height: markerHeight,
+        image: options.image || getAssetPath('/images/icons/map/marker.png'),
+        width: options.width || 32,
+        height: options.heightValue || 32,
         heightReference: options.heightReference ?? HeightReference.RELATIVE_TO_GROUND,
         scaleByDistance: scaleByDistance,
         disableDepthTestDistance: options.disableDepthTest ? Number.POSITIVE_INFINITY : undefined,
@@ -116,7 +116,8 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
             verticalOrigin: VerticalOrigin.BOTTOM,
             pixelOffset: labelPixelOffset,
             heightReference: options.heightReference,
-            show: true,
+            // 기본 상태에서 라벨도 숨김
+            show: false,
             disableDepthTestDistance: options.disableDepthTest ? Number.POSITIVE_INFINITY : undefined,
           }
         : undefined,
@@ -223,7 +224,7 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
   setMarkerHover: (viewer: CesiumViewer, markerId: string | null) => {
     const { hoveredMarkerId } = get()
 
-    // 이전 호버 마커 복원 (기본 스타일로)
+    // 이전 호버 마커 복원 (기본 상태로)
     if (hoveredMarkerId && hoveredMarkerId !== markerId) {
       const prevEntity = viewer.entities.getById(hoveredMarkerId)
       if (prevEntity) {
@@ -231,8 +232,9 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
         if (prevEntity.billboard) {
           prevEntity.billboard.scale = new ConstantProperty(1.0)
         }
-        // 라벨 원래 스타일로 복원
+        // 라벨 숨김
         if (prevEntity.label) {
+          prevEntity.label.show = new ConstantProperty(false)
           prevEntity.label.scale = new ConstantProperty(1.0)
           prevEntity.label.font = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelFont)
           prevEntity.label.fillColor = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelFillColor)
@@ -242,7 +244,7 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
       }
     }
 
-    // 새로운 호버 마커 강조 (호버 스타일 적용)
+    // 새로운 호버 마커 강조 (라벨 표시)
     if (markerId) {
       const entity = viewer.entities.getById(markerId)
       if (entity) {
@@ -250,7 +252,7 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
         if (entity.billboard) {
           entity.billboard.scale = new ConstantProperty(HOVER_CONFIG.billboardScaleMultiplier)
         }
-        // 라벨 확대 및 스타일 변경
+        // 라벨 표시 및 확대, 스타일 변경
         if (entity.label) {
           entity.label.show = new ConstantProperty(true)
           entity.label.scale = new ConstantProperty(HOVER_CONFIG.labelScaleMultiplier)
