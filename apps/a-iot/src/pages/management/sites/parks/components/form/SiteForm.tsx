@@ -54,7 +54,9 @@ export default function SiteForm({
         // 이미지 미리보기 생성
         const reader = new FileReader();
         reader.onloadend = () => {
-            setPreviewUrl(reader.result as string);
+            if (typeof reader.result === 'string') {
+                setPreviewUrl(reader.result);
+            }
         };
         reader.readAsDataURL(file);
 
@@ -122,7 +124,7 @@ export default function SiteForm({
                                         onClick={handleRemoveThumbnail}
                                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
                                     >
-                                        ×
+                                        <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             )}
