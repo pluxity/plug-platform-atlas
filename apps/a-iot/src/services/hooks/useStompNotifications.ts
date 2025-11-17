@@ -6,7 +6,8 @@ import {useNotificationStore} from '../../stores';
 const getWebSocketUrl = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    return `${protocol}//${host}/aiot/api/stomp/platform`;
+    const apiUrl = import.meta.env.VITE_API_URL || '/api';
+    return `${protocol}//${host}${apiUrl}/stomp/platform`;
 };
 
 const STOMP_ENDPOINT = getWebSocketUrl();

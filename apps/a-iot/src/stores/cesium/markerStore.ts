@@ -13,6 +13,7 @@ import {
   ConstantProperty,
   Event,
 } from 'cesium'
+import { getAssetPath } from '../../utils/assetPath'
 import type { MarkerOptions } from './types'
 import { createColoredSvgDataUrl } from '../../utils/svgMarkerUtils'
 
@@ -88,9 +89,9 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
       id: options.id,
       position: position,
       billboard: {
-        image: options.image || '/aiot/images/icons/map/marker.png',
-        width: markerWidth,
-        height: markerHeight,
+        image: options.image || getAssetPath('/images/icons/map/marker.png'),
+        width: options.width || 32,
+        height: options.heightValue || 32,
         heightReference: options.heightReference ?? HeightReference.RELATIVE_TO_GROUND,
         scaleByDistance: scaleByDistance,
         disableDepthTestDistance: options.disableDepthTest ? Number.POSITIVE_INFINITY : undefined,

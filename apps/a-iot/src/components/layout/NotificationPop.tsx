@@ -5,6 +5,7 @@ import { Notification, Event } from "../../services/types";
 import { getLevelInfo } from '../../pages/main/events/utils/levelUtils.ts';
 import EventDetailModal from '../../pages/main/events/components/modal/EventDetailModal.tsx';
 import { useNotificationStore } from '../../stores';
+import { getAssetPath } from '../../utils/assetPath';
 
 interface NotificationPanelProps {
     notifications: Notification[];
@@ -69,15 +70,15 @@ function NotificationItem({
     const getLevelIconPath = () => {
         switch (notification.level) {
             case 'DANGER':
-                return '/aiot/images/icons/notification/danger.svg';
+                return getAssetPath('/images/icons/notification/danger.svg');
             case 'WARNING':
-                return '/aiot/images/icons/notification/warning.svg';
+                return getAssetPath('/images/icons/notification/warning.svg');
             case 'CAUTION':
-                return '/aiot/images/icons/notification/caution.svg';
+                return getAssetPath('/images/icons/notification/caution.svg');
             case 'DISCONNECTED':
-                return '/aiot/images/icons/notification/danger.svg';
+                return getAssetPath('/images/icons/notification/danger.svg');
             default:
-                return '/aiot/images/icons/notification/caution.svg';
+                return getAssetPath('/images/icons/notification/caution.svg');
         }
     };
 

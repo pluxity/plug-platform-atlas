@@ -6,7 +6,7 @@ import MapControls from './MapControls'
 import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
 import type { Event } from '../../services/types'
-import {createColoredSvgDataUrl, preloadAllMarkerSvgs, SVG_MARKERS, SvgMarkerType} from "../../utils/svgMarkerUtils.ts";
+import { getAssetPath } from '../../utils/assetPath'
 
 interface CesiumMapProps {
   sites?: SiteResponse[]
@@ -277,7 +277,7 @@ export default function CesiumMap({
               lon: centerLon,
               lat: centerLat,
               height: 20,
-              image: '/images/icons/map/park.png',
+              image: getAssetPath('/images/icons/map/park.png'),
               width: 45,
               heightValue: 55,
               label: site.name,
@@ -314,8 +314,8 @@ export default function CesiumMap({
           lat: sensor.latitude!,
           height: sensor.height || 10,
           image: imageUrl,
-          width: 44,
-          heightValue: 53,
+          width: 22,
+          heightValue: 26,
           label: sensor.name || sensor.deviceId,
           labelColor: '#000000',
           heightReference: HeightReference.RELATIVE_TO_GROUND,
