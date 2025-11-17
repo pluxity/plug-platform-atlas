@@ -69,15 +69,15 @@ function NotificationItem({
     const getLevelIconPath = () => {
         switch (notification.level) {
             case 'DANGER':
-                return '/aiot/images/icons/notification/danger.svg';
+                return '/images/icons/notification/danger.svg';
             case 'WARNING':
-                return '/aiot/images/icons/notification/warning.svg';
+                return '/images/icons/notification/warning.svg';
             case 'CAUTION':
-                return '/aiot/images/icons/notification/caution.svg';
+                return '/images/icons/notification/caution.svg';
             case 'DISCONNECTED':
-                return '/aiot/images/icons/notification/danger.svg';
+                return '/images/icons/notification/danger.svg';
             default:
-                return '/aiot/images/icons/notification/caution.svg';
+                return '/images/icons/notification/caution.svg';
         }
     };
 

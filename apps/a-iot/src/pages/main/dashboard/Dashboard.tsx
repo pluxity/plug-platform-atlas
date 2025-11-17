@@ -46,7 +46,7 @@ export default function Dashboard() {
         title: '전체 공원',
         value: sites.length,
         icon: TreePine,
-        iconImage: '/aiot/images/icons/dashboard/park.png',
+        iconImage: '/images/icons/dashboard/park.png',
         description: '관리 중인 공원 수',
         iconBg: 'bg-green-100',
       },
@@ -55,7 +55,7 @@ export default function Dashboard() {
         value: cctvs.length,
         icon: Camera,
         description: '운영 중인 CCTV',
-        iconImage: '/aiot/images/icons/dashboard/cctv.png',
+        iconImage: '/images/icons/dashboard/cctv.png',
         iconBg: 'bg-blue-100',
       },
       {
@@ -63,7 +63,7 @@ export default function Dashboard() {
         value: sensors.length,
         icon: Radio,
         description: '설치된 센서',
-        iconImage: '/aiot/images/icons/dashboard/sensor.png',
+        iconImage: '/images/icons/dashboard/sensor.png',
         iconBg: 'bg-yellow-100',
       },
       {
@@ -71,7 +71,7 @@ export default function Dashboard() {
         value: users.length,
         icon: Users,
         description: '등록된 관리자',
-        iconImage: '/aiot/images/icons/dashboard/user.png',
+        iconImage: '/images/icons/dashboard/user.png',
         iconBg: 'bg-purple-100',
       },
     ]
@@ -126,8 +126,8 @@ export default function Dashboard() {
 
   const OverviewIcon = ({ isActive }: { isActive: boolean }) => {
     const iconPath = isActive 
-      ? '/aiot/images/icons/dashboard/active_tab_overview.png'
-      : '/aiot/images/icons/dashboard/tab_overview.png'
+      ? '/images/icons/dashboard/active_tab_overview.png'
+      : '/images/icons/dashboard/tab_overview.png'
     
     return (
       <img 
@@ -140,8 +140,8 @@ export default function Dashboard() {
 
   const ParkIcon = ({ isActive }: { isActive: boolean }) => {
     const iconPath = isActive 
-      ? '/aiot/images/icons/dashboard/active_tab_park.png'
-      : '/aiot/images/icons/dashboard/tab_park.png'
+      ? '/images/icons/dashboard/active_tab_park.png'
+      : '/images/icons/dashboard/tab_park.png'
     
     return (
       <img 

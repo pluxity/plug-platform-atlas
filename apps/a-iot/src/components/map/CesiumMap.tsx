@@ -1,5 +1,6 @@
-import { useRef, useEffect, useState } from 'react'
-import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium'
+import { useRef, useEffect, useState, useMemo } from 'react'
+import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartesian2 } from 'cesium'
+import { throttle } from 'lodash'
 import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../../stores/cesium'
 import { SiteResponse, FeatureResponse, type FeatureDeviceTypeResponse } from '@plug-atlas/web-core'
 import MapControls from './MapControls'
@@ -43,6 +44,17 @@ export default function CesiumMap({
   const { setCurrentProvider } = useImageryStore()
   
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
+
+  // siteSensors 필터링 로직을 useMemo로 최적화 (중복 제거)
+  const siteSensors = useMemo(() => {
+    if (activeTab !== 'parks' || !selectedSiteId) return []
+
+    return sensors.filter(sensor =>
+      sensor.siteResponse?.id?.toString() === selectedSiteId &&
+      sensor.longitude &&
+      sensor.latitude
+    )
+  }, [sensors, activeTab, selectedSiteId])
 
   useEffect(() => {
     preloadAllMarkerSvgs()
@@ -177,29 +189,28 @@ export default function CesiumMap({
 
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
 
-    handler.setInputAction((movement: any) => {
-      const pickedObject = viewer.scene.pick(movement.endPosition)
+    // throttle을 사용하여 성능 최적화 (100ms 간격으로 실행)
+    const handleMouseMove = throttle((endPosition: Cartesian2) => {
+      const pickedObject = viewer.scene.pick(endPosition)
+      const entity = pickedObject?.id
+      const entityId = entity?.id?.toString()
 
-      if (pickedObject && pickedObject.id) {
-        const entity = pickedObject.id
-        const entityId = entity.id?.toString()
-
-        // 디바이스 마커에만 호버 효과 적용
-        if (entityId?.startsWith('device-')) {
-          setMarkerHover(viewer, entityId)
-          // 커서 변경
-          viewer.scene.canvas.style.cursor = 'pointer'
-        } else {
-          setMarkerHover(viewer, null)
-          viewer.scene.canvas.style.cursor = 'default'
-        }
+      // 디바이스 마커에만 호버 효과 적용
+      if (entityId?.startsWith('device-')) {
+        setMarkerHover(viewer, entityId)
+        viewer.scene.canvas.style.cursor = 'pointer'
       } else {
         setMarkerHover(viewer, null)
         viewer.scene.canvas.style.cursor = 'default'
       }
+    }, 100)
+
+    handler.setInputAction((movement: ScreenSpaceEventHandler.MotionEvent) => {
+      handleMouseMove(movement.endPosition)
     }, ScreenSpaceEventType.MOUSE_MOVE)
 
     return () => {
+      handleMouseMove.cancel() // throttle 취소
       if (!handler.isDestroyed()) {
         handler.destroy()
       }
@@ -277,7 +288,7 @@ export default function CesiumMap({
               lon: centerLon,
               lat: centerLat,
               height: 20,
-              image: '/images/icons/map/park.png',
+              image: '/aiot/images/icons/map/park.png',
               width: 45,
               heightValue: 55,
               label: site.name,
@@ -290,13 +301,6 @@ export default function CesiumMap({
         }
       })
     } else if (activeTab === 'parks' && selectedSiteId) {
-      
-      const siteSensors = sensors.filter(sensor => 
-        sensor.siteResponse?.id?.toString() === selectedSiteId &&
-        sensor.longitude &&
-        sensor.latitude
-      )
-
       siteSensors.forEach((sensor) => {
         const svgMarkerType = getSvgMarkerType(sensor.deviceTypeResponse)
         const eventLevel = getDeviceEventLevel(sensor.deviceId)
@@ -330,13 +334,7 @@ export default function CesiumMap({
 
   useEffect(() => {
     const viewer = viewerRef.current
-    if (!viewer || viewer.isDestroyed() || isLoading || activeTab !== 'parks' || !selectedSiteId) return
-
-    const siteSensors = sensors.filter(sensor =>
-      sensor.siteResponse?.id?.toString() === selectedSiteId &&
-      sensor.longitude &&
-      sensor.latitude
-    )
+    if (!viewer || viewer.isDestroyed() || isLoading || siteSensors.length === 0) return
 
     siteSensors.forEach((sensor) => {
       const markerId = `device-${sensor.id}`
@@ -350,17 +348,11 @@ export default function CesiumMap({
     })
 
     viewer.scene.requestRender()
-  }, [events, isLoading, activeTab, selectedSiteId, sensors, changeMarkerColor])
+  }, [events, isLoading, siteSensors, changeMarkerColor])
 
   useEffect(() => {
     const viewer = viewerRef.current
-    if (!viewer || viewer.isDestroyed() || isLoading || activeTab !== 'parks' || !selectedSiteId) return
-
-    const siteSensors = sensors.filter(sensor =>
-      sensor.siteResponse?.id?.toString() === selectedSiteId &&
-      sensor.longitude &&
-      sensor.latitude
-    )
+    if (!viewer || viewer.isDestroyed() || isLoading || siteSensors.length === 0) return
 
     const criticalMarkers = new Map<string, string>()
     siteSensors.forEach((sensor) => {
@@ -382,7 +374,7 @@ export default function CesiumMap({
         })
       }
     }
-  }, [events, isLoading, activeTab, selectedSiteId, sensors, startMarkerBlink, stopMarkerBlink])
+  }, [events, isLoading, siteSensors, startMarkerBlink, stopMarkerBlink])
 
   useEffect(() => {
     const viewer = viewerRef.current

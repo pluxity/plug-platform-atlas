@@ -734,9 +734,22 @@ function EventAlertComponent() {
 
 ```typescript
 const HOVER_CONFIG = {
-  scaleMultiplier: 1.3,       // 확대 비율 (1.3배)
-  transitionDuration: 200,    // 전환 시간 (200ms)
-  labelFont: 'bold 14px SUIT' // 라벨 폰트
+  // 빌보드(마커 이미지) 확대
+  billboardScaleMultiplier: 1.3,    // 마커 이미지 확대 비율 (1.3배)
+  // 라벨 확대
+  labelScaleMultiplier: 1.15,       // 라벨 확대 비율 (1.15배)
+  // 라벨 스타일
+  labelFont: 'bold 14px SUIT',      // 호버 시 라벨 폰트
+  labelFillColor: Color.WHITE,      // 라벨 글자색
+  labelBackgroundColor: new Color(0.1, 0.4, 0.9, 0.95), // 밝은 블루 배경
+  labelBackgroundPadding: new Cartesian2(10, 5),        // 라벨 패딩
+}
+
+const DEFAULT_MARKER_CONFIG = {
+  labelFont: 'bold 13px SUIT',      // 기본 라벨 폰트
+  labelFillColor: Color.WHITE,      // 기본 라벨 글자색
+  labelBackgroundColor: new Color(0.2, 0.2, 0.2, 0.85), // 기본 어두운 배경
+  labelBackgroundPadding: new Cartesian2(8, 4),         // 기본 라벨 패딩
 }
 ```
 
@@ -744,7 +757,8 @@ const HOVER_CONFIG = {
 
 ```tsx
 import { useMarkerStore } from '../../stores/cesium'
-import { ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium'
+import { ScreenSpaceEventHandler, ScreenSpaceEventType, Cartesian2 } from 'cesium'
+import { throttle } from 'lodash'
 
 function CesiumMapWithHover() {
   const { setMarkerHover } = useMarkerStore()
@@ -756,29 +770,28 @@ function CesiumMapWithHover() {
 
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
 
-    // 마우스 이동 시 호버 감지
-    handler.setInputAction((movement: any) => {
-      const pickedObject = viewer.scene.pick(movement.endPosition)
+    // throttle을 사용하여 성능 최적화 (100ms 간격으로 실행)
+    const handleMouseMove = throttle((endPosition: Cartesian2) => {
+      const pickedObject = viewer.scene.pick(endPosition)
+      const entity = pickedObject?.id
+      const entityId = entity?.id?.toString()
 
-      if (pickedObject && pickedObject.id) {
-        const entity = pickedObject.id
-        const entityId = entity.id?.toString()
-
-        // 디바이스 마커인 경우에만 호버 효과 적용
-        if (entityId?.startsWith('device-')) {
-          setMarkerHover(viewer, entityId)
-          viewer.scene.canvas.style.cursor = 'pointer'
-        } else {
-          setMarkerHover(viewer, null)
-          viewer.scene.canvas.style.cursor = 'default'
-        }
+      // 디바이스 마커인 경우에만 호버 효과 적용
+      if (entityId?.startsWith('device-')) {
+        setMarkerHover(viewer, entityId)
+        viewer.scene.canvas.style.cursor = 'pointer'
       } else {
         setMarkerHover(viewer, null)
         viewer.scene.canvas.style.cursor = 'default'
       }
+    }, 100)
+
+    handler.setInputAction((movement: ScreenSpaceEventHandler.MotionEvent) => {
+      handleMouseMove(movement.endPosition)
     }, ScreenSpaceEventType.MOUSE_MOVE)
 
     return () => {
+      handleMouseMove.cancel() // throttle 취소
       if (!handler.isDestroyed()) {
         handler.destroy()
       }
@@ -794,16 +807,21 @@ function CesiumMapWithHover() {
 
 #### 동작 원리
 
-- 이전 호버 마커를 원래 크기로 복원
-- 새로운 호버 마커를 1.3배 확대
-- 라벨 스케일, 폰트, 배경색 변경으로 가독성 향상 (밝은 블루 배경)
+- **이전 호버 마커 복원**:
+  - 빌보드(마커 이미지) 원래 크기(1.0배)로 복원
+  - 라벨 원래 크기(1.0배) 및 기본 스타일로 복원
+- **새로운 호버 마커 강조**:
+  - 빌보드(마커 이미지) 1.3배 확대
+  - 라벨 1.15배 확대
+  - 라벨 폰트, 배경색, 패딩 변경으로 가독성 향상 (밝은 블루 배경)
 - `hoveredMarkerId` 상태를 통한 단일 호버 관리
 
 ### 통합 사용 예시: Blink + Hover
 
 ```tsx
 import { useRef, useEffect } from 'react'
-import { Viewer as CesiumViewer, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium'
+import { Viewer as CesiumViewer, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartesian2 } from 'cesium'
+import { throttle } from 'lodash'
 import { useMarkerStore } from '../../stores/cesium'
 
 export default function CesiumMap({ events }: CesiumMapProps) {
@@ -841,32 +859,33 @@ export default function CesiumMap({ events }: CesiumMapProps) {
     }
   }, [events, startMarkerBlink, stopMarkerBlink])
 
-  // 2. 호버 인터랙션 설정
+  // 2. 호버 인터랙션 설정 (throttle 적용)
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed()) return
 
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
 
-    handler.setInputAction((movement: any) => {
-      const pickedObject = viewer.scene.pick(movement.endPosition)
+    // throttle을 사용하여 성능 최적화 (100ms 간격으로 실행)
+    const handleMouseMove = throttle((endPosition: Cartesian2) => {
+      const pickedObject = viewer.scene.pick(endPosition)
+      const entity = pickedObject?.id
+      const entityId = entity?.id?.toString()
 
-      if (pickedObject && pickedObject.id) {
-        const entity = pickedObject.id
-        const entityId = entity.id?.toString()
-
-        // 센서 마커에만 호버 효과 적용
-        if (entityId?.startsWith('device-')) {
-          setMarkerHover(viewer, entityId)
-        } else {
-          setMarkerHover(viewer, null)
-        }
+      // 센서 마커에만 호버 효과 적용
+      if (entityId?.startsWith('device-')) {
+        setMarkerHover(viewer, entityId)
       } else {
         setMarkerHover(viewer, null)
       }
+    }, 100)
+
+    handler.setInputAction((movement: ScreenSpaceEventHandler.MotionEvent) => {
+      handleMouseMove(movement.endPosition)
     }, ScreenSpaceEventType.MOUSE_MOVE)
 
     return () => {
+      handleMouseMove.cancel() // throttle 취소
       if (!handler.isDestroyed()) {
         handler.destroy()
       }
@@ -891,9 +910,10 @@ export default function CesiumMap({ events }: CesiumMapProps) {
 
 #### 호버 인터랙션
 
-- `MOUSE_MOVE` 이벤트는 프레임마다 발생하므로 디바운싱 고려
-- 많은 마커가 있는 경우 `viewer.scene.pick` 호출 빈도 최적화
+- `MOUSE_MOVE` 이벤트는 매우 자주 발생하므로 **throttle 필수** (lodash의 `throttle` 권장)
+- `viewer.scene.pick`은 비용이 큰 작업이므로 호출 빈도 제한 (100-150ms 간격 권장)
 - 호버 대상이 아닌 엔티티는 빠르게 필터링
+- cleanup 함수에서 `throttle.cancel()` 호출하여 메모리 누수 방지
 
 #### requestRender 호출
 

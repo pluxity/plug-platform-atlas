@@ -23,6 +23,9 @@ const DEFAULT_MARKER_CONFIG = {
   height: 32,
   heightOffset: 1,
   labelFont: 'bold 13px SUIT',
+  labelFillColor: Color.WHITE,
+  labelBackgroundColor: new Color(0.2, 0.2, 0.2, 0.85),
+  labelBackgroundPadding: new Cartesian2(8, 4),
   labelOutlineWidth: 0,
   labelPixelOffsetY: -26,
   scaleNear: { distance: 100, scale: 1.5 },
@@ -36,9 +39,15 @@ const BLINK_CONFIG = {
 } as const
 
 const HOVER_CONFIG = {
-  scaleMultiplier: 1.3,
-  transitionDuration: 200,
+  // 빌보드(마커 이미지) 확대
+  billboardScaleMultiplier: 1.3,
+  // 라벨 확대
+  labelScaleMultiplier: 1.15,
+  // 라벨 스타일
   labelFont: 'bold 14px SUIT',
+  labelFillColor: Color.WHITE,
+  labelBackgroundColor: new Color(0.1, 0.4, 0.9, 0.95), // 밝은 블루 배경
+  labelBackgroundPadding: new Cartesian2(10, 5),
 } as const
 
 interface MarkerState {
@@ -99,9 +108,9 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
         ? {
             text: options.label,
             font: DEFAULT_MARKER_CONFIG.labelFont,
-            fillColor: Color.WHITE,
-            backgroundColor: new Color(0.2, 0.2, 0.2, 0.85),
-            backgroundPadding: new Cartesian2(8, 4),
+            fillColor: DEFAULT_MARKER_CONFIG.labelFillColor,
+            backgroundColor: DEFAULT_MARKER_CONFIG.labelBackgroundColor,
+            backgroundPadding: DEFAULT_MARKER_CONFIG.labelBackgroundPadding,
             showBackground: true,
             style: LabelStyle.FILL,
             verticalOrigin: VerticalOrigin.BOTTOM,
@@ -214,26 +223,42 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
   setMarkerHover: (viewer: CesiumViewer, markerId: string | null) => {
     const { hoveredMarkerId } = get()
 
+    // 이전 호버 마커 복원 (기본 스타일로)
     if (hoveredMarkerId && hoveredMarkerId !== markerId) {
       const prevEntity = viewer.entities.getById(hoveredMarkerId)
-      if (prevEntity && prevEntity.label) {
-        prevEntity.label.scale = new ConstantProperty(1.0)
-        prevEntity.label.font = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelFont)
-        prevEntity.label.fillColor = new ConstantProperty(Color.WHITE)
-        prevEntity.label.backgroundColor = new ConstantProperty(new Color(0.2, 0.2, 0.2, 0.85))
-        prevEntity.label.backgroundPadding = new ConstantProperty(new Cartesian2(8, 4))
+      if (prevEntity) {
+        // 빌보드(마커 이미지) 원래 크기로 복원
+        if (prevEntity.billboard) {
+          prevEntity.billboard.scale = new ConstantProperty(1.0)
+        }
+        // 라벨 원래 스타일로 복원
+        if (prevEntity.label) {
+          prevEntity.label.scale = new ConstantProperty(1.0)
+          prevEntity.label.font = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelFont)
+          prevEntity.label.fillColor = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelFillColor)
+          prevEntity.label.backgroundColor = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelBackgroundColor)
+          prevEntity.label.backgroundPadding = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelBackgroundPadding)
+        }
       }
     }
 
+    // 새로운 호버 마커 강조 (호버 스타일 적용)
     if (markerId) {
       const entity = viewer.entities.getById(markerId)
-      if (entity && entity.label) {
-        entity.label.show = new ConstantProperty(true)
-        entity.label.scale = new ConstantProperty(1.15)
-        entity.label.font = new ConstantProperty(HOVER_CONFIG.labelFont)
-        entity.label.fillColor = new ConstantProperty(Color.WHITE)
-        entity.label.backgroundColor = new ConstantProperty(new Color(0.1, 0.4, 0.9, 0.95)) // 밝은 블루 배경
-        entity.label.backgroundPadding = new ConstantProperty(new Cartesian2(10, 5))
+      if (entity) {
+        // 빌보드(마커 이미지) 확대
+        if (entity.billboard) {
+          entity.billboard.scale = new ConstantProperty(HOVER_CONFIG.billboardScaleMultiplier)
+        }
+        // 라벨 확대 및 스타일 변경
+        if (entity.label) {
+          entity.label.show = new ConstantProperty(true)
+          entity.label.scale = new ConstantProperty(HOVER_CONFIG.labelScaleMultiplier)
+          entity.label.font = new ConstantProperty(HOVER_CONFIG.labelFont)
+          entity.label.fillColor = new ConstantProperty(HOVER_CONFIG.labelFillColor)
+          entity.label.backgroundColor = new ConstantProperty(HOVER_CONFIG.labelBackgroundColor)
+          entity.label.backgroundPadding = new ConstantProperty(HOVER_CONFIG.labelBackgroundPadding)
+        }
       }
     }
 

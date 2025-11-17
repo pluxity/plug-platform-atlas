@@ -18,7 +18,7 @@ import IoTSensor from './pages/main/iot/IoTSensor.tsx'
 
 function App() {
   return (
-    <BrowserRouter basename={'/aiot'}>
+    <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
