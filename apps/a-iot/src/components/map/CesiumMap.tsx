@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useMemo } from 'react'
 import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartesian2 } from 'cesium'
-import { throttle } from 'lodash'
+import { throttle } from 'lodash-es'
 import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../../stores/cesium'
 import { SiteResponse, FeatureResponse, type FeatureDeviceTypeResponse } from '@plug-atlas/web-core'
 import MapControls from './MapControls'
