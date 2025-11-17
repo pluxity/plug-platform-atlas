@@ -193,12 +193,18 @@ export default function CesiumMap({
       const entity = pickedObject?.id
       const entityId = entity?.id?.toString()
 
+      // 센서 마커만 hover 효과 적용 (공원 마커는 제외)
       if (entityId?.startsWith('device-')) {
         setMarkerHover(viewer, entityId)
         viewer.scene.canvas.style.cursor = 'pointer'
       } else {
         setMarkerHover(viewer, null)
-        viewer.scene.canvas.style.cursor = 'default'
+        // 공원 마커는 클릭 가능하므로 포인터 커서 유지
+        if (entityId?.startsWith('park-')) {
+          viewer.scene.canvas.style.cursor = 'pointer'
+        } else {
+          viewer.scene.canvas.style.cursor = 'default'
+        }
       }
     }, 100)
 
@@ -280,7 +286,7 @@ export default function CesiumMap({
             const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2
             const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
 
-            addMarker(viewer, {
+            const entity = addMarker(viewer, {
               id: `park-${site.id}`,
               lon: centerLon,
               lat: centerLat,
@@ -294,6 +300,11 @@ export default function CesiumMap({
               disableDepthTest: true,
               disableScaleByDistance: true,
             })
+
+            // 전체보기 모드에서는 공원 이름 라벨을 항상 표시
+            if (entity.label) {
+              entity.label.show = true
+            }
           }
         }
       })

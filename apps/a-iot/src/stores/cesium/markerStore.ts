@@ -24,10 +24,9 @@ const DEFAULT_MARKER_CONFIG = {
   height: 32,
   heightOffset: 1,
   labelFont: 'bold 13px SUIT',
-  labelFillColor: Color.WHITE,
-  labelBackgroundColor: new Color(0.2, 0.2, 0.2, 0.85),
-  labelBackgroundPadding: new Cartesian2(8, 4),
-  labelOutlineWidth: 0,
+  labelFillColor: Color.BLACK, // 검은색 글씨
+  labelOutlineColor: Color.WHITE, // 흰색 테두리
+  labelOutlineWidth: 3, // 테두리 두께
   labelPixelOffsetY: -26,
   scaleNear: { distance: 100, scale: 1.5 },
   scaleFar: { distance: 5000, scale: 0.3 },
@@ -46,9 +45,9 @@ const HOVER_CONFIG = {
   labelScaleMultiplier: 1.15,
   // 라벨 스타일
   labelFont: 'bold 14px SUIT',
-  labelFillColor: Color.WHITE,
-  labelBackgroundColor: new Color(0.1, 0.4, 0.9, 0.95), // 블루 배경
-  labelBackgroundPadding: new Cartesian2(10, 5),
+  labelFillColor: Color.BLACK, // 검은색 글씨
+  labelOutlineColor: Color.WHITE, // 흰색 테두리
+  labelOutlineWidth: 3, // 테두리 두께
 } as const
 
 interface MarkerState {
@@ -109,10 +108,10 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
             text: options.label,
             font: DEFAULT_MARKER_CONFIG.labelFont,
             fillColor: DEFAULT_MARKER_CONFIG.labelFillColor,
-            backgroundColor: DEFAULT_MARKER_CONFIG.labelBackgroundColor,
-            backgroundPadding: DEFAULT_MARKER_CONFIG.labelBackgroundPadding,
-            showBackground: true,
-            style: LabelStyle.FILL,
+            outlineColor: DEFAULT_MARKER_CONFIG.labelOutlineColor,
+            outlineWidth: DEFAULT_MARKER_CONFIG.labelOutlineWidth,
+            showBackground: false, // 배경 제거
+            style: LabelStyle.FILL_AND_OUTLINE,
             verticalOrigin: VerticalOrigin.BOTTOM,
             pixelOffset: labelPixelOffset,
             heightReference: options.heightReference,
@@ -232,20 +231,17 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
         if (prevEntity.billboard) {
           prevEntity.billboard.scale = new ConstantProperty(1.0)
         }
-        // 라벨 숨김
-        if (prevEntity.label) {
+        // 라벨 숨김 (공원 마커는 제외)
+        if (prevEntity.label && !hoveredMarkerId.startsWith('park-')) {
           prevEntity.label.show = new ConstantProperty(false)
           prevEntity.label.scale = new ConstantProperty(1.0)
           prevEntity.label.font = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelFont)
-          prevEntity.label.fillColor = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelFillColor)
-          prevEntity.label.backgroundColor = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelBackgroundColor)
-          prevEntity.label.backgroundPadding = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelBackgroundPadding)
         }
       }
     }
 
-    // 새로운 호버 마커 강조 (라벨 표시)
-    if (markerId) {
+    // 새로운 호버 마커 강조 (공원 마커는 제외)
+    if (markerId && !markerId.startsWith('park-')) {
       const entity = viewer.entities.getById(markerId)
       if (entity) {
         // 빌보드(마커 이미지) 확대
@@ -257,9 +253,6 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
           entity.label.show = new ConstantProperty(true)
           entity.label.scale = new ConstantProperty(HOVER_CONFIG.labelScaleMultiplier)
           entity.label.font = new ConstantProperty(HOVER_CONFIG.labelFont)
-          entity.label.fillColor = new ConstantProperty(HOVER_CONFIG.labelFillColor)
-          entity.label.backgroundColor = new ConstantProperty(HOVER_CONFIG.labelBackgroundColor)
-          entity.label.backgroundPadding = new ConstantProperty(HOVER_CONFIG.labelBackgroundPadding)
         }
       }
     }
