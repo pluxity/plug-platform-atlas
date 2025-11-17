@@ -43,7 +43,9 @@ export default function SiteForm({
         // 이미지 미리보기 생성
         const reader = new FileReader();
         reader.onloadend = () => {
-            setPreviewUrl(reader.result as string);
+            if (typeof reader.result === 'string') {
+                setPreviewUrl(reader.result);
+            }
         };
         reader.readAsDataURL(file);
 
