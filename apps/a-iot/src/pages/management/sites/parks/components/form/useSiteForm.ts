@@ -20,11 +20,12 @@ export function useSiteForm() {
         setFormData({
             name: site.name,
             location: site.location,
-            description: site.description
+            description: site.description,
+            thumbnailId: site.thumbnail?.id
         });
     };
 
-    const updateFormField = (field: keyof SiteCreateRequest, value: string) => {
+    const updateFormField = (field: keyof SiteCreateRequest, value: string | number | undefined) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
