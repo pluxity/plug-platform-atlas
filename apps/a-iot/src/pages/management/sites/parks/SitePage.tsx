@@ -166,6 +166,7 @@ export default function SitePage() {
                 onCancel={handleEditCancel}
                 isLoading={updateSiteMutation.isMutating}
                 submitButtonText="수정"
+                initialThumbnailUrl={selectedSite?.thumbnail?.url}
             />
 
             <DeleteConfirmation

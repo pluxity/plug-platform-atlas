@@ -9,7 +9,7 @@ export interface Site {
     createdBy: string;
     updatedAt: string;
     updatedBy: string;
-    thumbnail: FileResponse;
+    thumbnail: FileResponse | null;
 }
 
 export interface SiteCreateRequest {

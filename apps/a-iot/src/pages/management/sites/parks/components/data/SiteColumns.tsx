@@ -1,4 +1,7 @@
-import { Site } from '../../../../../../services/types';
+import type { Site } from '../../../../../../services/types';
+import type { FileResponse } from '@plug-atlas/types';
+
+const DEFAULT_THUMBNAIL = '/aiot/images/icons/map/marker.png';
 
 export function createSiteColumns(
 ) {
@@ -11,28 +14,37 @@ export function createSiteColumns(
         {
             key: 'name' as keyof Site,
             header: '공원명',
-            cell: (value: any) => <div className="font-medium">{value}</div>,
+            cell: (value: Site[keyof Site]) => <div className="font-medium">{String(value)}</div>,
         },
         {
           key: 'thumbnail' as keyof Site,
           header: '이미지',
-          cell: (value: any) => <img src={value?.url || '/aiot/images/icons/map/marker.png'} className="w-12 h-12 rounded-full m-auto" alt={value?.originalFileName || 'thumbnail'}/>,
+          cell: (value: Site[keyof Site]) => {
+            const thumbnail = value as FileResponse | null;
+            return (
+              <img
+                src={thumbnail?.url ?? DEFAULT_THUMBNAIL}
+                className="w-12 h-12 rounded-full m-auto"
+                alt={thumbnail?.originalFileName ?? 'thumbnail'}
+              />
+            );
+          },
         },
         {
             key: 'description' as keyof Site,
             header: '설명',
-            cell: (value: any) => (
+            cell: (value: Site[keyof Site]) => (
                 <div className="max-w-xs truncate text-muted-foreground">
-                    {value}
+                    {String(value)}
                 </div>
             ),
         },
         {
             key: 'createdAt' as keyof Site,
             header: '생성일',
-            cell: (value: any) => (
+            cell: (value: Site[keyof Site]) => (
                 <div className="text-sm text-muted-foreground">
-                    {new Date(value).toLocaleDateString('ko-KR')}
+                    {new Date(String(value)).toLocaleDateString('ko-KR')}
                 </div>
             ),
         },

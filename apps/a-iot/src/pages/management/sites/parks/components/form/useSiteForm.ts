@@ -20,7 +20,8 @@ export function useSiteForm() {
         setFormData({
             name: site.name,
             location: site.location,
-            description: site.description
+            description: site.description,
+            thumbnailId: site.thumbnail?.id
         });
     };
 

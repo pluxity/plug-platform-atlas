@@ -2,7 +2,7 @@ import {Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Label, 
 import {SiteCreateRequest} from "../../../../../../services/types/site.ts";
 import CesiumPolygonDrawer from "./CesiumPolygonDrawer.tsx";
 import {useUploadFile} from '@plug-atlas/api-hooks';
-import {useState, useRef} from 'react';
+import {useState, useRef, useEffect} from 'react';
 
 interface SiteFormProps {
     isOpen: boolean;
@@ -14,6 +14,7 @@ interface SiteFormProps {
     onCancel: () => void;
     isLoading?: boolean;
     submitButtonText: string;
+    initialThumbnailUrl?: string;
 }
 
 export default function SiteForm({
@@ -25,12 +26,22 @@ export default function SiteForm({
                                      onSubmit,
                                      onCancel,
                                      isLoading = false,
-                                     submitButtonText
+                                     submitButtonText,
+                                     initialThumbnailUrl
                                  }: SiteFormProps) {
 
     const {trigger: uploadFile, isMutating: isUploading} = useUploadFile();
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 초기 썸네일 미리보기 설정
+    useEffect(() => {
+        if (initialThumbnailUrl) {
+            setPreviewUrl(initialThumbnailUrl);
+        } else {
+            setPreviewUrl(null);
+        }
+    }, [initialThumbnailUrl]);
 
     const handlePolygonComplete = (wktString: string) => {
         onFormFieldChange('location', wktString);
@@ -161,7 +172,7 @@ export default function SiteForm({
                     </Button>
                     <Button
                         onClick={onSubmit}
-                        disabled={isLoading}
+                        disabled={isLoading || isUploading}
                     >
                         {isLoading ? `${submitButtonText} 중...` : submitButtonText}
                     </Button>
