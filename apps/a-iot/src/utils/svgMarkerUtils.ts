@@ -13,7 +13,7 @@ export async function preloadAllMarkerSvgs(): Promise<void> {
   const markerNames = Object.values(SVG_MARKERS)
   const loadPromises = markerNames.map(async (name) => {
     try {
-      const path = `/images/icons/markers/${name}.svg`
+      const path = `/aiot/images/icons/markers/${name}.svg`
       const response = await fetch(path)
       if (!response.ok) return
       const svgContent = await response.text()

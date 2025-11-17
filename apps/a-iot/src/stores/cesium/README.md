@@ -666,6 +666,249 @@ handleFireEvent('fire-1')
 3. Blink 효과를 위해 `viewer.scene.requestRenderMode = false` 설정 필요
 4. Blink 리스너는 자동으로 정리되지만, 수동으로 중지하려면 `stopMarkerBlink` 호출
 
+---
+
+## 🎯 마커 인터랙션 (깜빡임 & 호버)
+
+### 깜빡임 애니메이션 (Blink)
+
+위험 상태, 새로운 알람, 선택된 마커 등을 시각적으로 강조하기 위한 기능입니다.
+
+#### 설정값
+
+```typescript
+const BLINK_CONFIG = {
+  defaultDuration: 1000,    // 기본 애니메이션 주기 (1초)
+  alphaMin: 0.3,            // 최소 투명도
+  alphaMax: 1.0,            // 최대 투명도
+}
+```
+
+#### 사용 예시
+
+```tsx
+import { useMarkerStore } from '../../stores/cesium'
+
+function EventAlertComponent() {
+  const { startMarkerBlink, stopMarkerBlink } = useMarkerStore()
+  const viewerRef = useRef<CesiumViewer>(null)
+
+  // 위험 이벤트 발생 시 마커 깜빡임 시작
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    const dangerEvents = events.filter(e => e.level === 'DANGER')
+
+    dangerEvents.forEach(event => {
+      const markerId = `device-${event.deviceId}`
+      startMarkerBlink(viewer, markerId, 800) // 0.8초 주기
+    })
+
+    // 컴포넌트 언마운트 시 애니메이션 정리
+    return () => {
+      if (!viewer.isDestroyed()) {
+        dangerEvents.forEach(event => {
+          const markerId = `device-${event.deviceId}`
+          stopMarkerBlink(viewer, markerId)
+        })
+      }
+    }
+  }, [events, startMarkerBlink, stopMarkerBlink])
+
+  return <CesiumMap events={events} />
+}
+```
+
+#### 동작 원리
+
+- 사인 곡선을 사용하여 부드러운 투명도 전환 (0.3 ↔ 1.0)
+- `viewer.clock.onTick` 이벤트를 활용한 프레임 단위 애니메이션
+- 자동 메모리 관리 (이전 애니메이션 리스너 제거)
+
+### 호버 인터랙션 (Hover)
+
+마우스를 올렸을 때 마커를 확대하고 라벨을 강조하는 기능입니다.
+
+#### 설정값
+
+```typescript
+const HOVER_CONFIG = {
+  scaleMultiplier: 1.3,       // 확대 비율 (1.3배)
+  transitionDuration: 200,    // 전환 시간 (200ms)
+  labelFont: 'bold 14px SUIT' // 라벨 폰트
+}
+```
+
+#### 사용 예시
+
+```tsx
+import { useMarkerStore } from '../../stores/cesium'
+import { ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium'
+
+function CesiumMapWithHover() {
+  const { setMarkerHover } = useMarkerStore()
+  const viewerRef = useRef<CesiumViewer>(null)
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
+
+    // 마우스 이동 시 호버 감지
+    handler.setInputAction((movement: any) => {
+      const pickedObject = viewer.scene.pick(movement.endPosition)
+
+      if (pickedObject && pickedObject.id) {
+        const entity = pickedObject.id
+        const entityId = entity.id?.toString()
+
+        // 디바이스 마커인 경우에만 호버 효과 적용
+        if (entityId?.startsWith('device-')) {
+          setMarkerHover(viewer, entityId)
+          viewer.scene.canvas.style.cursor = 'pointer'
+        } else {
+          setMarkerHover(viewer, null)
+          viewer.scene.canvas.style.cursor = 'default'
+        }
+      } else {
+        setMarkerHover(viewer, null)
+        viewer.scene.canvas.style.cursor = 'default'
+      }
+    }, ScreenSpaceEventType.MOUSE_MOVE)
+
+    return () => {
+      if (!handler.isDestroyed()) {
+        handler.destroy()
+      }
+      if (!viewer.isDestroyed()) {
+        viewer.scene.canvas.style.cursor = 'default'
+      }
+    }
+  }, [setMarkerHover])
+
+  return <div ref={cesiumContainerRef} />
+}
+```
+
+#### 동작 원리
+
+- 이전 호버 마커를 원래 크기로 복원
+- 새로운 호버 마커를 1.3배 확대
+- 라벨 스케일, 폰트, 배경색 변경으로 가독성 향상 (밝은 블루 배경)
+- `hoveredMarkerId` 상태를 통한 단일 호버 관리
+
+### 통합 사용 예시: Blink + Hover
+
+```tsx
+import { useRef, useEffect } from 'react'
+import { Viewer as CesiumViewer, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium'
+import { useMarkerStore } from '../../stores/cesium'
+
+export default function CesiumMap({ events }: CesiumMapProps) {
+  const viewerRef = useRef<CesiumViewer | null>(null)
+  const {
+    startMarkerBlink,
+    stopMarkerBlink,
+    setMarkerHover
+  } = useMarkerStore()
+
+  // 1. 위험/경고 이벤트에 대한 깜빡임 애니메이션 적용
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    const criticalEvents = events.filter(e =>
+      e.level === 'DANGER' || e.level === 'WARNING'
+    )
+
+    // 위험 이벤트 마커 깜빡임 시작
+    criticalEvents.forEach(event => {
+      const markerId = `device-${event.deviceId}`
+      const duration = event.level === 'DANGER' ? 600 : 1000 // 위험도에 따라 속도 조절
+      startMarkerBlink(viewer, markerId, duration)
+    })
+
+    // 정리 함수: 이벤트가 해결되거나 컴포넌트 언마운트 시 애니메이션 중지
+    return () => {
+      if (!viewer.isDestroyed()) {
+        criticalEvents.forEach(event => {
+          const markerId = `device-${event.deviceId}`
+          stopMarkerBlink(viewer, markerId)
+        })
+      }
+    }
+  }, [events, startMarkerBlink, stopMarkerBlink])
+
+  // 2. 호버 인터랙션 설정
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
+
+    handler.setInputAction((movement: any) => {
+      const pickedObject = viewer.scene.pick(movement.endPosition)
+
+      if (pickedObject && pickedObject.id) {
+        const entity = pickedObject.id
+        const entityId = entity.id?.toString()
+
+        // 센서 마커에만 호버 효과 적용
+        if (entityId?.startsWith('device-')) {
+          setMarkerHover(viewer, entityId)
+        } else {
+          setMarkerHover(viewer, null)
+        }
+      } else {
+        setMarkerHover(viewer, null)
+      }
+    }, ScreenSpaceEventType.MOUSE_MOVE)
+
+    return () => {
+      if (!handler.isDestroyed()) {
+        handler.destroy()
+      }
+    }
+  }, [setMarkerHover])
+
+  return (
+    <div className="relative w-full h-full">
+      <div ref={cesiumContainerRef} className="w-full h-full" />
+    </div>
+  )
+}
+```
+
+### 성능 최적화
+
+#### 깜빡임 애니메이션
+
+- 동시에 깜빡이는 마커가 10개 이상인 경우 성능 저하 가능
+- 중요도가 높은 이벤트만 깜빡임 적용 권장
+- `stopMarkerBlink`를 통한 명시적 정리 필수
+
+#### 호버 인터랙션
+
+- `MOUSE_MOVE` 이벤트는 프레임마다 발생하므로 디바운싱 고려
+- 많은 마커가 있는 경우 `viewer.scene.pick` 호출 빈도 최적화
+- 호버 대상이 아닌 엔티티는 빠르게 필터링
+
+#### requestRender 호출
+
+- 두 기능 모두 `viewer.scene.requestRender()` 호출
+- Cesium의 렌더링 최적화 메커니즘을 활용하여 불필요한 렌더링 방지
+
+### 주의사항
+
+1. **Viewer 인스턴스 확인**: 모든 함수 호출 전에 `viewer`가 `null`이 아니고 `isDestroyed()`가 `false`인지 확인
+2. **메모리 누수 방지**: 컴포넌트 언마운트 시 `stopMarkerBlink` 호출 및 `ScreenSpaceEventHandler` 정리 필수
+3. **마커 ID 네이밍**: 일관된 ID 네이밍 규칙 사용 (예: `device-{deviceId}`, `park-{siteId}`)
+4. **상태 동기화**: 마커가 제거되었을 때 깜빡임 애니메이션도 함께 정리 (`clearAllMarkers` 호출 시 자동 정리됨)
+
+---
+
 ## 카메라 제어
 
 ### cameraStore

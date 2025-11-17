@@ -32,7 +32,7 @@ export default function LocationPicker({
   onLocationChange,
   cctvHeight = 3,
   containerHeight,
-  markerImage = '/images/icons/map/marker.png',
+  markerImage = '/aiot/images/icons/map/marker.png',
   markerWidth = 32,
   markerHeight = 32,
 }: LocationPickerProps) {
