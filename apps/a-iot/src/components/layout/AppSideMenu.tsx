@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react'
-import { Building2, LogOut, ChevronRight } from 'lucide-react'
+import { LogOut, ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   SideMenu,
@@ -20,6 +20,7 @@ import {
 import { MAIN_MENU_ITEMS, ADMIN_MENU_ITEMS } from '../../constants/menu.ts'
 import { useAuthStore, useNotificationStore } from '../../stores'
 import { useStompNotifications, useInitialNotifications } from '../../services/hooks'
+import { getAssetPath } from "../../utils/assetPath.ts";
 import NotificationPop from './NotificationPop.tsx'
 
 export default function AppSideMenu() {
@@ -131,8 +132,8 @@ export default function AppSideMenu() {
         {({ open }) => (
           <>
             <SideMenuTrigger open={open} showChevron={false} className="h-10 shrink-0">
-              <Building2 className="size-5 text-blue-600" />
-              <span className="font-semibold text-sm">시민안심공원 서비스</span>
+              <img src={getAssetPath('/images/logos/CI.svg')} alt="AIoT Logo" className="h-6" />
+              <span className="font-semibold text-sm">성남시 시민안심공원 서비스</span>
             </SideMenuTrigger>
 
             <SideMenuContent className="w-72 h-[calc(100vh-5.2rem)] shrink-0">
