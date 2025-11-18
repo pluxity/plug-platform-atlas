@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from '@plug-atlas/ui';
+import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner, DialogFooter } from '@plug-atlas/ui';
 import { useUpdateAdminUser, useRoles } from '@plug-atlas/api-hooks';
 import { UserUpdateRequest, UserUpdateRequestSchema, UserResponse } from '@plug-atlas/types';
 
@@ -71,7 +71,7 @@ export default function UserEditDialog({ isOpen, user, onClose, onSuccess }: Use
                 <DialogHeader>
                     <DialogTitle>사용자 정보 수정</DialogTitle>
                 </DialogHeader>
-                <Form onSubmit={editUserForm.handleSubmit(submitEditUserForm)} className="space-y-4">
+                <Form onSubmit={editUserForm.handleSubmit(submitEditUserForm)} className="space-y-4 p-4">
                     <FormField>
                         <FormItem>
                             <FormLabel htmlFor="username">아이디</FormLabel>
@@ -181,12 +181,12 @@ export default function UserEditDialog({ isOpen, user, onClose, onSuccess }: Use
                         </FormItem>
                     </FormField>
 
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" className="flex-1" onClick={resetEditUserForm}>취소</Button>
-                        <Button type="submit" variant="default" className="flex-1" disabled={isUpdateUser || !editUserForm.formState.isValid}>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" className="min-w-30" onClick={resetEditUserForm}>취소</Button>
+                        <Button type="submit" variant="default" className="min-w-30" disabled={isUpdateUser || !editUserForm.formState.isValid}>
                             {isUpdateUser ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}
                         </Button>
-                    </div>
+                    </DialogFooter>
                 </Form>
             </DialogContent>
         </Dialog>

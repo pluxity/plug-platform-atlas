@@ -3,7 +3,7 @@
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 import { VariantProps, cva } from "class-variance-authority"
-import { AlertTriangle, CheckCircle, Info } from "lucide-react"
+import { AlertTriangle, CheckCircle, Info, XIcon } from "lucide-react"
 
 import { cn } from "../../lib/utils"
 
@@ -36,6 +36,8 @@ export interface AlertDialogContentProps
     VariantProps<typeof alertDialogContentVariants> {
   showIcon?: boolean
   iconVariant?: "default" | "destructive" | "warning" | "success"
+  showCloseButton?: boolean
+  closeButtonClassName?: string
 }
 
 export interface AlertDialogActionProps
@@ -92,7 +94,7 @@ function AlertDialogOverlay({
     <AlertDialogPrimitive.Overlay
       data-slot="alert-dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-background/10 backdrop-blur-xs data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className
       )}
       {...props}
@@ -107,6 +109,8 @@ function AlertDialogContent({
   variant,
   showIcon = false,
   iconVariant,
+  showCloseButton = true,
+  closeButtonClassName,
   ...props
 }: AlertDialogContentProps) {
   const displayIconVariant = iconVariant || variant || "default"
@@ -133,6 +137,18 @@ function AlertDialogContent({
         className={cn(alertDialogContentVariants({ size, variant }), className)}
         {...props}
       >
+        {showCloseButton && (
+          <AlertDialogPrimitive.Cancel
+            data-slot="alert-dialog-close"
+            className={cn(
+              "ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none text-black hover:text-black [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-5 z-10",
+              closeButtonClassName
+            )}
+          >
+            <XIcon />
+            <span className="sr-only">Close</span>
+          </AlertDialogPrimitive.Cancel>
+        )}
         {showIcon && (
           <div className="flex justify-center mb-2">
             <div className={cn(
@@ -160,7 +176,7 @@ function AlertDialogHeader({
     <div
       data-slot="alert-dialog-header"
       className={cn(
-        "flex flex-col space-y-2 text-center sm:text-left",
+        "flex flex-col space-y-2",
         className
       )}
       {...props}
@@ -176,7 +192,7 @@ function AlertDialogFooter({
     <div
       data-slot="alert-dialog-footer"
       className={cn(
-        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+        "flex justify-center gap-3",
         className
       )}
       {...props}

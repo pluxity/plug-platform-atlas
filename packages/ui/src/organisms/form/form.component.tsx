@@ -1,4 +1,5 @@
 import * as React from "react"
+import { cn } from "../../lib/utils"
 
 export interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {}
 
@@ -65,7 +66,7 @@ export interface FormMessageProps extends React.HTMLAttributes<HTMLParagraphElem
 
 const FormMessage = React.forwardRef<HTMLParagraphElement, FormMessageProps>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={className} {...props} />
+    <p ref={ref} className={cn("text-sm text-error-600", className)} {...props} />
   )
 )
 
