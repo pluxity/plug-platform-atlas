@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ModalForm, ModalFormItem, ModalFormField, ModalFormContainer } from "./modalForm.component";
+import { ModalForm, ModalFormItem, ModalFormField, ModalFormContainer } from "./ModalForm.component";
 import { Input } from "../../atoms/input/input.component";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../../atoms/select/select.component';
 import { Button } from '../../atoms/button/button.component';

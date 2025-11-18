@@ -7,7 +7,7 @@ import {
     useMarkerStore,
 } from '../../../../stores/cesium'
 import { Viewer as CesiumViewer, Color } from 'cesium'
-import type { FeatureResponse } from '@plug-atlas/web-core'
+import type { FeatureResponse } from '@/services/types'
 
 interface DeviceMapViewerProps {
     device: FeatureResponse | null

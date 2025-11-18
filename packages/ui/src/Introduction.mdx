@@ -1,57 +1,240 @@
-import { Meta } from '@storybook/blocks';
+import { Meta, ColorPalette, ColorItem } from '@storybook/blocks';
 
-<Meta title="Introduction/Getting Started" />
+<Meta title="Getting Started" />
 
-# @plug-atlas/ui Documentation
+# Plug Atlas UI
 
-**실외 지도 기반 관제 시스템 UI 라이브러리**
+**실외 지도 기반 관제 시스템을 위한 현대적이고 접근성 높은 UI 컴포넌트 라이브러리**
 
-## 📦 Overview
+React 19, TypeScript, Tailwind CSS v4로 구축된 전문 관제 시스템 UI 라이브러리입니다.
 
-`@plug-atlas/ui`는 Atomic Design 패턴을 기반으로 구축된 React 컴포넌트 라이브러리입니다.
+## 디자인 시스템
 
-### 기술 스택
-- **React 19** - 최신 React 기능 활용
-- **Tailwind CSS v4** - 유틸리티 기반 스타일링
-- **Radix UI** - 접근성 우선 프리미티브
-- **TypeScript** - 타입 안정성
-- **class-variance-authority** - 변형 관리
+이 라이브러리는 **Atomic Design** 원칙을 따르며, 복잡도에 따라 컴포넌트를 구성합니다:
+
+- **Atoms** (원자): 기본 빌딩 블록 (Button, Input, Badge 등)
+- **Molecules** (분자): Atom의 간단한 조합
+- **Organisms** (유기체): 복잡하고 기능이 완전한 컴포넌트
+- **Templates** (템플릿): 페이지 레벨 레이아웃
+
+## 기술 스택
+
+- ⚛️ **React 19** - 최신 React 기능 활용
+- 🔷 **TypeScript** - 완전한 타입 안정성
+- 🎨 **Tailwind CSS v4** - 유틸리티 기반 스타일링
+- ♿ **Radix UI** - 접근성 우선 프리미티브
+- 📚 **Storybook 8.6** - 인터랙티브 문서화
 
 ---
 
-## 🎨 Design System
+## 색상 팔레트
 
-### 색상 팔레트
+우리의 디자인 시스템은 브랜드 색상과 시맨틱 변형을 포함한 포괄적인 색상 팔레트를 사용합니다. 각 색상은 최대한의 유연성을 위해 50-900 단계의 음영을 제공합니다.
 
-<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+<ColorPalette>
+  <ColorItem
+    title="Primary (Primary)"
+    subtitle="주요 브랜드 색상 - Blue"
+    colors={{
+      50: 'hsl(217 100% 97%)',
+      100: 'hsl(217 100% 93%)',
+      200: 'hsl(217 100% 85%)',
+      300: 'hsl(217 100% 73%)',
+      400: 'hsl(217 100% 60%)',
+      500: 'hsl(217 100% 45%)',
+      600: 'hsl(217 100% 38%)',
+      700: 'hsl(217 100% 30%)',
+      800: 'hsl(217 100% 23%)',
+      900: 'hsl(217 100% 15%)',
+    }}
+  />
+  <ColorItem
+    title="Success (성공)"
+    subtitle="긍정적 액션 및 확인 - Green"
+    colors={{
+      50: 'hsl(147 55% 96%)',
+      100: 'hsl(147 57% 90%)',
+      200: 'hsl(147 60% 80%)',
+      300: 'hsl(147 62% 70%)',
+      400: 'hsl(147 64% 60%)',
+      500: 'hsl(147 65% 48%)',
+      600: 'hsl(147 63% 38%)',
+      700: 'hsl(147 61% 28%)',
+      800: 'hsl(147 59% 18%)',
+      900: 'hsl(147 57% 12%)',
+    }}
+  />
+  <ColorItem
+    title="Warning (경고)"
+    subtitle="주의 메시지 및 알림 - Orange"
+    colors={{
+      50: 'hsl(30 100% 97%)',
+      100: 'hsl(30 100% 94%)',
+      200: 'hsl(30 100% 84%)',
+      300: 'hsl(30 100% 75%)',
+      400: 'hsl(30 100% 65%)',
+      500: 'hsl(30 100% 55%)',
+      600: 'hsl(30 79% 44%)',
+      700: 'hsl(30 76% 34%)',
+      800: 'hsl(30 73% 24%)',
+      900: 'hsl(30 70% 14%)',
+    }}
+  />
+  <ColorItem
+    title="Error (오류)"
+    subtitle="파괴적 액션 및 오류 - Red"
+    colors={{
+      50: 'hsl(0 100% 97%)',
+      100: 'hsl(0 100% 94%)',
+      200: 'hsl(0 100% 85%)',
+      300: 'hsl(0 100% 75%)',
+      400: 'hsl(0 100% 68%)',
+      500: 'hsl(0 100% 60%)',
+      600: 'hsl(0 66% 48%)',
+      700: 'hsl(0 64% 38%)',
+      800: 'hsl(0 62% 28%)',
+      900: 'hsl(0 60% 15%)',
+    }}
+  />
+  <ColorItem
+    title="Gray (중립)"
+    subtitle="텍스트 및 배경을 위한 중립 색상"
+    colors={{
+      100: 'hsl(0 0% 95%)',
+      200: 'hsl(0 0% 85%)',
+      300: 'hsl(0 0% 75%)',
+      400: 'hsl(0 0% 65%)',
+      500: 'hsl(0 0% 55%)',
+      600: 'hsl(0 0% 42%)',
+      700: 'hsl(0 0% 35%)',
+      800: 'hsl(0 0% 26%)',
+      900: 'hsl(0 0% 17%)',
+    }}
+  />
+</ColorPalette>
+
+### 색상 사용하기
+
+모든 색상은 Tailwind CSS 클래스를 통해 사용할 수 있습니다:
+
+```tsx
+// Primary (Blue)
+<div className="bg-primary-600 text-white">주요 버튼</div>
+
+// Success (Green)
+<div className="bg-success-600 text-white">성공 메시지</div>
+
+// Warning (Orange)
+<div className="bg-warning-600 text-white">경고 알림</div>
+
+// Error (Red)
+<div className="bg-error-600 text-white">오류 메시지</div>
+
+// Gray (Neutral)
+<div className="bg-gray-100 text-gray-900">중립 배경</div>
+
+// 텍스트 색상
+<p className="text-primary-600">주요 텍스트</p>
+<p className="text-success-700">성공 텍스트</p>
+<p className="text-error-600">오류 텍스트</p>
+
+// 테두리 색상
+<div className="border border-gray-300">회색 테두리</div>
+<div className="border-2 border-primary-500">주요 테두리</div>
+```
+
+### 시맨틱 색상 사용법
+
+- **Primary**: 주요 브랜드 액션, 링크, 포커스 상태
+- **Success**: 확인, 성공적인 작업, 긍정적 피드백
+- **Warning**: 주의 메시지, 잠재적 문제, 주의 필요
+- **Error**: 파괴적 액션, 오류 상태, 중요 알림
+- **Gray**: 텍스트, 배경, 테두리, 비활성 상태
+
+---
+
+## 디자인 토큰
+
+### Border Radius (모서리 둥글기)
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginTop: '1rem', marginBottom: '2rem' }}>
   <div>
-    <div style={{ height: '80px', background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
-    <strong>Primary (Blue)</strong>
-    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>브랜드 색상으로 주요 액션 및 포커스 상태에 사용</p>
+    <div style={{ width: '100px', height: '100px', backgroundColor: 'hsl(217 100% 85%)', borderRadius: '0.5rem' }}></div>
+    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}><strong>button</strong> - 0.5rem (8px)</p>
+    <p style={{ fontSize: '0.75rem', color: 'hsl(0 0% 42%)' }}>버튼 기본값</p>
   </div>
-
   <div>
-    <div style={{ height: '80px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
-    <strong>Success (Green)</strong>
-    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>성공 상태, 확인 메시지, 긍정적 피드백</p>
+    <div style={{ width: '100px', height: '100px', backgroundColor: 'hsl(217 100% 85%)', borderRadius: '0.75rem' }}></div>
+    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}><strong>default</strong> - 0.75rem (12px)</p>
+    <p style={{ fontSize: '0.75rem', color: 'hsl(0 0% 42%)' }}>일반 컴포넌트</p>
   </div>
-
   <div>
-    <div style={{ height: '80px', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
-    <strong>Warning (Orange)</strong>
-    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>경고 메시지, 주의 필요 상태</p>
+    <div style={{ width: '100px', height: '100px', backgroundColor: 'hsl(217 100% 85%)', borderRadius: '0.875rem' }}></div>
+    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}><strong>card</strong> - 0.875rem (14px)</p>
+    <p style={{ fontSize: '0.75rem', color: 'hsl(0 0% 42%)' }}>카드, 패널</p>
   </div>
+</div>
 
-  <div>
-    <div style={{ height: '80px', background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
-    <strong>Error (Red)</strong>
-    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>오류 상태, 파괴적 액션, 필수 필드</p>
+### Typography (타이포그래피)
+
+<div style={{ marginTop: '1rem', marginBottom: '2rem' }}>
+  <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'hsl(0 0% 95%)', borderRadius: '0.5rem' }}>
+    <p style={{ fontFamily: 'SUIT, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', fontSize: '1rem', margin: 0 }}>
+      <strong>SUIT</strong> - 기본 본문 폰트
+    </p>
+    <p style={{ fontFamily: 'SUIT, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', fontSize: '0.875rem', color: 'hsl(0 0% 42%)', margin: '0.5rem 0 0 0' }}>
+      한글 최적화 산세리프 서체
+    </p>
   </div>
+  <div style={{ padding: '1rem', backgroundColor: 'hsl(0 0% 95%)', borderRadius: '0.5rem' }}>
+    <p style={{ fontFamily: 'ui-monospace, "Cascadia Code", monospace', fontSize: '1rem', margin: 0 }}>
+      <strong>Monospace</strong> - 코드 표시용 폰트
+    </p>
+    <p style={{ fontFamily: 'ui-monospace, "Cascadia Code", monospace', fontSize: '0.875rem', color: 'hsl(0 0% 42%)', margin: '0.5rem 0 0 0' }}>
+      코드 블록 및 고정폭 텍스트
+    </p>
+  </div>
+</div>
 
+### Shadow (그림자)
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginTop: '1rem', marginBottom: '2rem' }}>
+  <div style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 2px 8px -2px rgba(0, 0, 0, 0.1)' }}>
+    <p style={{ margin: 0, fontWeight: 'bold' }}>Soft</p>
+    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'hsl(0 0% 42%)' }}>가벼운 그림자</p>
+  </div>
+  <div style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 4px 16px -4px rgba(0, 0, 0, 0.15)' }}>
+    <p style={{ margin: 0, fontWeight: 'bold' }}>Medium</p>
+    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'hsl(0 0% 42%)' }}>중간 그림자</p>
+  </div>
+  <div style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 0 24px rgba(64, 97, 217, 0.2)' }}>
+    <p style={{ margin: 0, fontWeight: 'bold' }}>Glow</p>
+    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'hsl(0 0% 42%)' }}>발광 효과</p>
+  </div>
+  <div style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 8px 24px -4px rgba(64, 97, 217, 0.3)' }}>
+    <p style={{ margin: 0, fontWeight: 'bold' }}>Primary</p>
+    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'hsl(0 0% 42%)' }}>주요 색상 그림자</p>
+  </div>
+</div>
+
+### Gradient (그라데이션)
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem', marginBottom: '2rem' }}>
   <div>
-    <div style={{ height: '80px', background: 'linear-gradient(135deg, #6b7280 0%, #374151 100%)', borderRadius: '8px', marginBottom: '0.5rem' }}></div>
-    <strong>Gray</strong>
-    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>중립적 UI 요소, 텍스트, 테두리</p>
+    <div style={{ height: '80px', background: 'linear-gradient(135deg, hsl(217 100% 38%) 0%, hsl(217 100% 60%) 100%)', borderRadius: '0.5rem' }}></div>
+    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}><strong>Primary</strong></p>
+  </div>
+  <div>
+    <div style={{ height: '80px', background: 'linear-gradient(135deg, hsl(147 63% 38%) 0%, hsl(147 64% 60%) 100%)', borderRadius: '0.5rem' }}></div>
+    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}><strong>Success</strong></p>
+  </div>
+  <div>
+    <div style={{ height: '80px', background: 'linear-gradient(135deg, hsl(30 79% 44%) 0%, hsl(30 100% 65%) 100%)', borderRadius: '0.5rem' }}></div>
+    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}><strong>Warning</strong></p>
+  </div>
+  <div>
+    <div style={{ height: '80px', background: 'linear-gradient(135deg, hsl(0 66% 48%) 0%, hsl(0 100% 68%) 100%)', borderRadius: '0.5rem' }}></div>
+    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}><strong>Error</strong></p>
   </div>
 </div>
 
@@ -81,31 +264,41 @@ import { Meta } from '@storybook/blocks';
 
 ---
 
-## 🚀 Usage
+## 시작하기
 
-### Installation
+### 설치
 
 ```bash
 pnpm add @plug-atlas/ui
 ```
 
-### Import Components
+### 사용법
+
+앱에 전역 스타일을 import합니다:
 
 ```tsx
-import { Button, Input, Dialog } from '@plug-atlas/ui'
-import '@plug-atlas/ui/globals.css'
+import '@plug-atlas/ui/globals.css';
+```
+
+Atomic 레벨에서 컴포넌트를 import합니다:
+
+```tsx
+// Atoms에서 import
+import { Button } from '@plug-atlas/ui/atoms';
+
+// 또는 메인 엔트리에서 import
+import { Button } from '@plug-atlas/ui';
 
 function App() {
   return (
-    <div>
-      <Button variant="default">Click me</Button>
-      <Input placeholder="Enter text..." />
-    </div>
-  )
+    <Button variant="default" size="lg">
+      클릭하세요
+    </Button>
+  );
 }
 ```
 
-### Import by Category
+### 카테고리별 Import
 
 ```tsx
 // Atoms만 import
@@ -115,103 +308,33 @@ import { Button, Input, Badge } from '@plug-atlas/ui/atoms'
 import { Card, Alert } from '@plug-atlas/ui/molecules'
 
 // Organisms만 import
-import { Dialog, Select } from '@plug-atlas/ui/organisms'
+import { Dialog, Form } from '@plug-atlas/ui/organisms'
 ```
 
----
+### 유틸리티
 
-## ✨ Conventions
+조건부 클래스명을 위한 `cn` 유틸리티를 사용합니다:
 
-### Prop Naming
-- `variant` → `appearance` (시각적 스타일)
-- `size` → `scale` (크기 변형)
-- 네이티브 HTML prop과의 충돌 방지
-
-### Data Attributes
-모든 컴포넌트에 `data-slot` 속성 적용
-- 스타일링 훅
-- 분석 추적
-- 테스트 선택자
-
-### Accessibility
-- ARIA 속성 자동 적용
-- 키보드 네비게이션 지원
-- 스크린 리더 최적화
-
----
-
-## 📚 Component Status
-
-| Status | Description |
-|--------|-------------|
-| ✅ **Stable** | 프로덕션 사용 가능, API 안정 |
-| 🚧 **Draft** | 개발 중, API 변경 가능 |
-| ⚠️ **Deprecated** | 사용 중단 예정 |
-
----
-
-## 🛠 Development
-
-### Run Storybook
-
-```bash
-pnpm storybook
-```
-
-### Build Storybook
-
-```bash
-pnpm build-storybook
-```
-
-### Type Check
-
-```bash
-pnpm type-check
-```
-
-### Clean
-
-```bash
-pnpm clean
-```
-
----
-
-## 📖 Documentation
-
-이 Storybook은 **Auto Docs**를 사용하여 자동으로 문서를 생성합니다.
-
-### 문서 구성
-- **Description**: 컴포넌트 설명 (stories의 `parameters.docs.description.component`)
-- **Controls**: Props를 실시간으로 조작하며 테스트
-- **Stories**: 다양한 사용 예제 (Canvas에서 Preview + Code)
-- **Props Table**: 자동 생성된 Props 타입 정보
-
-### 새 컴포넌트 문서 작성
 ```tsx
-const meta: Meta<typeof Component> = {
-  title: 'Category/ComponentName',
-  component: Component,
-  parameters: {
-    docs: {
-      description: {
-        component: '컴포넌트에 대한 상세 설명...',
-      },
-    },
-  },
-}
+import { cn } from '@plug-atlas/ui/utils';
+
+const buttonClass = cn(
+  'base-class',
+  isActive && 'active-class',
+  isDisabled && 'disabled-class'
+);
 ```
 
 ---
 
-## 📖 Next Steps
+## 컴포넌트 탐색
 
-1. **Browse Components** - 왼쪽 사이드바에서 원하는 컴포넌트 탐색
-2. **Read Docs** - 각 컴포넌트의 Docs 탭에서 설명과 사용법 확인
-3. **Interactive Controls** - Controls 패널에서 props를 실시간으로 조작
-4. **Copy Code** - Canvas에서 Code 탭을 열어 코드 복사
-5. **Check Props** - Props 테이블에서 타입과 기본값 확인
+Atomic Design 레벨에 따라 구성된 컴포넌트를 탐색하세요:
+
+- **Atoms** → 기본 UI 요소
+- **Molecules** → 컴포넌트 조합
+- **Organisms** → 복잡한 기능
+- **Templates** → 페이지 레이아웃
 
 ---
 

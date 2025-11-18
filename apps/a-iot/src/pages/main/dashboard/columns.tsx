@@ -1,5 +1,5 @@
 import { Badge, Column } from '@plug-atlas/ui';
-import { FeatureResponse } from '@plug-atlas/web-core';
+import { FeatureResponse } from '@/services/types';
 import { Event } from '../../../services/types';
 import { getStatusInfo, getStatusBadgeStyle } from '../events/utils/statusUtils.ts';
 import { getLevelInfo } from '../events/utils/levelUtils.ts';

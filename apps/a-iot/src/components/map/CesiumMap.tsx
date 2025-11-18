@@ -2,7 +2,7 @@ import { useRef, useEffect, useState, useMemo } from 'react'
 import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartesian2, ConstantProperty } from 'cesium'
 import { throttle } from 'lodash-es'
 import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../../stores/cesium'
-import { SiteResponse, FeatureResponse, type FeatureDeviceTypeResponse } from '@plug-atlas/web-core'
+import { Site, FeatureResponse, type FeatureDeviceTypeResponse } from '@/services/types'
 import MapControls from './MapControls'
 import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
@@ -11,7 +11,7 @@ import { SVG_MARKERS, type SvgMarkerType, createColoredSvgDataUrl, preloadAllMar
 import { getAssetPath } from '../../utils/assetPath'
 
 interface CesiumMapProps {
-  sites?: SiteResponse[]
+  sites?: Site[]
   activeTab?: 'overview' | 'parks'
   selectedSiteId?: string | null
   onSiteSelect?: (siteId: string) => void

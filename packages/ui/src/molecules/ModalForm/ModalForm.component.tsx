@@ -1,7 +1,7 @@
 
 import { FormProvider} from "react-hook-form";
-import { cn } from "../../lib/utils"; 
-import { ModalFormContainerProps, ModalFormItemProps } from "./modalForm.types";
+import { cn } from "../../lib/utils";
+import { ModalFormContainerProps, ModalFormItemProps } from "./ModalForm.types";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "../../organisms/form";
 
 const ModalForm = FormProvider

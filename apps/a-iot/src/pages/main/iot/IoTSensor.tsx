@@ -1,5 +1,6 @@
 import { Badge, Button, Column, DataTable, Progress, Switch, Spinner, toast, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@plug-atlas/ui';
-import { useFeatures, useSyncFeatures, FeatureResponse, useUpdateFeature } from '@plug-atlas/web-core';
+import { useFeatures, useSyncFeatures, useUpdateFeature } from '@/services/hooks';
+import { FeatureResponse } from '@/services/types';
 import { useState, useEffect, useMemo } from 'react';
 import DeviceMapViewer from './components/DeviceMapViewer.tsx';
 import { useSearchBar, usePagination } from '../../../services/hooks';
