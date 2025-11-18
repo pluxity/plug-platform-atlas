@@ -33,12 +33,6 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
         }
     );
 
-    const handleStatusUpdate = () => {
-        if (onRefresh) {
-            onRefresh();
-        }
-    };
-
     const handleModalClose = () => {
         setIsDialogOpen(false);
         setSelectedEvent(null);
@@ -84,7 +78,9 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
                     eventId: event.eventId,
                     status: { result: 'IN_PROGRESS' }
                 });
-                handleStatusUpdate();
+                if (onRefresh) {
+                    onRefresh();
+                }
             } catch (error) {
                 console.error('상태 업데이트 실패:', error);
             }
@@ -211,7 +207,7 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
 
             <Dialog open={isDialogOpen} onOpenChange={handleModalClose}>
                 {selectedEvent && (
-                    <EventDetailModal event={selectedEvent} onStatusUpdate={handleStatusUpdate} />
+                    <EventDetailModal event={selectedEvent} />
                 )}
             </Dialog>
         </div>

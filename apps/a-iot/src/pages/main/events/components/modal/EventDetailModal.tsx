@@ -4,24 +4,30 @@ import { AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
 import { getStatusInfo } from '../../utils/statusUtils.ts';
 import { getLevelInfo } from '../../utils/levelUtils.ts';
 import type { Event } from '../../../../../services/types';
-import { useUpdateEventStatus } from '../../../../../services/hooks';
+import { useUpdateEventStatus, useEvent } from '../../../../../services/hooks';
 import ActionHistorySection from "./ActionHistoryItem.tsx";
 import EventLocationMap from './EventLocationMap.tsx';
 import ValueRangeIndicator from './ValueRangeIndicator.tsx';
 
 interface EventDetailModalProps {
   event: Event;
-  onStatusUpdate?: () => void;
 }
 
-export default function EventDetailModal({ event, onStatusUpdate }: EventDetailModalProps) {
+export default function EventDetailModal({ event }: EventDetailModalProps) {
   getStatusInfo(event.status);
   const [localEvent, setLocalEvent] = useState(event);
   const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
+  const { data: fetchedEvent, mutate: mutateEvent } = useEvent(event.eventId);
 
   useEffect(() => {
     setLocalEvent(event);
   }, [event]);
+
+  useEffect(() => {
+    if (fetchedEvent) {
+      setLocalEvent(fetchedEvent);
+    }
+  }, [fetchedEvent]);
 
   const handleStatusAction = async () => {
     if (localEvent.status === 'ACTIVE') {
@@ -31,9 +37,6 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
           status: { result: 'IN_PROGRESS' }
         });
         setLocalEvent({ ...localEvent, status: 'IN_PROGRESS' });
-        if (onStatusUpdate) {
-          onStatusUpdate();
-        }
       } catch (error) {
         console.error('상태 업데이트 실패:', error);
       }
@@ -51,14 +54,14 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
   };
 
   return (
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
+          <DialogTitle>
             {localEvent.profileDescription || localEvent.sensorDescription || '센서'} {getLevelInfo(localEvent.level).text} 발생
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 p-6">
           <div className="bg-gray-50/50 p-5 rounded-lg border border-gray-100">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">처리 상태</h3>
@@ -237,7 +240,12 @@ export default function EventDetailModal({ event, onStatusUpdate }: EventDetailM
 
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">조치 기록</h3>
-            <ActionHistorySection eventId={localEvent.eventId} />
+            <ActionHistorySection
+              eventId={localEvent.eventId}
+              onActionUpdate={() => {
+                mutateEvent();
+              }}
+            />
           </div>
         </div>
       </DialogContent>

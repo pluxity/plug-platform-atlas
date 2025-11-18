@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
-import { Button } from '@plug-atlas/ui'
-import { toast } from '@plug-atlas/ui'
+import {useEffect, useRef, useState} from 'react'
+import {Button, AspectRatio} from '@plug-atlas/ui'
+import {toast} from '@plug-atlas/ui'
 import {
     useViewerStore,
     usePolygonStore,
     useCameraStore,
     DEFAULT_CAMERA_POSITION
 } from '../../../../../../stores/cesium'
-import { Color, Viewer as CesiumViewer} from 'cesium'
-import { MapIcon, RotateCcw, CheckCircle, X, Info } from 'lucide-react'
+import {Color, Viewer as CesiumViewer} from 'cesium'
+import {MapIcon, RotateCcw, CheckCircle, X, Info} from 'lucide-react'
 
 interface CesiumPolygonDrawerProps {
     onPolygonComplete: (wktString: string) => void
@@ -27,8 +27,8 @@ export default function CesiumPolygonDrawer({
 
     const viewerId = useRef(`polygon-drawer-${Date.now()}`).current
 
-    const { createViewer, initializeResources } = useViewerStore()
-    const { setView, focusOn } = useCameraStore()
+    const {createViewer, initializeResources} = useViewerStore()
+    const {setView, focusOn} = useCameraStore()
     const {
         startDrawing,
         completeDrawing,
@@ -166,7 +166,7 @@ export default function CesiumPolygonDrawer({
             toast.warning('지도가 아직 로드 중입니다. 잠시 후 다시 시도해 주세요.')
             return
         }
-        
+
         try {
             startDrawing(viewerRef.current, viewerId)
             setShowHelp(true)
@@ -194,7 +194,7 @@ export default function CesiumPolygonDrawer({
 
     const handleCancelDrawing = () => {
         if (!viewerRef.current || !isInitialized) return
-        
+
         try {
             cancelDrawing(viewerRef.current, viewerId)
             setShowHelp(false)
@@ -205,7 +205,7 @@ export default function CesiumPolygonDrawer({
 
     const handleRemoveLastPoint = () => {
         if (!viewerRef.current || !isInitialized) return
-        
+
         try {
             removeLastPoint(viewerRef.current, viewerId)
         } catch (error) {
@@ -237,7 +237,7 @@ export default function CesiumPolygonDrawer({
                             className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50"
                             size="sm"
                         >
-                            <MapIcon className="w-4 h-4 mr-2" />
+                            <MapIcon className="w-4 h-4 mr-2"/>
                             {isInitialized ? '영역 그리기' : '지도 로딩중...'}
                         </Button>
                         <Button
@@ -264,21 +264,21 @@ export default function CesiumPolygonDrawer({
                                 onClick={() => setShowHelp(!showHelp)}
                                 className="text-blue-600 hover:text-blue-800 p-1"
                             >
-                                <Info className="w-4 h-4" />
+                                <Info className="w-4 h-4"/>
                             </button>
                         </div>
-                        
+
                         <div className="flex gap-2 flex-wrap">
                             <Button
                                 onClick={handleCompleteDrawing}
                                 disabled={!canComplete}
                                 size="sm"
-                                className={canComplete ? 
-                                    'bg-green-600 hover:bg-green-700 text-white shadow-sm' : 
+                                className={canComplete ?
+                                    'bg-green-600 hover:bg-green-700 text-white shadow-sm' :
                                     'bg-gray-200 text-gray-400 cursor-not-allowed'
                                 }
                             >
-                                <CheckCircle className="w-4 h-4 mr-1" />
+                                <CheckCircle className="w-4 h-4 mr-1"/>
                                 완료
                             </Button>
                             <Button
@@ -288,7 +288,7 @@ export default function CesiumPolygonDrawer({
                                 size="sm"
                                 className="text-orange-600 border-orange-200 hover:bg-orange-50 disabled:text-gray-400"
                             >
-                                <RotateCcw className="w-4 h-4 mr-1" />
+                                <RotateCcw className="w-4 h-4 mr-1"/>
                                 실행취소
                             </Button>
                             <Button
@@ -297,14 +297,14 @@ export default function CesiumPolygonDrawer({
                                 size="sm"
                                 className="text-red-600 border-red-200 hover:bg-red-50"
                             >
-                                <X className="w-4 h-4 mr-1" />
+                                <X className="w-4 h-4 mr-1"/>
                                 취소
                             </Button>
                         </div>
 
                         {canComplete && (
                             <div className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3" />
+                                <CheckCircle className="w-3 h-3"/>
                                 우클릭으로 완료하거나 '완료' 버튼을 누르세요
                             </div>
                         )}
@@ -314,15 +314,18 @@ export default function CesiumPolygonDrawer({
                                 <div className="text-xs text-blue-700 space-y-1">
                                     <div className="font-semibold mb-1.5">⌨️ 키보드 단축키</div>
                                     <div className="flex items-center gap-2">
-                                        <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Enter</kbd>
+                                        <kbd
+                                            className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Enter</kbd>
                                         <span>완료 (3개 이상의 점 필요)</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Backspace</kbd>
+                                        <kbd
+                                            className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Backspace</kbd>
                                         <span>마지막 점 제거</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <kbd className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Esc</kbd>
+                                        <kbd
+                                            className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Esc</kbd>
                                         <span>그리기 취소</span>
                                     </div>
                                     <div className="mt-1.5 pt-1.5 border-t border-blue-200">
@@ -336,34 +339,41 @@ export default function CesiumPolygonDrawer({
                     </div>
                 )}
             </div>
+            <div className="px-8 bg-black">
+                <AspectRatio ratio={4 / 3}>
+                    <div className="relative w-full h-full">
+                        <div
+                            ref={cesiumContainerRef}
+                            className="w-full h-full overflow-hidden"
+                            style={{position: 'relative'}}
+                            tabIndex={0}
+                        />
 
-            <div
-                ref={cesiumContainerRef}
-                className="w-full h-[400px] border rounded-lg overflow-hidden shadow-sm relative"
-                style={{ position: 'relative' }}
-                tabIndex={0}
-            />
+                        {isDrawing && isInitialized && (
+                            <div
+                                className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                    <span className="text-gray-700">점 {pointCount}개</span>
+                                    {canComplete && (
+                                        <span className="text-green-600 font-medium ml-2">✓ 완료 가능</span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
-            {isDrawing && isInitialized && (
-                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border">
-                    <div className="flex items-center gap-2 text-sm">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                        <span className="text-gray-700">점 {pointCount}개</span>
-                        {canComplete && (
-                            <span className="text-green-600 font-medium ml-2">✓ 완료 가능</span>
+                        {!isInitialized && (
+                            <div className="absolute inset-0 bg-gray-100/80 flex items-center justify-center">
+                                <div className="text-center">
+                                    <div
+                                        className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                                    <span className="text-sm text-gray-600">지도 로딩 중...</span>
+                                </div>
+                            </div>
                         )}
                     </div>
-                </div>
-            )}
-
-            {!isInitialized && (
-                <div className="absolute inset-0 bg-gray-100/80 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                        <span className="text-sm text-gray-600">지도 로딩 중...</span>
-                    </div>
-                </div>
-            )}
+                </AspectRatio>
+            </div>
         </div>
     )
 }

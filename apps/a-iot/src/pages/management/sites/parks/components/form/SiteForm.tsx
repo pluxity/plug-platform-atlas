@@ -84,11 +84,11 @@ export default function SiteForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="min-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4 p-4">
+                <div className="grid gap-4 p-6 pb-0">
                     <div className="grid gap-2">
                         <Label htmlFor="name">공원명</Label>
                         <Input
