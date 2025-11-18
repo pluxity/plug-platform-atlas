@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from '@plug-atlas/ui';
+import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner, DialogFooter } from '@plug-atlas/ui';
 import { useCreateAdminUser, useRoles } from '@plug-atlas/api-hooks';
 import { UserCreateRequest, UserCreateRequestSchema } from '@plug-atlas/types';
 
@@ -55,7 +55,7 @@ export default function UserCreateDialog({ isOpen, onClose, onSuccess }: UsersCr
                 <DialogHeader>
                     <DialogTitle>사용자 생성</DialogTitle>
                 </DialogHeader>
-                <Form onSubmit={createUserForm.handleSubmit(submitCreateUserForm)} className="space-y-4">
+                <Form onSubmit={createUserForm.handleSubmit(submitCreateUserForm)} className="space-y-4 p-4">
                     <FormField>
                         <FormItem>
                             <FormLabel htmlFor="username">아이디</FormLabel>
@@ -186,10 +186,10 @@ export default function UserCreateDialog({ isOpen, onClose, onSuccess }: UsersCr
                         </FormItem>
                     </FormField>
 
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" className="flex-1" onClick={resetCreateUserForm}>취소</Button>
-                        <Button type="submit" variant="default" className="flex-1" disabled={isCreateUser || !createUserForm.formState.isValid}>{isCreateUser ? (<> 저장중... <Spinner size="sm" /> </>) : '저장'}</Button>
-                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" className="min-w-30" onClick={resetCreateUserForm}>취소</Button>
+                        <Button type="submit" variant="default" className="min-w-30" disabled={isCreateUser || !createUserForm.formState.isValid}>{isCreateUser ? (<> 저장중... <Spinner size="sm" /> </>) : '저장'}</Button>
+                    </DialogFooter>
                 </Form>
             </DialogContent>
         </Dialog>

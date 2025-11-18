@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from '@plug-atlas/ui';
+import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner, DialogFooter } from '@plug-atlas/ui';
 import { useCreateRole, usePermissions } from '@plug-atlas/api-hooks';
 import { RoleCreateRequest, RoleCreateRequestSchema } from '@plug-atlas/types';
 interface RoleCreateDialogProps{
@@ -51,7 +51,7 @@ export default function RoleCreateDialog({ isOpen, onClose, onSuccess }: RoleCre
                 <DialogHeader>
                     <DialogTitle>역할 생성</DialogTitle>
                 </DialogHeader>
-                <Form onSubmit={createRoleForm.handleSubmit(submitCreateRoleForm)} className="space-y-4">
+                <Form onSubmit={createRoleForm.handleSubmit(submitCreateRoleForm)} className="space-y-4 p-4">
                     <FormField>
                         <FormItem>
                             <FormLabel htmlFor="name">이름</FormLabel>
@@ -127,10 +127,10 @@ export default function RoleCreateDialog({ isOpen, onClose, onSuccess }: RoleCre
 
                     </FormField>
 
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" className="flex-1" onClick={resetCreateRoleForm}>취소</Button>
-                        <Button type="submit" variant="default" className="flex-1" disabled={isCreateRole || !createRoleForm.formState.isValid}>{isCreateRole ? (<> 저장중... <Spinner size="sm" /> </>) : '저장'}</Button>
-                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" className="min-w-30" onClick={resetCreateRoleForm}>취소</Button>
+                        <Button type="submit" variant="default" className="min-w-30" disabled={isCreateRole || !createRoleForm.formState.isValid}>{isCreateRole ? (<> 저장중... <Spinner size="sm" /> </>) : '저장'}</Button>
+                    </DialogFooter>
                 </Form>
             </DialogContent>
         </Dialog>

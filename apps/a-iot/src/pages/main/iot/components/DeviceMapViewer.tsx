@@ -119,7 +119,9 @@ export default function DeviceMapViewer({
                         <DialogTitle>{device.name}</DialogTitle>
                         <DialogDescription>확대 축소만 가능합니다. 마우스 휠을 사용하세요.</DialogDescription>
                     </DialogHeader>
-                    < MapContent device={device} />
+                    <div className="p-4">
+                        <MapContent device={device}  />
+                    </div>
                 </DialogContent>
             </Dialog>
         )

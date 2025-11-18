@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, Form, FormLabel, FormField, FormItem, FormControl, FormMessage, Input, Button, toast, Label, Checkbox, Spinner } from '@plug-atlas/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Form, FormLabel, FormField, FormItem, FormControl, FormMessage, Input, Button, toast, Label, Checkbox, Spinner, DialogFooter } from '@plug-atlas/ui';
 import { useCreatePermission, useResourceTypes } from '@plug-atlas/api-hooks';
 import { PermissionGroupCreateRequest, PermissionGroupCreateRequestSchema, ResourceTypeResponse } from '@plug-atlas/types';
 import { useCallback } from 'react';
@@ -57,7 +57,7 @@ export default function PermissionCreateDialog({ isOpen, onClose, onSuccess }: P
                 <DialogHeader>
                     <DialogTitle>권한 생성</DialogTitle>
                 </DialogHeader>
-                <Form onSubmit={createPermissionForm.handleSubmit(submitCreatePermissionForm)} className="space-y-4">
+                <Form onSubmit={createPermissionForm.handleSubmit(submitCreatePermissionForm)} className="space-y-4 p-4">
                     <FormField>
                         <FormItem>
                             <FormLabel htmlFor="name">권한 이름</FormLabel>
@@ -145,14 +145,14 @@ export default function PermissionCreateDialog({ isOpen, onClose, onSuccess }: P
                         </FormItem>
                     </FormField>
 
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" className="flex-1" onClick={resetPermissionCreateForm}>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" className="min-w-30" onClick={resetPermissionCreateForm}>
                             취소
                         </Button>
-                        <Button type="submit" variant="default" className="flex-1" disabled={isCreating || !createPermissionForm.formState.isValid}>
+                        <Button type="submit" variant="default" className="min-w-30" disabled={isCreating || !createPermissionForm.formState.isValid}>
                             {isCreating ? (<> 저장중... <Spinner size="sm" /> </>) : '저장'}
                         </Button>
-                    </div>
+                    </DialogFooter>
                 </Form>
             </DialogContent>
         </Dialog>

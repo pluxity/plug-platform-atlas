@@ -92,7 +92,7 @@ export default function SiteForm({
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-4 p-4">
                     <div className="grid gap-2">
                         <Label htmlFor="name">공원명</Label>
                         <Input
@@ -165,17 +165,19 @@ export default function SiteForm({
                         </div>
                     </div>
                 </div>
-                <DialogFooter className="flex justify-end gap-2">
+                <DialogFooter>
                     <Button
                         variant="outline"
                         onClick={onCancel}
                         disabled={isLoading}
+                        className="min-w-30"
                     >
                         취소
                     </Button>
                     <Button
                         onClick={onSubmit}
                         disabled={isLoading || isUploading}
+                        className="min-w-30"
                     >
                         {isLoading ? `${submitButtonText} 중...` : submitButtonText}
                     </Button>

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, Form, FormLabel, FormField, FormItem, FormControl, FormMessage, Input, Button, toast, Label, Checkbox, Spinner } from '@plug-atlas/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Form, FormLabel, FormField, FormItem, FormControl, FormMessage, Input, Button, toast, Label, Checkbox, Spinner, DialogFooter } from '@plug-atlas/ui';
 import { useUpdatePermission, useResourceTypes } from '@plug-atlas/api-hooks';
 import { PermissionGroupUpdateRequest, PermissionGroupUpdateRequestSchema, ResourceTypeResponse, PermissionGroupResponse } from '@plug-atlas/types';
 import { useCallback, useEffect } from 'react';
@@ -71,7 +71,7 @@ export default function PermissionEditDialog({ isOpen, permission, onClose, onSu
                 <DialogHeader>
                     <DialogTitle>권한 수정</DialogTitle>
                 </DialogHeader>
-                <Form onSubmit={editPermissionForm.handleSubmit(submitEditPermissionForm)} className="space-y-4">
+                <Form onSubmit={editPermissionForm.handleSubmit(submitEditPermissionForm)} className="space-y-4 p-4">
                     <FormField>
                         <FormItem>
                             <FormLabel htmlFor="name">권한 이름</FormLabel>
@@ -159,14 +159,14 @@ export default function PermissionEditDialog({ isOpen, permission, onClose, onSu
                         </FormItem>
                     </FormField>
 
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" className="flex-1" onClick={resetPermissionEditForm}>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" className="min-w-30" onClick={resetPermissionEditForm}>
                             취소
                         </Button>
-                        <Button type="submit" variant="default" className="flex-1" disabled={isUpdating || !editPermissionForm.formState.isValid}>
+                        <Button type="submit" variant="default" className="min-w-30" disabled={isUpdating || !editPermissionForm.formState.isValid}>
                             {isUpdating ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}
                         </Button>
-                    </div>
+                    </DialogFooter>
                 </Form>
             </DialogContent>
         </Dialog>

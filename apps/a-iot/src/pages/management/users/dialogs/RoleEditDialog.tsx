@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from '@plug-atlas/ui';
+import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner, DialogFooter } from '@plug-atlas/ui';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { RoleUpdateRequest, RoleResponse, RoleUpdateRequestSchema } from '@plug-atlas/types';
@@ -68,7 +68,7 @@ export default function RoleEditDialog({ isOpen, role, onClose, onSuccess }: Rol
                 <DialogHeader>
                     <DialogTitle>역할 수정</DialogTitle>
                 </DialogHeader>
-                <Form onSubmit={editRoleForm.handleSubmit(submitEditRoleForm)} className="space-y-4">
+                <Form onSubmit={editRoleForm.handleSubmit(submitEditRoleForm)} className="space-y-4 p-4">
                     <FormField>
                         <FormItem>
                             <FormLabel htmlFor="name">이름</FormLabel>
@@ -144,10 +144,10 @@ export default function RoleEditDialog({ isOpen, role, onClose, onSuccess }: Rol
 
                     </FormField>
 
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" className="flex-1" onClick={resetEditRoleForm}>취소</Button>
-                        <Button type="submit" variant="default" className="flex-1" disabled={isUpdateRole || !editRoleForm.formState.isValid}>{isUpdateRole ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}</Button>
-                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" className="min-w-30" onClick={resetEditRoleForm}>취소</Button>
+                        <Button type="submit" variant="default" className="min-w-30" disabled={isUpdateRole || !editRoleForm.formState.isValid}>{isUpdateRole ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}</Button>
+                    </DialogFooter>
                 </Form>
             </DialogContent>
         </Dialog>

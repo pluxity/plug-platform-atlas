@@ -234,7 +234,7 @@ export default function CCTV() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
             <div className="space-y-2">
               <Label htmlFor="name">CCTV 이름 *</Label>
               <Input
@@ -380,10 +380,11 @@ export default function CCTV() {
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
                 disabled={isCreating || isUpdating}
+                className="min-w-30"
               >
                 취소
               </Button>
-              <Button type="submit" disabled={isCreating || isUpdating}>
+              <Button type="submit" className="min-w-30" disabled={isCreating || isUpdating}>
                 {isCreating || isUpdating ? '저장 중...' : editingCctv ? '수정' : '등록'}
               </Button>
             </DialogFooter>

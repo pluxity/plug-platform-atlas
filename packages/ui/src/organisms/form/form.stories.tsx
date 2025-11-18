@@ -137,7 +137,7 @@ export const WithValidation: Story = {
               />
             </FormControl>
             {errors.username && (
-              <FormMessage className="text-sm text-error-600">
+              <FormMessage>
                 {errors.username}
               </FormMessage>
             )}
@@ -159,7 +159,7 @@ export const WithValidation: Story = {
               />
             </FormControl>
             {errors.password && (
-              <FormMessage className="text-sm text-error-600">
+              <FormMessage>
                 {errors.password}
               </FormMessage>
             )}
