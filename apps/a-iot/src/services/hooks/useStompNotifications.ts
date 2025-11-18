@@ -88,6 +88,26 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                     }
                 });
                 subscriptionsRef.current.push(connectionErrorSub);
+
+                const changeEventStatusSub = client.subscribe('/queue/change-event-status', (message: IMessage) => {
+                    try {
+                        const updatedEvent: Event = JSON.parse(message.body);
+                        const notification: Notification = {
+                            id: `event-${updatedEvent.eventId}`,
+                            eventId: updatedEvent.eventId,
+                            type: 'sensor-alarm',
+                            title: updatedEvent.eventName,
+                            siteName: updatedEvent.deviceId,
+                            message: updatedEvent.guideMessage,
+                            timestamp: new Date(updatedEvent.occurredAt),
+                            level: updatedEvent.level as Notification['level'],
+                            payload: updatedEvent,
+                        };
+                        addNotification(notification);
+                    } catch (error) {
+                    }
+                });
+                subscriptionsRef.current.push(changeEventStatusSub);
             },
             onDisconnect: () => {
                 setIsConnected(false);

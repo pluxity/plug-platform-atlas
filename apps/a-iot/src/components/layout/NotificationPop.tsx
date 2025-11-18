@@ -4,7 +4,6 @@ import { Button, Popover, PopoverContent, PopoverTrigger, Dialog } from '@plug-a
 import { Notification, Event } from "../../services/types";
 import { getLevelInfo } from '../../pages/main/events/utils/levelUtils.ts';
 import EventDetailModal from '../../pages/main/events/components/modal/EventDetailModal.tsx';
-import { useNotificationStore } from '../../stores';
 import { getAssetPath } from '../../utils/assetPath';
 
 interface NotificationPanelProps {
@@ -128,7 +127,6 @@ export default function NotificationPop({
 }: NotificationPanelProps) {
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const addNotification = useNotificationStore((state) => state.addNotification);
 
     const handleItemClick = (event: Event) => {
         setSelectedEvent(event);
@@ -138,17 +136,6 @@ export default function NotificationPop({
     const handleDialogClose = () => {
         setIsDialogOpen(false);
         setSelectedEvent(null);
-    };
-
-    const handleStatusUpdate = () => {
-        if (selectedEvent) {
-            const updatedEvent = { ...selectedEvent, status: 'IN_PROGRESS' as const };
-            const notification = notifications.find(n => n.eventId === selectedEvent.eventId);
-            if (notification) {
-                addNotification({ ...notification, payload: updatedEvent });
-            }
-            setSelectedEvent(updatedEvent);
-        }
     };
 
     return (
@@ -207,10 +194,7 @@ export default function NotificationPop({
 
             <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
                 {selectedEvent && (
-                    <EventDetailModal
-                        event={selectedEvent}
-                        onStatusUpdate={handleStatusUpdate}
-                    />
+                    <EventDetailModal event={selectedEvent} />
                 )}
             </Dialog>
         </>

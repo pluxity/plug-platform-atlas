@@ -13,6 +13,7 @@ import {
 
 interface ActionHistorySectionProps {
   eventId: number;
+  onActionUpdate?: () => void;
 }
 
 interface ActionHistoryItemProps {
@@ -222,7 +223,7 @@ const AddActionHistoryForm: React.FC<{ eventId: number; onSuccess: () => void }>
   );
 };
 
-export default function ActionHistorySection({ eventId }: ActionHistorySectionProps) {
+export default function ActionHistorySection({ eventId, onActionUpdate }: ActionHistorySectionProps) {
   const { data: histories, isLoading, mutate } = useEventActionHistories(eventId, {
     refreshInterval: 30000,
     revalidateOnFocus: true,
@@ -230,6 +231,7 @@ export default function ActionHistorySection({ eventId }: ActionHistorySectionPr
 
   const handleRefresh = () => {
     mutate();
+    onActionUpdate?.();
   };
 
   return (
