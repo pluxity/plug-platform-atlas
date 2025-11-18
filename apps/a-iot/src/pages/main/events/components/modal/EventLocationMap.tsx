@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Viewer as CesiumViewer } from 'cesium';
+import { AspectRatio } from '@plug-atlas/ui';
 import { useViewerStore, useMarkerStore, useCameraStore } from '../../../../../stores/cesium';
 
 interface EventLocationMapProps {
@@ -17,7 +18,6 @@ export default function EventLocationMap({ longitude, latitude, eventName }: Eve
   const { addMarker, clearAllMarkers } = useMarkerStore();
   const { focusOn } = useCameraStore();
 
-  // Validate coordinates
   const hasValidCoordinates =
     longitude !== undefined &&
     longitude !== null &&
@@ -103,21 +103,25 @@ export default function EventLocationMap({ longitude, latitude, eventName }: Eve
   }
 
   return (
-    <div className="relative">
-      <div
-        ref={cesiumContainerRef}
-        className="w-full h-[300px] rounded-lg overflow-hidden border border-gray-200"
-        style={{ position: 'relative' }}
-      />
+    <div className="px-8 bg-black">
+      <AspectRatio ratio={4 / 3}>
+        <div className="relative w-full h-full">
+          <div
+            ref={cesiumContainerRef}
+            className="w-full h-full overflow-hidden"
+            style={{ position: 'relative' }}
+          />
 
-      {!isInitialized && (
-        <div className="absolute inset-0 bg-gray-100/80 rounded-lg flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <span className="text-sm text-gray-600">지도 로딩 중...</span>
-          </div>
+          {!isInitialized && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <span className="text-sm text-gray-100">지도 로딩 중...</span>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </AspectRatio>
     </div>
   );
 }

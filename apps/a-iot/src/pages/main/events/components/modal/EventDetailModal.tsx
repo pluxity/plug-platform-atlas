@@ -56,7 +56,7 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
   return (
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
+          <DialogTitle>
             {localEvent.profileDescription || localEvent.sensorDescription || '센서'} {getLevelInfo(localEvent.level).text} 발생
           </DialogTitle>
         </DialogHeader>
