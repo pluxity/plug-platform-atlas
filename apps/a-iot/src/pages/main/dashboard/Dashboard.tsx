@@ -155,7 +155,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-4">
         <Tabs className="shadow-md inline-flex rounded-xl" value={activeTab} onValueChange={handleTabChange} variant="buttons">
           <TabsList className="justify-start gap-0 !border-white rounded-xl">
             <TabsTrigger 
