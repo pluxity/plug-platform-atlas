@@ -1,5 +1,5 @@
 import {Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Label, DialogFooter} from '@plug-atlas/ui';
-import {SiteCreateRequest} from "../../../../../../services/types/site.ts";
+import {SiteCreateRequest} from "../../../../../../services/types";
 import CesiumPolygonDrawer from "./CesiumPolygonDrawer.tsx";
 import {useUploadFile} from '@plug-atlas/api-hooks';
 import {useState, useRef, useEffect} from 'react';
@@ -35,7 +35,6 @@ export default function SiteForm({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // 초기 썸네일 미리보기 설정
     useEffect(() => {
         if (initialThumbnailUrl) {
             setPreviewUrl(initialThumbnailUrl);
@@ -52,7 +51,6 @@ export default function SiteForm({
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // 이미지 미리보기 생성
         const reader = new FileReader();
         reader.onloadend = () => {
             if (typeof reader.result === 'string') {
@@ -61,7 +59,6 @@ export default function SiteForm({
         };
         reader.readAsDataURL(file);
 
-        // 파일 업로드
         try {
             const formData = new FormData();
             formData.append('file', file);
@@ -70,7 +67,6 @@ export default function SiteForm({
             onFormFieldChange('thumbnailId', thumbnailId);
         } catch (error) {
             console.error('파일 업로드 실패:', error);
-            // 미리보기 제거
             setPreviewUrl(null);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';

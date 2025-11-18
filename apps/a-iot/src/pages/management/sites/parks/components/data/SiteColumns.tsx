@@ -1,7 +1,29 @@
+import { useState } from 'react';
 import type { Site } from '../../../../../../services/types';
 import type { FileResponse } from '@plug-atlas/types';
+import { Skeleton } from "@plug-atlas/ui";
 
-const DEFAULT_THUMBNAIL = '/aiot/images/icons/map/marker.png';
+function ThumbnailCell({ value }: { value: Site[keyof Site] }) {
+  const thumbnail = value as FileResponse | null;
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError || !thumbnail) {
+    return (
+      <div className="flex justify-center">
+        <Skeleton className="w-12 h-12 rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={thumbnail.url}
+      className="w-12 h-12 rounded-full m-auto"
+      alt={thumbnail.originalFileName ?? 'thumbnail'}
+      onError={() => setHasError(true)}
+    />
+  );
+}
 
 export function createSiteColumns(
 ) {
@@ -19,16 +41,7 @@ export function createSiteColumns(
         {
           key: 'thumbnail' as keyof Site,
           header: '이미지',
-          cell: (value: Site[keyof Site]) => {
-            const thumbnail = value as FileResponse | null;
-            return (
-              <img
-                src={thumbnail?.url ?? DEFAULT_THUMBNAIL}
-                className="w-12 h-12 rounded-full m-auto"
-                alt={thumbnail?.originalFileName ?? 'thumbnail'}
-              />
-            );
-          },
+          cell: (value: Site[keyof Site]) => <ThumbnailCell value={value} />,
         },
         {
             key: 'description' as keyof Site,

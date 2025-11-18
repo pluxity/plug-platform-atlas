@@ -1,7 +1,7 @@
-import useSWR, { type SWRConfiguration } from 'swr'
-import useSWRMutation, { type SWRMutationConfiguration } from 'swr/mutation'
-import { useApiClient } from '../client/context'
-import type { FileResponse } from '@plug-atlas/types'
+import useSWR, {type SWRConfiguration} from 'swr'
+import useSWRMutation, {type SWRMutationConfiguration} from 'swr/mutation'
+import {useApiClient} from '../client'
+import type {FileResponse} from '@plug-atlas/types'
 
 type DataResponse<T> = { data: T }
 
