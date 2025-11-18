@@ -17,9 +17,9 @@ function ThumbnailCell({ value }: { value: Site[keyof Site] }) {
 
   return (
     <img
-      src={thumbnail?.url}
+      src={thumbnail.url}
       className="w-12 h-12 rounded-full m-auto"
-      alt={thumbnail?.originalFileName ?? 'thumbnail'}
+      alt={thumbnail.originalFileName ?? 'thumbnail'}
       onError={() => setHasError(true)}
     />
   );
