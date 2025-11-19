@@ -66,15 +66,15 @@ export default function PermissionCreateDialog({ isOpen, onClose, onSuccess }: P
                                     control={createPermissionForm.control}
                                     render={({ field }) => (
                                         <ModalFormItem 
-                                            label="권한 이름" 
+                                            label="이름" 
                                             message={createPermissionForm.formState.errors.name?.message}
                                         >
                                             <Input 
                                                 {...field}
                                                 id="name" 
                                                 type="text" 
-                                                placeholder="권한 이름을 입력해주세요." 
-                                                aria-label="권한 이름"
+                                                placeholder="이름을 입력해주세요." 
+                                                aria-label="이름"
                                             />
                                         </ModalFormItem>
                                     )}
@@ -87,7 +87,7 @@ export default function PermissionCreateDialog({ isOpen, onClose, onSuccess }: P
                                     control={createPermissionForm.control}
                                     render={({ field }) => (
                                         <ModalFormItem 
-                                            label="권한 설명" 
+                                            label="설명" 
                                             message={createPermissionForm.formState.errors.description?.message}
                                         >
                                             <Input 
@@ -95,7 +95,7 @@ export default function PermissionCreateDialog({ isOpen, onClose, onSuccess }: P
                                                 id="description" 
                                                 type="text" 
                                                 placeholder="권한 설명을 입력해주세요." 
-                                                aria-label="권한 설명"
+                                                aria-label="설명"
                                             />
                                         </ModalFormItem>
                                     )}
@@ -108,7 +108,7 @@ export default function PermissionCreateDialog({ isOpen, onClose, onSuccess }: P
                                     control={createPermissionForm.control}
                                     render={({ field }) => (
                                         <ModalFormItem 
-                                            label="권한 목록"
+                                            label="목록"
                                             message={createPermissionForm.formState.errors.permissions?.message}
                                         >
                                             <div className="flex flex-wrap gap-x-6 gap-y-4 max-h-[100px] p-0 overflow-y-auto p-1">

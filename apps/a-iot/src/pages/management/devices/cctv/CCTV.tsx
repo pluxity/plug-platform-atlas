@@ -326,7 +326,7 @@ export default function CCTV() {
                                 placeholder="예: 127.111400"
                                 {...field}
                                 value={field.value ?? ''}
-                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                                onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
                               />
                               {errors.lon && (
                                 <p className="text-sm text-destructive">{errors.lon.message}</p>
@@ -351,7 +351,7 @@ export default function CCTV() {
                                 placeholder="예: 37.394800"
                                 {...field}
                                 value={field.value ?? ''}
-                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                                onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
                               />
                               {errors.lat && (
                                 <p className="text-sm text-destructive">{errors.lat.message}</p>
@@ -376,7 +376,7 @@ export default function CCTV() {
                                 placeholder="예: 3.0"
                                 {...field}
                                 value={field.value ?? ''}
-                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                                onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
                               />
                               {errors.height && (
                                 <p className="text-sm text-destructive">{errors.height.message}</p>
