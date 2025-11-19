@@ -67,7 +67,7 @@ export default function PermissionEditDialog({ isOpen, permission, onClose, onSu
                 resetPermissionEditForm();
             }
         }}>
-            <DialogContent aria-describedby={undefined} className="max-w-2xl">
+            <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>권한 수정</DialogTitle>
                 </DialogHeader>
@@ -125,7 +125,7 @@ export default function PermissionEditDialog({ isOpen, permission, onClose, onSu
                                             label="권한 목록"
                                             message={editPermissionForm.formState.errors.permissions?.message}
                                         >
-                                            <div className="flex flex-col gap-6 max-h-96 overflow-y-auto border rounded-lg p-4">
+                                            <div className="flex flex-wrap gap-x-6 gap-y-4 max-h-[100px] p-0 overflow-y-auto p-1">
                                                 {resourceTypes?.map((resourceType: ResourceTypeResponse) => {
                                                     const resources = resourceData[resourceType.key] || [];
 

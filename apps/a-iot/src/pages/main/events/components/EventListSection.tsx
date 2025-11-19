@@ -142,7 +142,7 @@ export default function EventListSection() {
             </div>
 
             {activeFiltersCount > 0 && (
-                <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 mt-4">
                     <span className="text-sm font-medium text-gray-700">적용된 필터:</span>
 
                     {dateRange && (
