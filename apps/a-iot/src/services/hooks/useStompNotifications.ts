@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {Client, IMessage, StompSubscription} from '@stomp/stompjs';
 import type {ConnectionErrorPayload, Notification, Event} from '../types';
-import {useNotificationStore} from '../../stores';
+import {useNotificationStore, useEventStore} from '../../stores';
 
 const getWebSocketUrl = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -22,6 +22,8 @@ export function useStompNotifications(): UseStompNotificationsReturn {
     const subscriptionsRef = useRef<StompSubscription[]>([]);
 
     const addNotification = useNotificationStore((state) => state.addNotification);
+    const addEvent = useEventStore((state) => state.addEvent);
+    const updateEvent = useEventStore((state) => state.updateEvent);
 
     useEffect(() => {
         const client = new Client({
@@ -32,9 +34,14 @@ export function useStompNotifications(): UseStompNotificationsReturn {
             onConnect: () => {
                 setIsConnected(true);
 
-                const sensorAlarmSub = client.subscribe('/queue/sensor-alarm', (message: IMessage) => {
+                const sensorAlarmSub = client.subscribe('/user/queue/sensor-alarm', (message: IMessage) => {
                     try {
                         const payload: Event = JSON.parse(message.body);
+
+                        // EventStore에 이벤트 추가/업데이트
+                        addEvent(payload);
+
+                        // Notification 생성
                         const notification: Notification = {
                             id: `sensor-${Date.now()}-${Math.random()}`,
                             type: 'sensor-alarm',
@@ -51,26 +58,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                 });
                 subscriptionsRef.current.push(sensorAlarmSub);
 
-                const userSensorAlarmSub = client.subscribe('/user/queue/sensor-alarm', (message: IMessage) => {
-                    try {
-                        const payload: Event = JSON.parse(message.body);
-                        const notification: Notification = {
-                            id: `sensor-${Date.now()}-${Math.random()}`,
-                            type: 'sensor-alarm',
-                            title: payload.eventName || '센서 알람',
-                            siteName: payload.siteName || payload.sensorDescription,
-                            message: payload.guideMessage || '',
-                            timestamp: payload.occurredAt ? new Date(payload.occurredAt) : new Date(),
-                            level: payload.level as Notification['level'],
-                            payload,
-                        };
-                        addNotification(notification);
-                    } catch (error) {
-                    }
-                });
-                subscriptionsRef.current.push(userSensorAlarmSub);
-
-                const connectionErrorSub = client.subscribe('/queue/connection-error', (message: IMessage) => {
+                const connectionErrorSub = client.subscribe('/user/queue/connection-error', (message: IMessage) => {
                     try {
                         const payload: ConnectionErrorPayload = JSON.parse(message.body);
                         const notification: Notification = {
@@ -89,9 +77,14 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                 });
                 subscriptionsRef.current.push(connectionErrorSub);
 
-                const changeEventStatusSub = client.subscribe('/queue/change-event-status', (message: IMessage) => {
+                const changeEventStatusSub = client.subscribe('/user/queue/change-event-status', (message: IMessage) => {
                     try {
                         const updatedEvent: Event = JSON.parse(message.body);
+
+                        // EventStore에 이벤트 상태 업데이트 (가장 중요!)
+                        updateEvent(updatedEvent.eventId, updatedEvent);
+
+                        // Notification 업데이트
                         const notification: Notification = {
                             id: `event-${updatedEvent.eventId}`,
                             eventId: updatedEvent.eventId,
@@ -124,7 +117,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
             subscriptionsRef.current = [];
             client.deactivate();
         };
-    }, [addNotification]);
+    }, [addNotification, addEvent, updateEvent]);
 
     return {
         isConnected,

@@ -1,7 +1,10 @@
-import { useEffect } from 'react';
-import { useNotificationStore } from '../../stores';
-import { useEvents } from './useEventsManagement';
-import type { Event, Notification } from '../types';
+// External packages
+import { useEffect } from 'react'
+
+// Internal imports
+import { useEvents } from '@/services/hooks/useEventsManagement'
+import type { Event, Notification } from '@/services/types'
+import { useEventStore, useNotificationStore } from '@/stores'
 
 const eventToNotification = (event: Event): Notification => {
     return {
@@ -20,9 +23,11 @@ const eventToNotification = (event: Event): Notification => {
 
 export function useInitialNotifications() {
     const { isInitialized, setInitialized, setNotifications } = useNotificationStore();
+    const { setEvents } = useEventStore();
 
-    const { data: pendingEvents, isLoading } = useEvents(
-        { status: 'ACTIVE' },
+    // 전체 이벤트 로드 (status 필터 제거 - 모든 이벤트를 eventStore에 저장)
+    const { data: allEvents, isLoading } = useEvents(
+        undefined, // 필터 없이 전체 이벤트 조회
         {
             revalidateOnFocus: false,
             revalidateOnReconnect: false,
@@ -31,12 +36,17 @@ export function useInitialNotifications() {
     );
 
     useEffect(() => {
-        if (!isInitialized && pendingEvents && pendingEvents.length > 0 && !isLoading) {
-            const notifications = pendingEvents.map(eventToNotification);
+        if (!isInitialized && allEvents && !isLoading) {
+            // EventStore 초기화 (전체 이벤트 저장)
+            setEvents(allEvents);
+
+            // NotificationStore 초기화 (ACTIVE 이벤트만 알림으로 표시)
+            const activeEvents = allEvents.filter(event => event.status === 'ACTIVE');
+            const notifications = activeEvents.map(eventToNotification);
             setNotifications(notifications);
             setInitialized(true);
         }
-    }, [isInitialized, pendingEvents, isLoading, setNotifications, setInitialized]);
+    }, [isInitialized, allEvents, isLoading, setNotifications, setInitialized, setEvents]);
 
     return { isLoading, isInitialized };
 }
