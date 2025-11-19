@@ -1,6 +1,6 @@
 import { useForm, Controller } from 'react-hook-form';
 import { useCallback, useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, DialogFooter, ModalForm, ModalFormItem, ModalFormField, ModalFormContainer, Spinner, Label } from '@plug-atlas/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, DialogFooter, ModalForm, ModalFormItem, ModalFormField, ModalFormContainer, Label } from '@plug-atlas/ui';
 import { SiteCreateRequest } from "../../../../../../services/types";
 import CesiumPolygonDrawer from "./CesiumPolygonDrawer.tsx";
 import { useUploadFile } from '@plug-atlas/api-hooks';
