@@ -33,11 +33,9 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
     };
 
     const sortConditions = (conditions: EventCondition[]): EventCondition[] => {
-        // 새 조건(id가 없는 것)과 기존 조건 분리
         const newConditions = conditions.filter(c => !c.id);
         const existingConditions = conditions.filter(c => c.id);
 
-        // 기존 조건만 정렬
         const sortedExisting = existingConditions.sort((a, b) => {
             const fieldKeyCompare = (a.fieldKey || '').localeCompare(b.fieldKey || '');
             if (fieldKeyCompare !== 0) {
@@ -47,7 +45,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             return getLevelPriority(a.level) - getLevelPriority(b.level);
         });
 
-        // 새 조건을 최상단에 배치
         return [...newConditions, ...sortedExisting];
     };
 
@@ -65,7 +62,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             }
         });
 
-        // 중복 제거: Set을 사용하여 고유한 에러 메시지만 유지
         const uniqueErrors = Array.from(new Set(allErrors));
 
         return {
@@ -88,6 +84,11 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
         }
         setHasUnsavedChanges(false);
     }, [conditionsData]);
+
+    useEffect(() => {
+        const hasChanges = checkForChanges(editingData);
+        setHasUnsavedChanges(hasChanges);
+    }, [editingData, originalData]);
 
     const checkForChanges = (currentEditing: EventCondition[]) => {
         if (currentEditing.length !== originalData.length) return true;
@@ -145,16 +146,10 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
 
             updated[index] = updatedCondition;
 
-            // 새 조건이 아닌 경우에만 fieldKey나 level 변경 시 정렬
             const isNewCondition = !updatedCondition.id;
             if (!isNewCondition && (field === 'fieldKey' || field === 'level')) {
-                const sortedUpdated = sortConditions(updated);
-                setHasUnsavedChanges(checkForChanges(sortedUpdated));
-                return sortedUpdated;
+                return sortConditions(updated);
             }
-
-            const hasChanges = checkForChanges(updated);
-            setHasUnsavedChanges(hasChanges);
 
             return updated;
         });
@@ -166,26 +161,16 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             id: undefined
         };
 
-        setEditingData(prev => {
-            // 새 조건을 최상단에 추가
-            const updated = [newCondition, ...prev];
-            setHasUnsavedChanges(checkForChanges(updated));
-            return updated;
-        });
+        setEditingData(prev => [newCondition, ...prev]);
     };
 
     const handleRemoveCondition = (index: number) => {
-        setEditingData(prev => {
-            const updated = prev.filter((_, i) => i !== index);
-            setHasUnsavedChanges(checkForChanges(updated));
-            return updated;
-        });
+        setEditingData(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleDelete = async (conditionId: number) => {
         try {
-            await deleteEventCondition(conditionId);
-            await refetch();
+            await deleteEventCondition(conditionId, objectId);
             toast.success("삭제 완료", {
                 description: "이벤트 조건이 삭제되었습니다.",
             });
@@ -205,7 +190,6 @@ export const useEventConditionManager = (objectId: string, profiles: DeviceProfi
             });
 
             setHasUnsavedChanges(false);
-            await refetch();
             toast.success("저장 완료", {
                 description: "모든 이벤트 조건이 저장되었습니다.",
             });
