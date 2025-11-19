@@ -1,12 +1,12 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input } from '@plug-atlas/ui';
-import { DeviceProfile, EventCondition } from '../../../../../../services/types';
+import { DeviceProfile, EventCondition } from '@/services/types';
 import {
     getAvailableLevelsByProfile,
     isBooleanProfile,
     getProfileByFieldKey
 } from '../../handlers/EventConditionUtils.tsx';
-import { getLevelBadge } from '../../../../../main/events/utils/levelUtils.ts';
+import { getLevelBadge } from '@/pages/main/events/utils/levelUtils.ts';
 
 interface EditableFieldKeyProps {
     value: string;
@@ -154,7 +154,7 @@ export const EditableCondition: React.FC<EditableConditionProps> = ({
                         const boolValue = value === 'true';
                         onChange('booleanValue', boolValue);
                         onChange('operator', 'GE');
-                        onChange('thresholdValue', boolValue ? 1 : 0);
+                        onChange('thresholdValue', undefined);
                     }}
                 >
                     <SelectTrigger className={`w-full ${requiredStatus?.booleanValue ? 'border-red-500' : ''}`}>

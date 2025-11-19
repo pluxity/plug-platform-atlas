@@ -1,6 +1,6 @@
 import { Button, Toaster } from '@plug-atlas/ui';
 import { Plus, Info, Save, X, FileEdit, AlertCircle } from 'lucide-react';
-import { DeviceProfile } from '../../../../../../services/types';
+import { DeviceProfile } from '@/services/types';
 import { useEventConditionManager } from "../../handlers/useEventConditionManager.ts";
 import { createColumns } from "./CreateColumns.tsx";
 import ErrorDisplay from '../ErrorDisplay.tsx';
@@ -88,25 +88,6 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {!hasUnsavedChanges && conditionsData.length > 0 && (
-                            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-                                <Info className="h-4 w-4 text-gray-600 flex-shrink-0" />
-                                <span className="text-xs text-gray-600">
-                                    변경된 내용이 없습니다
-                                </span>
-                            </div>
-                        )}
-
-                        {hasUnsavedChanges && !validationState.isValid && (
-                            <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
-                                <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-red-600">
-                                        필수 항목을 입력해주세요
-                                    </span>
-                                </div>
-                            </div>
-                        )}
 
                         {hasUnsavedChanges && (
                             <>
@@ -147,25 +128,25 @@ export default function EventConditionsManager({ objectId, profiles }: EventCond
                     </div>
                 )}
 
-                {/*{hasUnsavedChanges && !validationState.isValid && validationState.errors.length > 0 && (*/}
-                {/*    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">*/}
-                {/*        <div className="flex items-start gap-3">*/}
-                {/*            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />*/}
-                {/*            <div className="flex-1">*/}
-                {/*                <h3 className="text-sm font-medium text-red-800 mb-2">*/}
-                {/*                    조건을 저장하기 전에 다음 문제들을 해결해주세요:*/}
-                {/*                </h3>*/}
-                {/*                <ul className="list-disc list-inside space-y-1">*/}
-                {/*                    {validationState.errors.map((error, index) => (*/}
-                {/*                        <li key={index} className="text-sm text-red-700">*/}
-                {/*                            {error}*/}
-                {/*                        </li>*/}
-                {/*                    ))}*/}
-                {/*                </ul>*/}
-                {/*            </div>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*)}*/}
+                {hasUnsavedChanges && !validationState.isValid && validationState.errors.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                                <h3 className="text-sm font-medium text-red-800 mb-2">
+                                    조건을 저장하기 전에 다음 문제들을 해결해주세요:
+                                </h3>
+                                <ul className="list-disc list-inside space-y-1">
+                                    {validationState.errors.map((error, index) => (
+                                        <li key={index} className="text-sm text-red-700">
+                                            {error}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div>

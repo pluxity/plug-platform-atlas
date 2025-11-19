@@ -1,7 +1,7 @@
 import React from 'react';
 import { z } from 'zod';
-import { DeviceProfile, EventCondition } from "../../../../../services/types";
-import { EventConditionOperator, EventLevel } from "../../../../../services/types/eventCondition.ts";
+import { DeviceProfile, EventCondition } from "@/services/types";
+import { EventConditionOperator, EventLevel } from "@/services/types";
 
 export interface Column<T> {
     key: keyof T;
@@ -9,48 +9,50 @@ export interface Column<T> {
     cell: (value: any, row: T, index?: number) => React.ReactNode;
 }
 
-// Zod 스키마 정의
-const eventConditionBaseSchema = z.object({
-    objectId: z.string().min(1, { message: "객체 ID가 필요합니다" }),
-    fieldKey: z.string().min(1, { message: "Field Key를 선택해주세요" }),
-    level: z.enum(['NORMAL', 'WARNING', 'CAUTION', 'DANGER', 'DISCONNECTED'], {
-        message: "레벨을 선택해주세요"
-    }),
-    conditionType: z.enum(['SINGLE', 'RANGE'], {
-        message: "조건 타입을 선택해주세요"
-    }),
-    operator: z.enum(['GE', 'LE', 'BETWEEN'], {
-        message: "연산자를 선택해주세요"
-    }),
+const booleanConditionSchema = z.object({
+    objectId: z.string().min(1),
+    fieldKey: z.string().min(1),
+    level: z.enum(['NORMAL', 'WARNING', 'CAUTION', 'DANGER', 'DISCONNECTED']),
+    conditionType: z.literal('SINGLE'),
+    operator: z.literal('GE'),
+    booleanValue: z.boolean({ message: "Boolean 값을 선택해주세요" }),
+    thresholdValue: z.number().nullish(),
+    leftValue: z.number().nullish(),
+    rightValue: z.number().nullish(),
     notificationEnabled: z.boolean(),
     activate: z.boolean(),
     guideMessage: z.string().optional(),
-});
+}).passthrough();
 
-// Boolean 타입 조건 스키마
-const booleanConditionSchema = eventConditionBaseSchema.extend({
-    booleanValue: z.boolean({ message: "Boolean 값을 선택해주세요" }),
-    thresholdValue: z.number().optional(),
-    leftValue: z.undefined(),
-    rightValue: z.undefined(),
-});
-
-// SINGLE 조건 스키마
-const singleConditionSchema = eventConditionBaseSchema.extend({
+const singleConditionSchema = z.object({
+    objectId: z.string().min(1),
+    fieldKey: z.string().min(1),
+    level: z.enum(['NORMAL', 'WARNING', 'CAUTION', 'DANGER', 'DISCONNECTED']),
     conditionType: z.literal('SINGLE'),
+    operator: z.enum(['GE', 'LE'], { message: "연산자를 선택해주세요" }),
     thresholdValue: z.number({ message: "기준값을 입력해주세요" }),
-    booleanValue: z.undefined(),
-    leftValue: z.undefined(),
-    rightValue: z.undefined(),
-});
+    booleanValue: z.boolean().nullish(),
+    leftValue: z.number().nullish(),
+    rightValue: z.number().nullish(),
+    notificationEnabled: z.boolean(),
+    activate: z.boolean(),
+    guideMessage: z.string().optional(),
+}).passthrough();
 
-const rangeConditionSchema = eventConditionBaseSchema.extend({
+const rangeConditionSchema = z.object({
+    objectId: z.string().min(1),
+    fieldKey: z.string().min(1),
+    level: z.enum(['NORMAL', 'WARNING', 'CAUTION', 'DANGER', 'DISCONNECTED']),
     conditionType: z.literal('RANGE'),
+    operator: z.literal('BETWEEN'),
     leftValue: z.number({ message: "최소값을 입력해주세요" }),
     rightValue: z.number({ message: "최대값을 입력해주세요" }),
-    booleanValue: z.undefined(),
-    thresholdValue: z.undefined(),
-}).refine((data) => data.leftValue < data.rightValue, {
+    booleanValue: z.boolean().nullish(),
+    thresholdValue: z.number().nullish(),
+    notificationEnabled: z.boolean(),
+    activate: z.boolean(),
+    guideMessage: z.string().optional(),
+}).passthrough().refine((data) => data.leftValue < data.rightValue, {
     message: "최소값은 최대값보다 작아야 합니다",
     path: ["leftValue"],
 });
@@ -76,7 +78,7 @@ export const createDefaultCondition = (objectId: string): EventCondition => ({
     level: 'NORMAL',
     conditionType: 'SINGLE',
     operator: 'GE',
-    thresholdValue: 1.0,
+    thresholdValue: undefined,
     leftValue: undefined,
     rightValue: undefined,
     notificationEnabled: true,
@@ -89,10 +91,25 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
     const errors: string[] = [];
     const fieldErrors: Record<string, string[]> = {};
 
-    // Boolean 타입인지 확인
+    const addFieldError = (field: string, message: string) => {
+        errors.push(message);
+        if (!fieldErrors[field]) {
+            fieldErrors[field] = [];
+        }
+        fieldErrors[field].push(message);
+    };
+
+    if (!condition.fieldKey || condition.fieldKey.trim() === '') {
+        addFieldError('fieldKey', "Field Key를 선택해주세요");
+        return {
+            isValid: false,
+            errors,
+            fieldErrors
+        };
+    }
+
     const isBoolean = isBooleanProfile(profiles, condition.fieldKey);
 
-    // 적절한 스키마 선택 및 validation
     let validationResult;
 
     if (isBoolean) {
@@ -103,7 +120,6 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
         validationResult = singleConditionSchema.safeParse(condition);
     }
 
-    // Zod validation 오류 처리
     if (!validationResult.success) {
         validationResult.error.issues.forEach((err: z.ZodIssue) => {
             const path = err.path.join('.');
@@ -115,28 +131,85 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
         });
     }
 
-    // 중복 조건 검증
-    if (allConditions && condition.fieldKey && condition.level) {
+    const profile = profiles.find(p => p.fieldKey === condition.fieldKey);
+    if (profile) {
+        const fieldName = profile.description || profile.fieldKey;
+
+        if (profile.fieldKey === 'Angle-X' || profile.fieldKey === 'Angle-Y') {
+            if (condition.conditionType === 'SINGLE' && condition.thresholdValue !== undefined) {
+                if (condition.thresholdValue < -90 || condition.thresholdValue > 90) {
+                    const angleError = `${fieldName}의 값은 -90 ~ 90 사이여야 합니다`;
+                    errors.push(angleError);
+                    if (!fieldErrors['thresholdValue']) {
+                        fieldErrors['thresholdValue'] = [];
+                    }
+                    fieldErrors['thresholdValue'].push(angleError);
+                }
+            } else if (condition.conditionType === 'RANGE') {
+                if (condition.leftValue !== undefined && (condition.leftValue < -90 || condition.leftValue > 90)) {
+                    const angleError = `${fieldName}의 최소값은 -90 ~ 90 사이여야 합니다`;
+                    errors.push(angleError);
+                    if (!fieldErrors['leftValue']) {
+                        fieldErrors['leftValue'] = [];
+                    }
+                    fieldErrors['leftValue'].push(angleError);
+                }
+                if (condition.rightValue !== undefined && (condition.rightValue < -90 || condition.rightValue > 90)) {
+                    const angleError = `${fieldName}의 최대값은 -90 ~ 90 사이여야 합니다`;
+                    errors.push(angleError);
+                    if (!fieldErrors['rightValue']) {
+                        fieldErrors['rightValue'] = [];
+                    }
+                    fieldErrors['rightValue'].push(angleError);
+                }
+            }
+        }
+
+        if (condition.conditionType === 'RANGE' && profile.fieldKey === 'errorRange' && condition.leftValue !== undefined && condition.leftValue <= 0) {
+            const customError = `${fieldName}의 최소값은 0보다 커야 합니다`;
+            errors.push(customError);
+            if (!fieldErrors['leftValue']) {
+                fieldErrors['leftValue'] = [];
+            }
+            fieldErrors['leftValue'].push(customError);
+        }
+    }
+
+    if (allConditions && condition.fieldKey) {
         const duplicates = allConditions.filter(other =>
             other !== condition &&
-            other.fieldKey === condition.fieldKey &&
-            other.level === condition.level
+            other.fieldKey === condition.fieldKey
         );
 
+        const isFireAlarm = profile?.fieldKey === 'Fire Alarm';
+
         for (const duplicate of duplicates) {
-            if (isDuplicateCondition(condition, duplicate)) {
-                const profile = profiles.find(p => p.fieldKey === condition.fieldKey);
+            if (isSameConditionValue(condition, duplicate)) {
                 const fieldName = profile?.description || condition.fieldKey;
-                const levelName = getLevelDisplayName(condition.level);
+                const currentLevelName = getLevelDisplayName(condition.level);
+                const duplicateLevelName = getLevelDisplayName(duplicate.level);
 
-                const duplicateError = `${fieldName}의 ${levelName} 레벨에 동일한 조건이 이미 존재합니다`;
-                errors.push(duplicateError);
+                let duplicateError: string;
 
-                if (!fieldErrors['fieldKey']) {
-                    fieldErrors['fieldKey'] = [];
+                if (isFireAlarm && condition.level === duplicate.level) {
+                    duplicateError = `${fieldName}의 ${currentLevelName} 레벨에 동일한 조건이 이미 존재합니다`;
+                    errors.push(duplicateError);
+
+                    if (!fieldErrors['fieldKey']) {
+                        fieldErrors['fieldKey'] = [];
+                    }
+                    fieldErrors['fieldKey'].push(duplicateError);
+                    break;
+                } else if (!isFireAlarm && condition.level !== duplicate.level) {
+                    duplicateError = `${fieldName}의 ${duplicateLevelName} 레벨에 동일한 조건값이 이미 존재합니다. 다른 조건값을 입력해주세요`;
+                    errors.push(duplicateError);
+
+                    if (!fieldErrors['fieldKey']) {
+                        fieldErrors['fieldKey'] = [];
+                    }
+                    fieldErrors['fieldKey'].push(duplicateError);
+                    break;
                 }
-                fieldErrors['fieldKey'].push(duplicateError);
-                break;
             }
         }
     }
@@ -148,8 +221,8 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
     };
 };
 
-const isDuplicateCondition = (condition1: EventCondition, condition2: EventCondition): boolean => {
-    if (condition1.fieldKey !== condition2.fieldKey || condition1.level !== condition2.level) {
+const isSameConditionValue = (condition1: EventCondition, condition2: EventCondition): boolean => {
+    if (condition1.fieldKey !== condition2.fieldKey) {
         return false;
     }
 
@@ -226,7 +299,7 @@ export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey:
         conditionType: 'SINGLE',
         operator: 'GE',
         booleanValue: undefined,
-        thresholdValue: 1.0,
+        thresholdValue: undefined,
         leftValue: undefined,
         rightValue: undefined
     };
@@ -282,10 +355,6 @@ export const getAvailableLevelsByProfile = (profiles: DeviceProfile[], fieldKey:
     }
     
     return ['NORMAL', 'CAUTION', 'WARNING', 'DANGER'];
-};
-
-export const getBooleanValueLabel = (value: boolean): string => {
-    return value ? 'ON (True)' : 'OFF (False)';
 };
 
 export const getProfileByFieldKey = (profiles: DeviceProfile[], fieldKey: string): DeviceProfile | undefined => {

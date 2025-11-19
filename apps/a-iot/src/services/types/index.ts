@@ -21,6 +21,7 @@ export type {
 export type {
   EventCondition,
   EventConditionRequest,
+  EventConditionOperator
 } from './eventCondition'
 
 export type {
