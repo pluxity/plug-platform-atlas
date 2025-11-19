@@ -91,9 +91,16 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
     const errors: string[] = [];
     const fieldErrors: Record<string, string[]> = {};
 
+    const addFieldError = (field: string, message: string) => {
+        errors.push(message);
+        if (!fieldErrors[field]) {
+            fieldErrors[field] = [];
+        }
+        fieldErrors[field].push(message);
+    };
+
     if (!condition.fieldKey || condition.fieldKey.trim() === '') {
-        errors.push("Field Key를 선택해주세요");
-        fieldErrors['fieldKey'] = ["Field Key를 선택해주세요"];
+        addFieldError('fieldKey', "Field Key를 선택해주세요");
         return {
             isValid: false,
             errors,
@@ -168,14 +175,12 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
         }
     }
 
-    // 중복 조건 검증
     if (allConditions && condition.fieldKey) {
         const duplicates = allConditions.filter(other =>
             other !== condition &&
             other.fieldKey === condition.fieldKey
         );
 
-        // Fire Alarm은 같은 레벨에 중복 조건 불가, 다른 센서는 다른 레벨에만 중복 조건값 불가
         const isFireAlarm = profile?.fieldKey === 'Fire Alarm';
 
         for (const duplicate of duplicates) {
@@ -187,7 +192,6 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
                 let duplicateError: string;
 
                 if (isFireAlarm && condition.level === duplicate.level) {
-                    // Fire Alarm: 같은 레벨에 동일한 조건 불가
                     duplicateError = `${fieldName}의 ${currentLevelName} 레벨에 동일한 조건이 이미 존재합니다`;
                     errors.push(duplicateError);
 
@@ -197,7 +201,6 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
                     fieldErrors['fieldKey'].push(duplicateError);
                     break;
                 } else if (!isFireAlarm && condition.level !== duplicate.level) {
-                    // 다른 센서: 다른 레벨에 동일한 조건값 불가
                     duplicateError = `${fieldName}의 ${duplicateLevelName} 레벨에 동일한 조건값이 이미 존재합니다. 다른 조건값을 입력해주세요`;
                     errors.push(duplicateError);
 
@@ -218,7 +221,6 @@ export const validateConditionData = (condition: EventCondition, profiles: Devic
     };
 };
 
-// 조건값이 동일한지 체크 (레벨 무관)
 const isSameConditionValue = (condition1: EventCondition, condition2: EventCondition): boolean => {
     if (condition1.fieldKey !== condition2.fieldKey) {
         return false;
@@ -228,18 +230,15 @@ const isSameConditionValue = (condition1: EventCondition, condition2: EventCondi
         return false;
     }
 
-    // Boolean 조건 비교
     if (condition1.booleanValue !== undefined && condition2.booleanValue !== undefined) {
         return condition1.booleanValue === condition2.booleanValue;
     }
 
-    // 단일 조건 비교
     if (condition1.conditionType === 'SINGLE') {
         return condition1.operator === condition2.operator &&
                condition1.thresholdValue === condition2.thresholdValue;
     }
 
-    // 범위 조건 비교
     if (condition1.conditionType === 'RANGE') {
         return condition1.leftValue === condition2.leftValue &&
                condition1.rightValue === condition2.rightValue;
