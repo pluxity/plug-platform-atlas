@@ -1,8 +1,10 @@
-import { Badge, Column } from '@plug-atlas/ui';
-import { FeatureResponse } from '@/services/types';
-import { Event } from '../../../services/types';
-import { getStatusInfo, getStatusBadgeStyle } from '../events/utils/statusUtils.ts';
-import { getLevelInfo } from '../events/utils/levelUtils.ts';
+// @plug-atlas packages
+import { Badge, Column } from '@plug-atlas/ui'
+
+// Internal imports
+import { getLevelInfo } from '@/pages/main/events/utils/levelUtils'
+import { getStatusBadgeStyle, getStatusInfo } from '@/pages/main/events/utils/statusUtils'
+import { Event, FeatureResponse } from '@/services/types'
 
 /**
  * 배터리 알람 테이블 컬럼 정의
@@ -87,24 +89,24 @@ export const featureStatusColumns: Column<FeatureResponse>[] = [
     )
   },
   {
-    key: 'name',
+    key: 'deviceId',
     header: '디바이스 코드',
+    cell: (_, row) => (
+      row.deviceId ? String(row.deviceId) : '-'
+    ),
+  },
+  {
+    key: 'name',
+    header: '디바이스 이름',
     cell: (_, row) => (
       row.name ? String(row.name) : '-'
     ),
   },
   {
     key: 'eventStatus',
-    header: '이벤트 상태',
+    header: '장치 상태',
     cell: (_, row) => (
       row.eventStatus ? <Badge variant='secondary'>{row.eventStatus}</Badge> : '-'
-    )
-  },
-  {
-    key: 'active',
-    header: '활성화',
-    cell: (_, row) => (
-      row.active ? <Badge>활성화</Badge> : <Badge variant='secondary'>비활성화</Badge>
     )
   },
 ];

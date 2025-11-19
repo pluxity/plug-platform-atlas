@@ -5,6 +5,7 @@ import { Notification, Event } from "../../services/types";
 import { getLevelInfo } from '../../pages/main/events/utils/levelUtils.ts';
 import EventDetailModal from '../../pages/main/events/components/modal/EventDetailModal.tsx';
 import { getAssetPath } from '../../utils/assetPath';
+import { useEventStore } from '../../stores';
 
 interface NotificationPanelProps {
     notifications: Notification[];
@@ -52,9 +53,18 @@ function NotificationItem({
     onMarkAsRead?: (id: string) => void;
     onItemClick: (event: Event) => void;
 }) {
-    const payload = notification.type === 'sensor-alarm'
+    // eventStore에서 최신 이벤트 가져오기 (실시간 업데이트 반영)
+    const getEvent = useEventStore((state) => state.getEvent);
+
+    // notification.payload는 초기 데이터, 최신 상태는 eventStore에서 조회
+    const initialPayload = notification.type === 'sensor-alarm'
         ? (notification.payload as Event)
         : null;
+
+    // eventId가 있으면 eventStore에서 최신 상태 조회, 없으면 초기 payload 사용
+    const payload = initialPayload?.eventId
+        ? (getEvent(initialPayload.eventId) ?? initialPayload)
+        : initialPayload;
 
     const handleClick = () => {
         if (!notification.read && onMarkAsRead) {
@@ -66,8 +76,11 @@ function NotificationItem({
         }
     };
 
+    // 최신 이벤트의 level 사용 (실시간 업데이트 반영)
+    const currentLevel = payload?.level ?? notification.level;
+
     const getLevelIconPath = () => {
-        switch (notification.level) {
+        switch (currentLevel) {
             case 'DANGER':
                 return getAssetPath('/images/icons/notification/danger.svg');
             case 'WARNING':
@@ -92,7 +105,7 @@ function NotificationItem({
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center flex-1 min-w-0">
                     <span className="text-sm font-bold text-zinc-800 truncate">
-                        {payload?.profileDescription || payload?.sensorDescription || '센서'} {getLevelInfo(payload?.level || notification.level || '').text} 발생
+                        {payload?.profileDescription || payload?.sensorDescription || '센서'} {getLevelInfo(currentLevel || '').text} 발생
                     </span>
                 </div>
                 <span className="text-xs text-neutral-400 whitespace-nowrap ml-2">
@@ -102,14 +115,14 @@ function NotificationItem({
             <div className="flex gap-2.5 items-center">
                 <img
                     src={getLevelIconPath()}
-                    alt={notification.level || 'notification'}
+                    alt={currentLevel || 'notification'}
                     className="w-7 h-7 flex-shrink-0"
                 />
                 <div className="space-y-1">
                     <div className="text-sm text-zinc-800 m-0">
                         {payload?.siteName || '알 수 없음'}
                     </div>
-                    <div className={`text-xs ${getLevelColor(notification.level)}`}>
+                    <div className={`text-xs ${getLevelColor(currentLevel)}`}>
                         {payload?.sensorDescription || ''}: {payload?.deviceId || ''}
                     </div>
                 </div>

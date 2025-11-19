@@ -66,6 +66,13 @@ export {
   useInitialNotifications,
 } from './useInitialNotifications'
 
+export {
+  useEventUpdates,
+  useEventById,
+  useEventsBySite,
+  useEventsByStatus,
+} from './useEventUpdates'
+
 // Facility hooks
 export * from './useFacility'
 

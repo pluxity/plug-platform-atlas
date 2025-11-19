@@ -1,4 +1,5 @@
-import React from 'react';
+// External packages
+import React from 'react'
 
 export type EventLevel = 'NORMAL' | 'CAUTION' | 'WARNING' | 'DANGER' | 'DISCONNECTED';
 
@@ -52,11 +53,11 @@ const levelConfigMap: Record<EventLevel, LevelConfig> = {
     DISCONNECTED: {
         label: '연결끊김',
         text: '연결끊김',
-        color: 'text-purple-700 bg-purple-50/80 border-l-4 border-purple-500',
+        color: 'text-gray-700 bg-gray-50/80 border-l-4 border-gray-400',
         badgeColor: 'bg-gray-100 text-gray-800',
-        dashboardBg: 'bg-indigo-100',
-        dashboardText: 'text-blue-700',
-        dashboardDot: 'bg-blue-700'
+        dashboardBg: 'bg-gray-100',
+        dashboardText: 'text-gray-600',
+        dashboardDot: 'bg-gray-400'
     }
 };
 

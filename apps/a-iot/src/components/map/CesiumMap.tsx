@@ -6,7 +6,6 @@ import { Site, FeatureResponse, type FeatureDeviceTypeResponse } from '@/service
 import MapControls from './MapControls'
 import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
-import type { Event } from '../../services/types'
 import { SVG_MARKERS, type SvgMarkerType, createColoredSvgDataUrl, preloadAllMarkerSvgs } from '../../utils/svgMarkerUtils'
 import { getAssetPath } from '../../utils/assetPath'
 
@@ -16,7 +15,6 @@ interface CesiumMapProps {
   selectedSiteId?: string | null
   onSiteSelect?: (siteId: string) => void
   sensors?: FeatureResponse[]
-  events?: Event[]
   className?: string
   viewerInitOptions?: ViewerInitOptions
 }
@@ -27,7 +25,6 @@ export default function CesiumMap({
   selectedSiteId,
   onSiteSelect,
   sensors = [],
-  events = [],
   className = '',
   viewerInitOptions
 }: CesiumMapProps) {
@@ -43,7 +40,7 @@ export default function CesiumMap({
   const { clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
   const { focusOn } = useCameraStore()
   const { setCurrentProvider } = useImageryStore()
-  
+
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
 
   const siteSensors = useMemo(() => {
@@ -245,29 +242,22 @@ export default function CesiumMap({
   const getEventLevelColor = (level?: string): string => {
     switch (level) {
       case 'NORMAL':
-        return '#11C208' 
+        return '#11C208'
       case 'WARNING':
-        return '#F86700' 
+        return '#F86700'
       case 'CAUTION':
         return '#FDC200'
       case 'DANGER':
-        return '#CA0014' 
+        return '#CA0014'
       case 'DISCONNECTED':
-        return '#0B1FFF' 
+        return '#9CA3AF' // 회색 (gray-400)
       default:
-        return '#11C208' 
+        return '#11C208'
     }
   }
 
-  const getDeviceEventLevel = (deviceId: string): string | undefined => {
-    const deviceEvents = events.filter(e => e.deviceId === deviceId)
-    if (deviceEvents.length === 0) return undefined
-    
-    const sortedEvents = deviceEvents.sort((a, b) => 
-      new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
-    )
-    return sortedEvents[0]?.level
-  }
+  // Feature의 eventStatus는 SWR의 자동 revalidate로 업데이트됨
+  // sensors가 변경되면 자동으로 마커 색상과 깜빡임이 업데이트됨
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -311,8 +301,8 @@ export default function CesiumMap({
     } else if (activeTab === 'parks' && selectedSiteId) {
       siteSensors.forEach((sensor) => {
         const svgMarkerType = getSvgMarkerType(sensor.deviceTypeResponse)
-        const eventLevel = getDeviceEventLevel(sensor.deviceId)
-        const color = getEventLevelColor(eventLevel)
+        const deviceStatus = sensor.eventStatus // Feature의 eventStatus 직접 사용
+        const color = getEventLevelColor(deviceStatus)
         
         const markerId = `device-${sensor.id}`
         markerSvgTypeMapRef.current.set(markerId, svgMarkerType)
@@ -349,14 +339,14 @@ export default function CesiumMap({
       const svgMarkerType = markerSvgTypeMapRef.current.get(markerId)
       if (!svgMarkerType) return
 
-      const eventLevel = getDeviceEventLevel(sensor.deviceId)
-      const color = getEventLevelColor(eventLevel)
+      const deviceStatus = sensor.eventStatus // Feature의 eventStatus 직접 사용
+      const color = getEventLevelColor(deviceStatus)
 
       changeMarkerColor(viewer, markerId, svgMarkerType, color)
     })
 
     viewer.scene.requestRender()
-  }, [events, isLoading, siteSensors, changeMarkerColor])
+  }, [sensors, isLoading, siteSensors, changeMarkerColor])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -364,14 +354,14 @@ export default function CesiumMap({
 
     const criticalMarkers = new Map<string, string>()
     siteSensors.forEach((sensor) => {
-      const eventLevel = getDeviceEventLevel(sensor.deviceId)
-      if (eventLevel === 'DANGER' || eventLevel === 'WARNING') {
-        criticalMarkers.set(`device-${sensor.id}`, eventLevel)
+      const deviceStatus = sensor.eventStatus // Feature의 eventStatus 직접 사용
+      if (deviceStatus === 'DANGER' || deviceStatus === 'WARNING') {
+        criticalMarkers.set(`device-${sensor.id}`, deviceStatus)
       }
     })
 
-    criticalMarkers.forEach((eventLevel, markerId) => {
-      const duration = eventLevel === 'DANGER' ? 600 : 1000
+    criticalMarkers.forEach((deviceStatus, markerId) => {
+      const duration = deviceStatus === 'DANGER' ? 600 : 1000
       startMarkerBlink(viewer, markerId, duration)
     })
 
@@ -382,7 +372,7 @@ export default function CesiumMap({
         })
       }
     }
-  }, [events, isLoading, siteSensors, startMarkerBlink, stopMarkerBlink])
+  }, [sensors, isLoading, siteSensors, startMarkerBlink, stopMarkerBlink])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -410,7 +400,7 @@ export default function CesiumMap({
   }
 
   return (
-    <div className={`relative w-full h-[600px] rounded-lg overflow-hidden ${className}`}>
+    <div className={`relative w-full rounded-lg overflow-hidden ${className || 'h-[600px]'}`}>
       <div ref={cesiumContainerRef} className="w-full h-full" />
 
       <MapLayerSelector
