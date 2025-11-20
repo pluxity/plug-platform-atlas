@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus, Map, Copy } from 'lucide-react'
 import {
@@ -24,6 +24,10 @@ import {
   Switch,
   AspectRatio,
   toast,
+  ModalForm,
+  ModalFormItem,
+  ModalFormField,
+  ModalFormContainer,
 } from '@plug-atlas/ui'
 import type { Column } from '@plug-atlas/ui'
 import { useCctvList, useCreateCctv, useUpdateCctv, useDeleteCctv, useSearchBar, usePagination } from '../../../../services/hooks'
@@ -45,14 +49,7 @@ export default function CCTV() {
   const [deletingCctv, setDeletingCctv] = useState<CctvResponse | null>(null)
   const [showMap, setShowMap] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    setValue,
-    watch,
-  } = useForm<CctvCreateRequest>({
+  const cctvForm = useForm<CctvCreateRequest>({
     resolver: zodResolver(cctvCreateRequestSchema),
     defaultValues: {
       name: '',
@@ -62,6 +59,15 @@ export default function CCTV() {
       height: 3,
     },
   })
+
+  const {
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    watch,
+    control,
+  } = cctvForm
 
   const currentLon = watch('lon')
   const currentLat = watch('lat')
@@ -226,7 +232,7 @@ export default function CCTV() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingCctv ? 'CCTV 수정' : 'CCTV 등록'}</DialogTitle>
             <DialogDescription className="sr-only">
@@ -234,161 +240,204 @@ export default function CCTV() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">CCTV 이름 *</Label>
-              <Input
-                id="name"
-                placeholder="예: 정문 CCTV"
-                {...register('name')}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
-            </div>
+          <div className="max-w-7xl max-h-[90vh] overflow-y-auto">
+            <ModalForm {...cctvForm}>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
+                <ModalFormContainer>
+                  <ModalFormField>
+                    <Controller
+                      name="name"
+                      control={control}
+                      render={({ field }) => (
+                        <ModalFormItem 
+                          label="CCTV 이름 *"
+                          message={errors.name?.message}
+                        >
+                          <Input
+                            id="name"
+                            placeholder="예: 정문 CCTV"
+                            {...field}
+                          />
+                        </ModalFormItem>
+                      )}
+                    />
+                  </ModalFormField>
 
-            {editingCctv && editingCctv.viewUrl && (
-              <div className="space-y-2">
-                <Label htmlFor="viewUrl">View URL (읽기 전용)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="viewUrl"
-                    value={editingCctv.viewUrl}
-                    disabled
-                    readOnly
-                    className="bg-muted"
-                  />
+                  {editingCctv && editingCctv.viewUrl && (
+                    <ModalFormItem label="View URL (읽기 전용)">
+                      <div className="flex gap-2">
+                        <Input
+                          id="viewUrl"
+                          value={editingCctv.viewUrl}
+                          disabled
+                          readOnly
+                          className="bg-muted"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            navigator.clipboard.writeText(editingCctv.viewUrl || '')
+                            toast.success('View URL이 클립보드에 복사되었습니다.')
+                          }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </ModalFormItem>
+                  )}
+
+                  <ModalFormField>
+                    <Controller
+                      name="url"
+                      control={control}
+                      render={({ field }) => (
+                        <ModalFormItem 
+                          label="Origin URL *"
+                          message={errors.url?.message}
+                          description="CCTV의 원본 스트림 주소를 입력하세요."
+                        >
+                          <Input
+                            id="url"
+                            placeholder="rtsp://example.com/stream 또는 http://example.com/stream"
+                            {...field}
+                          />
+                        </ModalFormItem>
+                      )}
+                    />
+                  </ModalFormField>
+
+                  <ModalFormItem label="위치 정보">
+                    <div className="flex flex-col gap-2">
+                      <ModalFormField>
+                        <Controller
+                          name="lon"
+                          control={control}
+                          render={({ field }) => (
+                            <div className="space-y-1">
+                              <Label htmlFor="lon" className="text-sm text-muted-foreground">
+                                경도 (Longitude) *
+                              </Label>
+                              <Input
+                                id="lon"
+                                type="number"
+                                step="0.000001"
+                                placeholder="예: 127.111400"
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                              />
+                              {errors.lon && (
+                                <p className="text-sm text-destructive">{errors.lon.message}</p>
+                              )}
+                            </div>
+                          )}
+                        />
+                      </ModalFormField>
+                      <ModalFormField>
+                        <Controller
+                          name="lat"
+                          control={control}
+                          render={({ field }) => (
+                            <div className="space-y-1">
+                              <Label htmlFor="lat" className="text-sm text-muted-foreground">
+                                위도 (Latitude) *
+                              </Label>
+                              <Input
+                                id="lat"
+                                type="number"
+                                step="0.000001"
+                                placeholder="예: 37.394800"
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                              />
+                              {errors.lat && (
+                                <p className="text-sm text-destructive">{errors.lat.message}</p>
+                              )}
+                            </div>
+                          )}
+                        />
+                      </ModalFormField>
+                      <ModalFormField>
+                        <Controller
+                          name="height"
+                          control={control}
+                          render={({ field }) => (
+                            <div className="space-y-1">
+                              <Label htmlFor="height" className="text-sm text-muted-foreground">
+                                높이 (Height, m) *
+                              </Label>
+                              <Input
+                                id="height"
+                                type="number"
+                                step="0.1"
+                                placeholder="예: 3.0"
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                              />
+                              {errors.height && (
+                                <p className="text-sm text-destructive">{errors.height.message}</p>
+                              )}
+                            </div>
+                          )}
+                        />
+                      </ModalFormField>
+                    </div>
+                  </ModalFormItem>
+                </ModalFormContainer>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <Map className="w-4 h-4 text-muted-foreground" />
+                  <Label htmlFor="show-map" className="cursor-pointer">
+                    지도에서 위치 선택
+                  </Label>
+                </div>
+                <Switch
+                  id="show-map"
+                  checked={showMap}
+                  onCheckedChange={setShowMap}
+                />
+              </div>
+
+              {showMap && (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    지도에서 <strong>우클릭</strong>하여 <br /> "여기에 CCTV 위치 지정"을 선택하여 위치를 조정할 수 있습니다.
+                  </p>
+                  <div className="px-8 bg-black">
+                    <AspectRatio ratio={4 / 3}>
+                      <LocationPicker
+                        lon={currentLon}
+                        lat={currentLat}
+                        onLocationChange={handleLocationChange}
+                        cctvHeight={currentHeight}
+                      />
+                    </AspectRatio>
+                  </div>
+                </div>
+              )}
+
+                <DialogFooter>
                   <Button
                     type="button"
                     variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      navigator.clipboard.writeText(editingCctv.viewUrl || '')
-                      toast.success('View URL이 클립보드에 복사되었습니다.')
-                    }}
+                    onClick={() => setIsDialogOpen(false)}
+                    disabled={isCreating || isUpdating}
+                    className="min-w-30"
                   >
-                    <Copy className="h-4 w-4" />
+                    취소
                   </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  View URL은 서버에서 자동 생성되며 수정할 수 없습니다.
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="url">Origin URL *</Label>
-              <Input
-                id="url"
-                placeholder="rtsp://example.com/stream 또는 http://example.com/stream"
-                {...register('url')}
-              />
-              {errors.url && (
-                <p className="text-sm text-destructive">{errors.url.message}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                CCTV의 원본 스트림 주소를 입력하세요.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>위치 정보</Label>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="lon" className="text-sm text-muted-foreground">
-                    경도 (Longitude) *
-                  </Label>
-                  <Input
-                    id="lon"
-                    type="number"
-                    step="0.000001"
-                    placeholder="예: 127.111400"
-                    {...register('lon', { valueAsNumber: true })}
-                  />
-                  {errors.lon && (
-                    <p className="text-sm text-destructive">{errors.lon.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="lat" className="text-sm text-muted-foreground">
-                    위도 (Latitude) *
-                  </Label>
-                  <Input
-                    id="lat"
-                    type="number"
-                    step="0.000001"
-                    placeholder="예: 37.394800"
-                    {...register('lat', { valueAsNumber: true })}
-                  />
-                  {errors.lat && (
-                    <p className="text-sm text-destructive">{errors.lat.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="height" className="text-sm text-muted-foreground">
-                    높이 (Height, m) *
-                  </Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    step="0.1"
-                    placeholder="예: 3.0"
-                    {...register('height', { valueAsNumber: true })}
-                  />
-                  {errors.height && (
-                    <p className="text-sm text-destructive">{errors.height.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2">
-                <Map className="w-4 h-4 text-muted-foreground" />
-                <Label htmlFor="show-map" className="cursor-pointer">
-                  지도에서 위치 선택
-                </Label>
-              </div>
-              <Switch
-                id="show-map"
-                checked={showMap}
-                onCheckedChange={setShowMap}
-              />
-            </div>
-
-            {showMap && (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  지도에서 <strong>우클릭</strong>하여 <br /> "여기에 CCTV 위치 지정"을 선택하여 위치를 조정할 수 있습니다.
-                </p>
-                <div className="px-8 bg-black">
-                  <AspectRatio ratio={4 / 3}>
-                    <LocationPicker
-                      lon={currentLon}
-                      lat={currentLat}
-                      onLocationChange={handleLocationChange}
-                      cctvHeight={currentHeight}
-                    />
-                  </AspectRatio>
-                </div>
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-                disabled={isCreating || isUpdating}
-                className="min-w-30"
-              >
-                취소
-              </Button>
-              <Button type="submit" className="min-w-30" disabled={isCreating || isUpdating}>
-                {isCreating || isUpdating ? '저장 중...' : editingCctv ? '수정' : '등록'}
-              </Button>
-            </DialogFooter>
-          </form>
+                  <Button type="submit" className="min-w-30" disabled={isCreating || isUpdating}>
+                    {isCreating || isUpdating ? '저장 중...' : editingCctv ? '수정' : '등록'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </ModalForm>
+          </div>
         </DialogContent>
       </Dialog>
 

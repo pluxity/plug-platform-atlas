@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner, DialogFooter } from '@plug-atlas/ui';
+import { Button, ModalForm, ModalFormItem, ModalFormField, ModalFormContainer, Input, toast, Checkbox, Label, Dialog, DialogContent, DialogHeader, DialogTitle, Spinner, DialogFooter } from '@plug-atlas/ui';
 import { useUpdateAdminUser, useRoles } from '@plug-atlas/api-hooks';
 import { UserUpdateRequest, UserUpdateRequestSchema, UserResponse } from '@plug-atlas/types';
 
@@ -71,83 +71,91 @@ export default function UserEditDialog({ isOpen, user, onClose, onSuccess }: Use
                 <DialogHeader>
                     <DialogTitle>사용자 정보 수정</DialogTitle>
                 </DialogHeader>
-                <Form onSubmit={editUserForm.handleSubmit(submitEditUserForm)} className="space-y-4 p-4">
-                    <FormField>
-                        <FormItem>
-                            <FormLabel htmlFor="username">아이디</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    id="username"
-                                    type="text"
-                                    value={user.username}
-                                    disabled
-                                    className="bg-gray-100"
-                                />
-                            </FormControl>
-                        </FormItem>
-                    </FormField>
+                <ModalForm {...editUserForm}>
+                    <form onSubmit={editUserForm.handleSubmit(submitEditUserForm)} className="space-y-4 p-4">
+                        <ModalFormContainer>
+                            <ModalFormField>
+                                <ModalFormItem label="아이디">
+                                    <Input 
+                                        id="username"
+                                        type="text"
+                                        value={user.username}
+                                        disabled
+                                        className="bg-gray-100"
+                                    />
+                                </ModalFormItem>
+                            </ModalFormField>
 
-                    <FormField>
-                        <FormItem>
-                            <FormLabel htmlFor="name">이름</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    id="name"
-                                    type="text"
-                                    placeholder="이름을 입력해주세요."
-                                    {...editUserForm.register('name')}
+                            <ModalFormField>
+                                <Controller
+                                    name="name"
+                                    control={editUserForm.control}
+                                    render={({ field }) => (
+                                        <ModalFormItem 
+                                            label="이름"
+                                            message={editUserForm.formState.errors.name?.message}
+                                        >
+                                            <Input 
+                                                id="name"
+                                                type="text"
+                                                placeholder="이름을 입력해주세요."
+                                                {...field}
+                                            />
+                                        </ModalFormItem>
+                                    )}
                                 />
-                            </FormControl>
-                            <FormMessage className="text-sm text-error-600">
-                                {editUserForm.formState.errors.name?.message}
-                            </FormMessage>
-                        </FormItem>
-                    </FormField>
+                            </ModalFormField>
 
-                    <FormField>
-                        <FormItem>
-                            <FormLabel htmlFor="phoneNumber">전화번호</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    id="phoneNumber"
-                                    type="text"
-                                    placeholder="전화번호를 입력해주세요. (ex: 010-1234-5678)"
-                                    {...editUserForm.register('phoneNumber')}
+                            <ModalFormField>
+                                <Controller
+                                    name="phoneNumber"
+                                    control={editUserForm.control}
+                                    render={({ field }) => (
+                                        <ModalFormItem 
+                                            label="전화번호"
+                                            message={editUserForm.formState.errors.phoneNumber?.message}
+                                        >
+                                            <Input 
+                                                id="phoneNumber"
+                                                type="text"
+                                                placeholder="전화번호를 입력해주세요. (ex: 010-1234-5678)"
+                                                {...field}
+                                            />
+                                        </ModalFormItem>
+                                    )}
                                 />
-                            </FormControl>
-                            <FormMessage className="text-sm text-error-600">
-                                {editUserForm.formState.errors.phoneNumber?.message}
-                            </FormMessage>
-                        </FormItem>
-                    </FormField>
+                            </ModalFormField>
 
-                    <FormField>
-                        <FormItem>
-                            <FormLabel htmlFor="department">부서</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    id="department"
-                                    type="text"
-                                    placeholder="부서를 입력해주세요."
-                                    {...editUserForm.register('department')}
+                            <ModalFormField>
+                                <Controller
+                                    name="department"
+                                    control={editUserForm.control}
+                                    render={({ field }) => (
+                                        <ModalFormItem 
+                                            label="부서"
+                                            message={editUserForm.formState.errors.department?.message}
+                                        >
+                                            <Input 
+                                                id="department"
+                                                type="text"
+                                                placeholder="부서를 입력해주세요."
+                                                {...field}
+                                            />
+                                        </ModalFormItem>
+                                    )}
                                 />
-                            </FormControl>
-                            <FormMessage className="text-sm text-error-600">
-                                {editUserForm.formState.errors.department?.message}
-                            </FormMessage>
-                        </FormItem>
-                    </FormField>
+                            </ModalFormField>
 
-                    <FormField>
-                        <FormItem>
-                            <FormLabel>역할</FormLabel>
-                            <Controller
-                                name="roleIds"
-                                control={editUserForm.control}
-                                render={({ field }) => {
-                                    return (
-                                        <FormControl>
-                                            <div className="flex flex-wrap gap-x-6 gap-y-2 max-h-96 overflow-y-auto border rounded-lg p-4">
+                            <ModalFormField>
+                                <Controller
+                                    name="roleIds"
+                                    control={editUserForm.control}
+                                    render={({ field }) => (
+                                        <ModalFormItem 
+                                            label="역할"
+                                            message={editUserForm.formState.errors.roleIds?.message}
+                                        >
+                                            <div className="flex flex-wrap gap-x-6 gap-y-4 max-h-[100px] p-0 overflow-y-auto p-1">
                                                 {roles?.map(role => {
                                                     const checkboxId = `edit-role-${role.id}`;
                                                     const checked = field.value?.includes(role.id) ?? false;
@@ -171,23 +179,20 @@ export default function UserEditDialog({ isOpen, user, onClose, onSuccess }: Use
                                                     );
                                                 })}
                                             </div>
-                                        </FormControl>
-                                    );
-                                }}
-                            />
-                            <FormMessage className="text-sm text-error-600">
-                                {editUserForm.formState.errors.roleIds?.message}
-                            </FormMessage>
-                        </FormItem>
-                    </FormField>
+                                        </ModalFormItem>
+                                    )}
+                                />
+                            </ModalFormField>
+                        </ModalFormContainer>
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" className="min-w-30" onClick={resetEditUserForm}>취소</Button>
-                        <Button type="submit" variant="default" className="min-w-30" disabled={isUpdateUser || !editUserForm.formState.isValid}>
-                            {isUpdateUser ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}
-                        </Button>
-                    </DialogFooter>
-                </Form>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" className="min-w-30" onClick={resetEditUserForm}>취소</Button>
+                            <Button type="submit" variant="default" className="min-w-30" disabled={isUpdateUser || !editUserForm.formState.isValid}>
+                                {isUpdateUser ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </ModalForm>
             </DialogContent>
         </Dialog>
     );

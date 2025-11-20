@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, Form, FormLabel, FormField, FormItem, FormControl, FormMessage, Input, Button, toast, Label, Checkbox, Spinner, DialogFooter } from '@plug-atlas/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, ModalForm, ModalFormItem, ModalFormField, ModalFormContainer, Input, Button, toast, Label, Checkbox, Spinner, DialogFooter } from '@plug-atlas/ui';
 import { useUpdatePermission, useResourceTypes } from '@plug-atlas/api-hooks';
 import { PermissionGroupUpdateRequest, PermissionGroupUpdateRequestSchema, ResourceTypeResponse, PermissionGroupResponse } from '@plug-atlas/types';
 import { useCallback, useEffect } from 'react';
@@ -71,103 +71,110 @@ export default function PermissionEditDialog({ isOpen, permission, onClose, onSu
                 <DialogHeader>
                     <DialogTitle>권한 수정</DialogTitle>
                 </DialogHeader>
-                <Form onSubmit={editPermissionForm.handleSubmit(submitEditPermissionForm)} className="space-y-4 p-4">
-                    <FormField>
-                        <FormItem>
-                            <FormLabel htmlFor="name">권한 이름</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    id="name" 
-                                    type="text" 
-                                    placeholder="권한 이름을 입력해주세요." 
-                                    {...editPermissionForm.register('name')}
+                <ModalForm {...editPermissionForm}>
+                    <form onSubmit={editPermissionForm.handleSubmit(submitEditPermissionForm)} className="p-4">
+                        <ModalFormContainer>
+                            <ModalFormField>
+                                <Controller
+                                    name="name"
+                                    control={editPermissionForm.control}
+                                    render={({ field }) => (
+                                        <ModalFormItem 
+                                            label="이름" 
+                                            message={editPermissionForm.formState.errors.name?.message}
+                                        >
+                                            <Input 
+                                                {...field}
+                                                id="name" 
+                                                type="text" 
+                                                placeholder="이름을 입력해주세요." 
+                                                aria-label="이름"
+                                            />
+                                        </ModalFormItem>
+                                    )}
                                 />
-                            </FormControl>
-                            <FormMessage className="text-sm text-error-600">
-                                {editPermissionForm.formState.errors.name?.message}
-                            </FormMessage>
-                        </FormItem>
-                    </FormField>
+                            </ModalFormField>
 
-                    <FormField>
-                        <FormItem>
-                            <FormLabel htmlFor="description">권한 설명</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    id="description" 
-                                    type="text" 
-                                    placeholder="권한 설명을 입력해주세요." 
-                                    {...editPermissionForm.register('description')}
+                            <ModalFormField>
+                                <Controller
+                                    name="description"
+                                    control={editPermissionForm.control}
+                                    render={({ field }) => (
+                                        <ModalFormItem 
+                                            label="설명" 
+                                            message={editPermissionForm.formState.errors.description?.message}
+                                        >
+                                            <Input 
+                                                {...field}
+                                                id="description" 
+                                                type="text" 
+                                                placeholder="권한 설명을 입력해주세요." 
+                                                aria-label="설명"
+                                            />
+                                        </ModalFormItem>
+                                    )}
                                 />
-                            </FormControl>
-                            <FormMessage className="text-sm text-error-600">
-                                {editPermissionForm.formState.errors.description?.message}
-                            </FormMessage>
-                        </FormItem>
-                    </FormField>
+                            </ModalFormField>
 
-                    <FormField>
-                        <FormItem>
-                            <FormLabel>권한 목록</FormLabel>
-                            <Controller
-                              name="permissions"
-                              control={editPermissionForm.control}
-                              render={({ field }) => {
-                                return (
-                                  <FormControl>
-                                    <div className="flex flex-col gap-6 max-h-96 overflow-y-auto border rounded-lg p-4">
-                                    {resourceTypes?.map((resourceType: ResourceTypeResponse) => {
-                                          const resources = resourceData[resourceType.key] || [];
-
-                                          return (
-                                            <div key={resourceType.key} className="flex flex-col gap-2">
-                                              <div className="font-semibold">{resourceType.name}</div>
-                                              <div className="flex flex-wrap gap-x-6 gap-y-2">
-                                                {resources.length > 0 ? (
-                                                  resources.map((resource: PermissionResourceItem) => {
-                                                    const checkboxId = `${resourceType.key}-${resource.id}`;
-                                                    const checked = isSelected(field.value || [], resourceType.key, resource.id);
+                            <ModalFormField>
+                                <Controller
+                                    name="permissions"
+                                    control={editPermissionForm.control}
+                                    render={({ field }) => (
+                                        <ModalFormItem 
+                                            label="목록"
+                                            message={editPermissionForm.formState.errors.permissions?.message}
+                                        >
+                                            <div className="flex flex-wrap gap-x-6 gap-y-4 max-h-[100px] p-0 overflow-y-auto p-1">
+                                                {resourceTypes?.map((resourceType: ResourceTypeResponse) => {
+                                                    const resources = resourceData[resourceType.key] || [];
 
                                                     return (
-                                                      <div key={resource.id} className="flex items-center gap-2">
-                                                        <Checkbox 
-                                                          id={checkboxId}
-                                                          checked={checked}
-                                                          onCheckedChange={(isChecked) => 
-                                                            handleCheckboxChange(field.value || [], field.onChange, resourceType.key, resource.id, !!isChecked)
-                                                          }
-                                                        />
-                                                        <Label htmlFor={checkboxId}>{resource.name}</Label>
-                                                      </div>
-                                                    );
-                                                  })
-                                                ) : (
-                                                  <div className="text-gray-500 text-sm">사용 가능한 리소스가 없습니다.</div>
-                                                )}
-                                              </div>
-                                            </div>
-                                          );
-                                        })}
-                                    </div>
-                                  </FormControl>
-                                );
-                              }}
-                            />
-                            <FormMessage className="text-sm text-error-600">
-                                {editPermissionForm.formState.errors.permissions?.message}
-                            </FormMessage>
-                        </FormItem>
-                    </FormField>
+                                                        <div key={resourceType.key} className="flex flex-col gap-2">
+                                                            <div className="font-semibold">{resourceType.name}</div>
+                                                            <div className="flex flex-wrap gap-x-6 gap-y-2">
+                                                                {resources.length > 0 ? (
+                                                                    resources.map((resource: PermissionResourceItem) => {
+                                                                        const checkboxId = `${resourceType.key}-${resource.id}`;
+                                                                        const checked = isSelected(field.value || [], resourceType.key, resource.id);
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" className="min-w-30" onClick={resetPermissionEditForm}>
-                            취소
-                        </Button>
-                        <Button type="submit" variant="default" className="min-w-30" disabled={isUpdating || !editPermissionForm.formState.isValid}>
-                            {isUpdating ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}
-                        </Button>
-                    </DialogFooter>
-                </Form>
+                                                                        return (
+                                                                            <div key={resource.id} className="flex items-center gap-2">
+                                                                                <Checkbox 
+                                                                                    id={checkboxId}
+                                                                                    checked={checked}
+                                                                                    onCheckedChange={(isChecked) => 
+                                                                                        handleCheckboxChange(field.value || [], field.onChange, resourceType.key, resource.id, !!isChecked)
+                                                                                    }
+                                                                                />
+                                                                                <Label htmlFor={checkboxId}>{resource.name}</Label>
+                                                                            </div>
+                                                                        );
+                                                                    })
+                                                                ) : (
+                                                                    <div className="text-gray-500 text-sm">사용 가능한 리소스가 없습니다.</div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </ModalFormItem>
+                                    )}
+                                />
+                            </ModalFormField>
+                        </ModalFormContainer>
+
+                        <DialogFooter>
+                            <Button type="button" variant="outline" className="min-w-30" onClick={resetPermissionEditForm}>
+                                취소
+                            </Button>
+                            <Button type="submit" variant="default" className="min-w-30" disabled={isUpdating || !editPermissionForm.formState.isValid}>
+                                {isUpdating ? (<> 수정중... <Spinner size="sm" /> </>) : '수정'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </ModalForm>
             </DialogContent>
         </Dialog>
     )

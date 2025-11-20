@@ -11,7 +11,7 @@ function ModalFormContainer({
   className
 }: ModalFormContainerProps) {
   return (
-    <div className={cn("min-w-lg divide-y divide-slate-300 border-b border-t-2 border-slate-300", className)}>
+    <div className={cn("w-full border-t-2 border-[#bbbecf]", className)}>
       {children}
     </div>
   )
@@ -25,10 +25,10 @@ function ModalFormItem({
   message,
 }: ModalFormItemProps) {
   return (
-    <FormItem className={cn("flex flex-col", className)}>
+    <FormItem className={cn("border-b border-[#bbbecf]", className)}>
       <div className="flex">
-        <div className="flex items-center bg-zinc-200/80 justify-center w-40 px-3 py-2 border-r border-slate-300">
-          <FormLabel className="text-slate-400 font-bold">
+        <div className="flex items-center bg-[#e2e8f0] justify-center w-40 px-3 py-2 ">
+          <FormLabel className="text-muted-foreground font-bold text-sm">
             {label}
           </FormLabel>
         </div>
@@ -37,7 +37,7 @@ function ModalFormItem({
             {children}
           </FormControl>
           {message && (<FormMessage className="pt-1">{message}</FormMessage>)}
-          {description && !message && (<FormDescription className="pt-1 text-sm text-slate-400">{description}</FormDescription>)}
+          {description && !message && (<FormDescription className="pt-1 text-sm text-muted-foreground">{description}</FormDescription>)}
         </div>
       </div>
     </FormItem>
