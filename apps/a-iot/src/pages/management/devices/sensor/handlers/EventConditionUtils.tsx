@@ -1,7 +1,9 @@
-import React from 'react';
-import { z } from 'zod';
-import { DeviceProfile, EventCondition } from "@/services/types";
-import { EventConditionOperator, EventLevel } from "@/services/types";
+// External packages
+import React from 'react'
+import { z } from 'zod'
+
+// Internal imports
+import { DeviceProfile, EventCondition, EventConditionOperator, EventLevel } from '@/services/types'
 
 export interface Column<T> {
     key: keyof T;
@@ -279,13 +281,14 @@ export const getRequiredFieldsStatus = (condition: EventCondition, profiles: Dev
 
 export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey: string): Partial<EventCondition> => {
     const profile = profiles.find(p => p.fieldKey === fieldKey);
-    
+
     if (!profile) {
         return {};
     }
-    
+
     if (profile.fieldType === 'Boolean') {
         return {
+            level: 'DANGER',
             conditionType: 'SINGLE',
             operator: 'GE',
             booleanValue: true,
@@ -294,8 +297,9 @@ export const getConditionConfigByProfile = (profiles: DeviceProfile[], fieldKey:
             rightValue: undefined
         };
     }
-    
+
     return {
+        level: 'NORMAL',
         conditionType: 'SINGLE',
         operator: 'GE',
         booleanValue: undefined,
