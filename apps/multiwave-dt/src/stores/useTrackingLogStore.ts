@@ -23,8 +23,10 @@ export interface TrackingLogEntry {
 interface TrackingLogState {
   logs: TrackingLogEntry[]
   maxLogs: number
+  selectedSnapshot: string | null
   addLog: (entry: Omit<TrackingLogEntry, 'id' | 'timestamp'>) => void
   clearLogs: () => void
+  setSelectedSnapshot: (snapshot: string | null) => void
 }
 
 let logIdCounter = 0
@@ -32,6 +34,7 @@ let logIdCounter = 0
 export const useTrackingLogStore = create<TrackingLogState>((set) => ({
   logs: [],
   maxLogs: 100, // 최대 100개 로그 유지
+  selectedSnapshot: null,
 
   addLog: (entry) =>
     set((state) => {
@@ -48,8 +51,16 @@ export const useTrackingLogStore = create<TrackingLogState>((set) => ({
         newLogs.splice(state.maxLogs)
       }
 
-      return { logs: newLogs }
+      // 스냅샷이 있는 이벤트인 경우 자동으로 선택
+      const updates: Partial<TrackingLogState> = { logs: newLogs }
+      if (newLog.data?.snapshot) {
+        updates.selectedSnapshot = newLog.data.snapshot
+      }
+
+      return updates
     }),
 
-  clearLogs: () => set({ logs: [] }),
+  clearLogs: () => set({ logs: [], selectedSnapshot: null }),
+
+  setSelectedSnapshot: (snapshot) => set({ selectedSnapshot: snapshot }),
 }))

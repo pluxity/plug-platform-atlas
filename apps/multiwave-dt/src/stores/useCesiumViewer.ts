@@ -46,7 +46,7 @@ export const useCesiumViewer = create<CesiumViewerState>((set, get) => ({
         maximumRenderTimeChange: Infinity,
       })
 
-      viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(2)
+      // viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(2) // 휠클릭(중간버튼) 활성화
 
       try {
         const vworldApiKey = import.meta.env.VITE_VWORLD_API_KEY || '3102019F-E82C-3A0B-A92C-18FA1261C2F8'

@@ -4,6 +4,7 @@ import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { useCesiumViewer } from '../../stores/useCesiumViewer'
 import { useSceneModeStore } from '../../stores/useSceneModeStore'
 import { ObjectTracker } from './ObjectTracker'
+import { CctvMarkers } from './CctvMarkers'
 
 export function CesiumMap() {
   const cesiumContainer = useRef<HTMLDivElement>(null)
@@ -64,7 +65,12 @@ export function CesiumMap() {
   return (
     <>
       <div ref={cesiumContainer} className="h-full w-full" />
-      {viewer && <ObjectTracker />}
+      {viewer && (
+        <>
+          <ObjectTracker />
+          <CctvMarkers />
+        </>
+      )}
     </>
   )
 }

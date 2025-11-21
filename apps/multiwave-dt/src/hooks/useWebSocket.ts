@@ -47,7 +47,17 @@ export function useWebSocket() {
             })
           } else if (data.type === 'event' && data.object) {
             const serverObj = data.object
-            const typeLabel = serverObj.type === 'person' ? '사람' : '야생동물'
+
+            // 타입별 라벨 매핑
+            let typeLabel = '알 수 없음'
+            const normalizedType = serverObj.type.toLowerCase().trim()
+            if (normalizedType === 'person') {
+              typeLabel = '사람'
+            } else if (normalizedType === 'vehicle' || normalizedType === 'car') {
+              typeLabel = '차량'
+            } else if (normalizedType === 'wildlife') {
+              typeLabel = '야생동물'
+            }
 
             if (data.event_description === '객체 추적 종료') {
               addLog({
@@ -101,6 +111,10 @@ export function useWebSocket() {
                 confidence: serverObj.metadata.confidence,
                 detection_count: serverObj.metadata.detection_count,
               },
+              // person_attributes 추가 (사람인 경우)
+              ...(serverObj.type === 'person' && (serverObj as any).person_attributes
+                ? { person_attributes: (serverObj as any).person_attributes }
+                : {}),
             })
           } else if (data.type === 'tracking_update' && data.object) {
             const serverObj = data.object
@@ -122,6 +136,10 @@ export function useWebSocket() {
                 confidence: serverObj.metadata.confidence,
                 detection_count: serverObj.metadata.detection_count,
               },
+              // person_attributes 추가 (사람인 경우)
+              ...(serverObj.type === 'person' && (serverObj as any).person_attributes
+                ? { person_attributes: (serverObj as any).person_attributes }
+                : {}),
             })
           }
         } catch (error) {

@@ -89,13 +89,26 @@ pnpm multiwave-dt dev
 
 ### 3. 빌드
 
+#### 개발 빌드
 ```bash
-# 루트에서 빌드
+# 루트에서 빌드 (localhost 환경)
 pnpm build
 
 # 또는 개별 빌드
 pnpm multiwave-dt build
 ```
+
+#### 스테이징/프로덕션 빌드
+```bash
+# 스테이징 환경 빌드 (.env.staging 사용)
+pnpm --filter @plug-atlas/multiwave-dt build:staging
+
+# 결과물: dist/ 폴더
+# - Base URL: /multiwave-dt/
+# - WebSocket: ws://plugplatform.com/multiwave-dt/ws
+```
+
+**⚠️ 중요**: 배포 시 반드시 `build:staging` 명령어를 사용하세요!
 
 ---
 

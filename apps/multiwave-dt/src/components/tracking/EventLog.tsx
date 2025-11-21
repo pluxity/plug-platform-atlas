@@ -1,11 +1,98 @@
-import { useState } from 'react'
+import * as Cesium from 'cesium'
 import { useTrackingLogStore } from '../../stores/useTrackingLogStore'
-import { Trash2, X, Camera } from 'lucide-react'
+import { useTrackingStore } from '../../stores/useTrackingStore'
+import { useObjectModalStore } from '../../stores/useObjectModalStore'
+import { useCesiumViewer } from '../../stores/useCesiumViewer'
+import { User, PawPrint, Car, Info } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@plug-atlas/ui'
 
+// 타입별 스타일 설정
+const eventTypeStyles = {
+  person: {
+    bgColor: 'bg-[#D4C5B0]', // 베이지색
+    iconBg: 'bg-[#E8A500]', // 노란색
+    icon: User,
+  },
+  wildlife: {
+    bgColor: 'bg-[#B8D4E8]', // 파란색
+    iconBg: 'bg-[#4A90B8]', // 진한 파란색
+    icon: PawPrint,
+  },
+  vehicle: {
+    bgColor: 'bg-[#E8B8C8]', // 분홍색
+    iconBg: 'bg-[#C83C3C]', // 빨간색
+    icon: Car,
+  },
+  car: {
+    bgColor: 'bg-[#E8B8C8]', // 분홍색
+    iconBg: 'bg-[#C83C3C]', // 빨간색
+    icon: Car,
+  },
+} as const
+
 export function EventLog() {
-  const { logs, clearLogs } = useTrackingLogStore()
-  const [selectedLog, setSelectedLog] = useState<string | null>(null)
+  const { logs, setSelectedSnapshot } = useTrackingLogStore()
+  const objects = useTrackingStore((state) => state.objects)
+  const openModal = useObjectModalStore((state) => state.openModal)
+  const viewer = useCesiumViewer((state: any) => state.viewer)
+
+  const handleLogClick = (log: any) => {
+    // 스냅샷이 있으면 EventSnapshotPanel에 표시
+    if (log.data?.snapshot) {
+      setSelectedSnapshot(log.data.snapshot)
+    }
+
+    // 로그에서 객체 ID를 가져와서 해당 객체의 모달을 열기
+    if (log.data?.objectId) {
+      const obj = objects.get(log.data.objectId)
+      if (obj) {
+        // 스냅샷 이미지를 함께 전달하여 TrackingObjectModal 열기
+        openModal(obj, log.data?.snapshot)
+
+        // 카메라를 해당 객체를 바라보는 위치로 이동
+        if (viewer && !viewer.isDestroyed()) {
+          const targetLat = obj.position?.latitude ?? (obj as any).latitude
+          const targetLon = obj.position?.longitude ?? (obj as any).longitude
+          const targetAlt = obj.position?.altitude ?? 0
+
+          // 객체 바로 위에서 수직으로 내려다보기
+          viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(
+              targetLon,
+              targetLat,
+              targetAlt + 1500 // 1500m 높이에서 수직으로
+            ),
+            duration: 1.5,
+            orientation: {
+              heading: Cesium.Math.toRadians(0), // 북쪽 방향
+              pitch: Cesium.Math.toRadians(-90), // 수직으로 내려다보기
+              roll: 0,
+            },
+          })
+        }
+        return
+      }
+    }
+
+    // 객체가 없지만 좌표 정보가 있으면 카메라만 이동
+    if (log.data?.latitude && log.data?.longitude) {
+      if (viewer && !viewer.isDestroyed()) {
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(
+            log.data.longitude,
+            log.data.latitude,
+            1500 // 1500m 높이에서 수직으로
+          ),
+          duration: 1.5,
+          orientation: {
+            heading: Cesium.Math.toRadians(0), // 북쪽 방향
+            pitch: Cesium.Math.toRadians(-90), // 수직으로 내려다보기
+            roll: 0,
+          },
+        })
+      }
+    }
+  }
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp)
@@ -16,180 +103,88 @@ export function EventLog() {
     })
   }
 
-  const formatDateTime = (timestamp: number) => {
-    const date = new Date(timestamp)
-    return date.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-  }
-
-  const selectedLogData = selectedLog ? logs.find(l => l.id === selectedLog) : null
-
   return (
-    <Card className="h-full flex flex-col bg-slate-800/95 backdrop-blur-sm border-slate-700">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm text-white">이벤트 로그</CardTitle>
-          <button
-            onClick={clearLogs}
-            className="p-1.5 hover:bg-slate-700 rounded transition-colors"
-            title="로그 지우기"
-          >
-            <Trash2 className="h-3.5 w-3.5 text-slate-400" />
-          </button>
-        </div>
+    <Card className="h-full flex flex-col bg-[#181A1D]/80 backdrop-blur-md border-slate-600/30 rounded-[12px]">
+      <CardHeader className="py-2 border-b border-slate-600/20 text-center">
+        <CardTitle className="text-sm font-semibold text-white">이벤트 로그</CardTitle>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-y-auto p-2">
+      <CardContent className="flex-1 min-h-0 overflow-y-auto p-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-slate-800/50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-500/70 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400/80">
         {logs.length === 0 ? (
           <div className="text-center text-slate-500 text-xs py-8">이벤트가 없습니다</div>
         ) : (
-          <div className="space-y-1.5">
-            {logs.map((log) => (
-              <Card
-                key={log.id}
-                className={`cursor-pointer transition-all ${
-                  selectedLog === log.id
-                    ? 'bg-blue-600/30 border-blue-500'
-                    : 'bg-slate-700/50 hover:bg-slate-700 border-transparent'
-                }`}
-                onClick={() => setSelectedLog(log.id)}
-              >
-                <CardContent className="p-3">
-                  {/* 스냅샷 이미지 (있는 경우) */}
-                  {log.data?.snapshot && (
-                    <div className="mb-3 rounded-lg overflow-hidden border border-slate-600">
-                      <img
-                        src={log.data.snapshot}
-                        alt="이벤트 스냅샷"
-                        className="w-full aspect-video object-cover"
-                      />
-                    </div>
-                  )}
+          <div className="space-y-2">
+            {logs.map((log) => {
+              // 시스템 메시지인지 확인 (연결, 에러, 정보 등)
+              const isSystemMessage = !log.data?.objectType || log.type === 'connection' || log.type === 'error' || log.type === 'info'
 
-                  <div className="flex items-start gap-2">
-                    {/* 타입 표시 (작은 원) */}
-                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                      log.type === 'tracking_update' ? 'bg-blue-500' :
-                      log.type === 'error' ? 'bg-red-500' :
-                      log.type === 'connection' ? 'bg-green-500' : 'bg-slate-500'
-                    }`} />
-
-                    {/* 내용 */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-xs text-slate-200 line-clamp-2 leading-relaxed">{log.message}</span>
-                        <span className="text-xs text-slate-500 flex-shrink-0">{formatTime(log.timestamp)}</span>
+              if (isSystemMessage) {
+                // 시스템 메시지 - 간단한 스타일
+                return (
+                  <div
+                    key={log.id}
+                    className="bg-slate-700/50 rounded-lg px-3 py-2 border border-slate-600/30"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Info className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                      <div className="text-[10px] text-slate-400">
+                        {formatTime(log.timestamp)}
                       </div>
-
-                      {/* 카메라 ID */}
-                      {log.data?.camera && (
-                        <div className="mt-1 text-xs text-slate-400">
-                          <Camera className="h-3 w-3 inline mr-1" />
-                          {log.data.camera}
-                        </div>
-                      )}
+                      <div className="text-[10px] text-slate-300 flex-1">
+                        {log.message}
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                )
+              }
+
+              // 객체 이벤트 메시지 - 타입별 색상
+              const objectType = log.data?.objectType || 'person'
+
+              // 추적 종료 이벤트인지 확인 (메시지 기반)
+              const isTrackingEnd = log.message?.includes('종료') || log.message?.includes('사라짐')
+
+              // 타입 정규화 (소문자, 공백 제거)
+              const normalizedType = objectType.toLowerCase().trim()
+              const typeKey = normalizedType === 'car' ? 'vehicle' : normalizedType
+
+              const style = eventTypeStyles[typeKey as keyof typeof eventTypeStyles] || eventTypeStyles.person
+              const Icon = style.icon
+
+              // 추적 종료인 경우 회색으로 변경
+              const bgColor = isTrackingEnd ? 'bg-slate-500/50' : style.bgColor
+              const iconBg = isTrackingEnd ? 'bg-slate-600' : style.iconBg
+
+              return (
+                <div
+                  key={log.id}
+                  className="cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                  onClick={() => handleLogClick(log)}
+                >
+                  {/* 알림 카드 - 타입별 색상 (종료 시 회색) */}
+                  <div className={`${bgColor} rounded-lg p-2.5 shadow-sm`}>
+                    <div className="flex items-start gap-2.5">
+                      {/* 아이콘 */}
+                      <div className={`${iconBg} rounded-full p-2 flex-shrink-0`}>
+                        <Icon className="h-5 w-5 text-white" />
+                      </div>
+                      {/* 내용 */}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] text-slate-700 mb-0.5">
+                          오전 {formatTime(log.timestamp)}
+                        </div>
+                        <div className="text-xs font-semibold text-slate-900 leading-relaxed">
+                          {log.message}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </CardContent>
-
-      {/* 선택된 이벤트 스냅샷 모달 */}
-      {selectedLogData && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="bg-slate-800 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border-slate-700 max-w-3xl w-full max-h-[90vh] overflow-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm text-white">이벤트 상세</CardTitle>
-                <button
-                  onClick={() => setSelectedLog(null)}
-                  className="p-1 hover:bg-slate-700 rounded transition-colors"
-                >
-                  <X className="h-5 w-5 text-slate-400" />
-                </button>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-              {/* 스냅샷 이미지 */}
-              <div className="aspect-video bg-slate-900/50 rounded-lg overflow-hidden border border-slate-700">
-                {selectedLogData.data?.snapshot ? (
-                  <img
-                    src={selectedLogData.data.snapshot}
-                    alt="이벤트 스냅샷"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-500">
-                    <div className="text-center">
-                      <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">스냅샷이 없습니다</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* 이벤트 정보 */}
-              <div className="bg-slate-700/50 rounded-lg p-3 space-y-2">
-                <div className="text-sm">
-                  <div className="text-slate-400 mb-1">메시지</div>
-                  <div className="text-white">{selectedLogData.message}</div>
-                </div>
-
-                <div className="text-sm">
-                  <div className="text-slate-400 mb-1">시간</div>
-                  <div className="text-white">{formatDateTime(selectedLogData.timestamp)}</div>
-                </div>
-
-                {/* 추가 정보 */}
-                {selectedLogData.data && (
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-600">
-                    {selectedLogData.data.objectId && (
-                      <div className="text-sm">
-                        <div className="text-slate-400">객체 ID</div>
-                        <div className="text-white font-mono text-xs">{selectedLogData.data.objectId}</div>
-                      </div>
-                    )}
-                    {selectedLogData.data.name && (
-                      <div className="text-sm">
-                        <div className="text-slate-400">이름</div>
-                        <div className="text-white">{selectedLogData.data.name}</div>
-                      </div>
-                    )}
-                    {selectedLogData.data.objectType && (
-                      <div className="text-sm">
-                        <div className="text-slate-400">타입</div>
-                        <div className="text-white">{selectedLogData.data.objectType === 'person' ? '사람' : '야생동물'}</div>
-                      </div>
-                    )}
-                    {selectedLogData.data.camera && (
-                      <div className="text-sm">
-                        <div className="text-slate-400">카메라</div>
-                        <div className="text-white">{selectedLogData.data.camera}</div>
-                      </div>
-                    )}
-                    {selectedLogData.data.eventDescription && (
-                      <div className="text-sm col-span-2">
-                        <div className="text-slate-400">이벤트</div>
-                        <div className="text-white">{selectedLogData.data.eventDescription}</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </Card>
   )
 }

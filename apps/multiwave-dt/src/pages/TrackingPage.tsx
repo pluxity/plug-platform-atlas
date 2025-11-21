@@ -1,18 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { CesiumMap } from '../components/cesium/CesiumMap'
 import { Header } from '../components/layout/Header'
-import { ObjectList } from '../components/tracking/ObjectList'
+import { OverviewPanel } from '../components/tracking/OverviewPanel'
 import { EventLog } from '../components/tracking/EventLog'
+import { EventSnapshotPanel } from '../components/tracking/EventSnapshotPanel'
+import { VideoSearchButton } from '../components/tracking/VideoSearchButton'
 import { ObjectInfoPanel } from '../components/tracking/ObjectInfoPanel'
+import { TrackingObjectModal } from '../components/tracking/TrackingObjectModal'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { useObjectTimeout } from '../hooks/useObjectTimeout'
 import { initDB, scheduleAutoCleanup, getStorageStats } from '../services/indexeddb.service'
-import { Film, X } from 'lucide-react'
 
 export function TrackingPage() {
   useWebSocket()
   useObjectTimeout()
-  const [showVideoSearch, setShowVideoSearch] = useState(false)
 
   useEffect(() => {
     initDB()
@@ -26,54 +27,45 @@ export function TrackingPage() {
   }, [])
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-slate-900">
-      <Header />
-
-      <div className="absolute top-14 left-0 right-0 bottom-0">
+    <div className="relative h-screen w-screen overflow-hidden">
+      {/* 3D 지도 - 전체 화면 */}
+      <div className="fixed inset-0 w-screen h-screen">
         <CesiumMap />
       </div>
 
-      <div className="absolute top-14 inset-x-0 bottom-0 pointer-events-none">
+      {/* 헤더 */}
+      <Header />
+
+      {/* 지도 위 정보 패널 */}
+      <div className="absolute inset-0 pointer-events-none">
         <ObjectInfoPanel />
       </div>
 
-      <div className="absolute left-4 top-[4.5rem] bottom-4 w-80 z-30">
-        <ObjectList />
-      </div>
-
-      <div className="absolute right-4 top-[4.5rem] bottom-20 w-96 z-30">
-        <EventLog />
-      </div>
-
-      <div className="absolute right-4 bottom-4 z-40">
-        <button
-          onClick={() => setShowVideoSearch(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-lg transition-colors"
-        >
-          <Film className="h-4 w-4" />
-          <span>영상기록 검색</span>
-        </button>
-      </div>
-
-      {showVideoSearch && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-800 rounded-lg shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border border-slate-700 max-w-4xl w-full max-h-[90vh] overflow-auto">
-            <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-              <h3 className="font-semibold text-white text-sm">영상기록 검색</h3>
-              <button
-                onClick={() => setShowVideoSearch(false)}
-                className="p-1 hover:bg-slate-700 rounded transition-colors"
-              >
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
-            </div>
-            <div className="p-8 text-center text-slate-400">
-              <Film className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">영상기록 검색 기능은 추후 구현 예정입니다.</p>
-            </div>
-          </div>
+      {/* 좌측 사이드바 - 패널들 */}
+      <div className="absolute left-4 top-[4.5rem] bottom-4 w-96 z-30 flex flex-col gap-3">
+        {/* 1. 종합상황 패널 */}
+        <div className="h-44">
+          <OverviewPanel />
         </div>
-      )}
+
+        {/* 2. 이벤트 로그 패널 */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <EventLog />
+        </div>
+
+        {/* 3. 이벤트 스냅샷 패널 */}
+        <div className="h-72">
+          <EventSnapshotPanel />
+        </div>
+
+        {/* 4. 영상기록 검색 버튼 */}
+        <div>
+          <VideoSearchButton />
+        </div>
+      </div>
+
+      {/* 트래킹 객체 모달 */}
+      <TrackingObjectModal />
     </div>
   )
 }

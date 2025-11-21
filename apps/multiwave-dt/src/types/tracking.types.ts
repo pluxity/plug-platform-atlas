@@ -4,6 +4,10 @@ export interface TrackingObjectMetadata {
   direction?: number
   confidence?: number
   detection_count?: number
+  zone?: string
+  species?: string
+  alert?: string
+  imageUrl?: string
 }
 
 export interface TrackingObject {

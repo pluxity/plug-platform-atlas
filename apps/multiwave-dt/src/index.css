@@ -4,3 +4,8 @@
 /* Then load Tailwind and shared globals */
 @import "tailwindcss";
 @import "../../../packages/ui/src/globals.css";
+
+/* Finally, app-specific styles go here */
+* {
+    border-color: black;
+}

@@ -3,7 +3,32 @@ import { SceneTransforms } from 'cesium'
 import * as Cesium from 'cesium'
 import { useCesiumViewer } from '../../stores/useCesiumViewer'
 import { useTrackingStore } from '../../stores/useTrackingStore'
+import { useObjectModalStore } from '../../stores/useObjectModalStore'
 import { X, User, HelpCircle } from 'lucide-react'
+
+// 카메라를 객체를 바라보는 위치로 이동하는 함수
+const flyToObject = (viewer: any, obj: any) => {
+  if (!viewer || viewer.isDestroyed()) return
+
+  const targetLat = obj.position?.latitude ?? obj.latitude
+  const targetLon = obj.position?.longitude ?? obj.longitude
+  const targetAlt = obj.position?.altitude ?? 0
+
+  // 객체 바로 위에서 수직으로 내려다보기
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(
+      targetLon,
+      targetLat,
+      targetAlt + 1500 // 1500m 높이에서 수직으로
+    ),
+    duration: 1.5,
+    orientation: {
+      heading: Cesium.Math.toRadians(0), // 북쪽 방향
+      pitch: Cesium.Math.toRadians(-90), // 수직으로 내려다보기
+      roll: 0,
+    },
+  })
+}
 
 interface ObjectPanelPosition {
   objectId: string
@@ -16,6 +41,7 @@ export function ObjectInfoPanel() {
   const viewer = useCesiumViewer((state: any) => state.viewer)
   const objects = useTrackingStore((state: any) => state.objects)
   const togglePinObject = useTrackingStore((state: any) => state.togglePinObject)
+  const openModal = useObjectModalStore((state) => state.openModal)
 
   const [positions, setPositions] = useState<Map<string, ObjectPanelPosition>>(new Map())
 
@@ -153,15 +179,19 @@ export function ObjectInfoPanel() {
             </svg>
 
             <div
-              className="absolute pointer-events-auto"
+              className="absolute pointer-events-auto cursor-pointer"
               style={{
                 left: `${pos.screenX}px`,
                 top: `${pos.screenY}px`,
                 transform: 'translate(-50%, -100%)',
                 zIndex: 2,
               }}
+              onClick={() => {
+                openModal(obj)
+                flyToObject(viewer, obj)
+              }}
             >
-              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border-2 border-blue-500 min-w-[350px] mb-16">
+              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border-2 border-blue-500 min-w-[350px] mb-16 hover:shadow-2xl transition-shadow">
               <div className="flex items-center justify-between p-3 border-b bg-blue-600 text-white rounded-t-lg">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-md bg-white/20">
@@ -175,7 +205,10 @@ export function ObjectInfoPanel() {
                   </div>
                 </div>
                 <button
-                  onClick={() => togglePinObject(objectId)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    togglePinObject(objectId)
+                  }}
                   className="p-1 hover:bg-white/20 rounded transition-colors"
                   title="닫기"
                 >

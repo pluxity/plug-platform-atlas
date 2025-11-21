@@ -5,25 +5,23 @@ import { useTrackingStore } from '../../stores/useTrackingStore'
 import { useSceneModeStore } from '../../stores/useSceneModeStore'
 import type { TrackingObject, TrackingPath } from '../../types/tracking.types'
 
-// 객체 타입별 색상 정의
+// 객체 타입별 색상 정의 (OverviewPanel과 동일한 색상)
 const OBJECT_COLORS = {
-  person: Color.BLUE,
-  wildlife: Color.ORANGE,
+  person: Color.fromCssColorString('#E8A500'), // 노란색
+  vehicle: Color.fromCssColorString('#C83C3C'), // 빨간색
+  car: Color.fromCssColorString('#C83C3C'), // 빨간색
+  wildlife: Color.fromCssColorString('#4A90B8'), // 파란색
 } as const
 
 // 야간 모드 색상 (녹색 강조)
 const NIGHT_COLOR = Color.LIME
 
-// 객체 타입별 라벨 텍스트
-const OBJECT_LABELS = {
-  person: '👤',
-  wildlife: '🦌',
-} as const
-
 // 경로 색상 (반투명)
 const PATH_COLORS = {
-  person: Color.BLUE.withAlpha(0.7),
-  wildlife: Color.ORANGE.withAlpha(0.7),
+  person: Color.fromCssColorString('#E8A500').withAlpha(0.7),
+  vehicle: Color.fromCssColorString('#C83C3C').withAlpha(0.7),
+  car: Color.fromCssColorString('#C83C3C').withAlpha(0.7),
+  wildlife: Color.fromCssColorString('#4A90B8').withAlpha(0.7),
 } as const
 
 // 경로 최대 포인트 수
@@ -112,7 +110,6 @@ function updateOrCreateEntity(
   // 야간 모드 시 녹색으로 강조, 그 외에는 타입별 색상
   const color = mode === 'night' ? NIGHT_COLOR : (OBJECT_COLORS[obj.type as keyof typeof OBJECT_COLORS] || OBJECT_COLORS.person)
   const pathColor = mode === 'night' ? NIGHT_COLOR.withAlpha(0.7) : (PATH_COLORS[obj.type as keyof typeof PATH_COLORS] || PATH_COLORS.person)
-  const label = OBJECT_LABELS[obj.type as keyof typeof OBJECT_LABELS] || OBJECT_LABELS.person
 
   // 경로 좌표 계산
   let pathPositions: Cartesian3[] | undefined
@@ -138,6 +135,11 @@ function updateOrCreateEntity(
     // point 색상 업데이트
     if (entity.point) {
       entity.point.color = new ConstantProperty(color)
+    }
+
+    // label 색상 업데이트
+    if (entity.label) {
+      entity.label.fillColor = new ConstantProperty(color)
     }
 
     // polyline 업데이트
@@ -172,9 +174,9 @@ function updateOrCreateEntity(
         heightReference: HeightReference.RELATIVE_TO_GROUND,
       },
       label: {
-        text: `${label} ${obj.id.slice(0, 8)}`,
+        text: obj.id.slice(0, 8),
         font: '14px sans-serif',
-        fillColor: Color.WHITE,
+        fillColor: color, // 타입별 색상 적용
         outlineColor: Color.BLACK,
         outlineWidth: 2,
         style: 0, // FILL
