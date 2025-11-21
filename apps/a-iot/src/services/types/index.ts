@@ -21,6 +21,7 @@ export type {
 export type {
   EventCondition,
   EventConditionRequest,
+  EventConditionOperator
 } from './eventCondition'
 
 export type {
@@ -64,3 +65,24 @@ export type {
 export type {
   PermissionCheckboxItem,
 } from './permissionCheckbox'
+
+// Facility types (from web-core)
+export * from './facility'
+
+// Event Setting types (from web-core)
+export * from './event-setting'
+
+// Device types (from web-core)
+export * from './device'
+
+// Abbreviation types (from web-core)
+export * from './abbreviation'
+
+// Feature types (from web-core)
+export * from './feature'
+
+// Action History types (from web-core)
+export * from './action-history'
+
+// Mobius types (from web-core)
+export * from './mobius'

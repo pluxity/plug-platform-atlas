@@ -22,6 +22,9 @@ build/
 .env.local
 .env.development
 .env.development.local
+.env.example
+.env.staging
+.env.staging.local
 .env.test.local
 .env.production
 .env.production.local

@@ -41,7 +41,7 @@ export const useEvents = (
 };
 
 export const useInfiniteEvents = (
-    baseParams?: Omit<EventsQueryParams, 'lastId'>,
+    baseParams?: Omit<EventsQueryParams, 'lastId' | 'lastStatus'>,
     pageSize: number = 10,
     options?: SWRInfiniteConfiguration<PaginatedEventsResponse, Error>
 ) => {
@@ -57,6 +57,9 @@ export const useInfiniteEvents = (
 
         if (pageIndex > 0 && previousPageData?.nextCursor) {
             params.lastId = previousPageData.nextCursor;
+            if (previousPageData?.nextStatus) {
+                params.lastStatus = previousPageData.nextStatus;
+            }
         }
 
         const queryString = new URLSearchParams(
@@ -75,7 +78,7 @@ export const useInfiniteEvents = (
         getKey,
         async (key: string) => {
             const response = await client.get<ApiResponse<PaginatedEventsResponse>>(key);
-            return response.data || { content: [], nextCursor: null, hasNext: false };
+            return response.data || { content: [], nextCursor: null, nextStatus: null, hasNext: false };
         },
         options
     );

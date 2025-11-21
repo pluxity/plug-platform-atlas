@@ -48,7 +48,7 @@ export const Default: Story = {
             Make changes to your profile here. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 p-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
               Name
@@ -103,7 +103,7 @@ export const WithForm: Story = {
             Update profile information below.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-6">
+        <div className="grid gap-6 p-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="firstName">First Name</Label>

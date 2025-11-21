@@ -131,3 +131,49 @@ export const SimpleConfirmation: Story = {
     </AlertDialog>
   ),
 }
+
+export const WithCloseButton: Story = {
+  render: () => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">With Close Button</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent showCloseButton={true}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Dialog with Close Button</AlertDialogTitle>
+          <AlertDialogDescription>
+            This dialog has a close button (X) in the top right corner.
+            You can close it by clicking the X button or using the Cancel/Continue buttons.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction>Continue</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ),
+}
+
+export const WithoutCloseButton: Story = {
+  render: () => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">Without Close Button</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent showCloseButton={false}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Dialog without Close Button</AlertDialogTitle>
+          <AlertDialogDescription>
+            This dialog does not have a close button (X) in the top right corner.
+            You can only close it by clicking the Cancel or Continue buttons below.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction>Continue</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ),
+}

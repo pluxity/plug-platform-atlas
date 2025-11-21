@@ -30,11 +30,13 @@ export interface EventsQueryParams {
     sensorType?: SensorType;
     size?: number;
     lastId?: number;
+    lastStatus?: EventStatus;
 }
 
 export interface PaginatedEventsResponse {
     content: Event[];
     nextCursor: number | null;
+    nextStatus: EventStatus | null;
     hasNext: boolean;
 }
 

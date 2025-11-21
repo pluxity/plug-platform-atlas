@@ -20,7 +20,6 @@ export class ApiClient {
       timeout: config.timeout ?? 30000,
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
         ...config.headers,
       },
       hooks: {
@@ -64,7 +63,11 @@ export class ApiClient {
   }
 
   public async post<T = void>(url: string, json?: unknown, options?: Options): Promise<T | void> {
-    const response = await this.client.post(url, { ...options, json })
+    const requestOptions: Options = json instanceof FormData
+        ? { ...options, body: json }
+        : { ...options, json }
+
+    const response = await this.client.post(url, requestOptions)
 
     if (response.status === 201) {
       const location = response.headers.get('location')

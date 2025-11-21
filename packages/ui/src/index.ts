@@ -36,6 +36,7 @@ export * from './molecules/tooltip'
 
 export * from './molecules/menubar'
 export * from './molecules/sheet'
+export * from './molecules/ModalForm'
 
 export * from './organisms/alert-dialog'
 export * from './organisms/chart'

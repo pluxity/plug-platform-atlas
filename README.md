@@ -38,7 +38,7 @@
 ### Frontend
 - **Framework**: React 19
 - **Language**: TypeScript 5
-- **Build Tool**: Vite 6
+- **Build Tool**: Vite 7
 - **Styling**: Tailwind CSS v4
 - **UI Library**: Radix UI
 - **State Management**: Zustand, SWR

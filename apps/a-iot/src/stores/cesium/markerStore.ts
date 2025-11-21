@@ -13,12 +13,46 @@ import {
   ConstantProperty,
   Event,
 } from 'cesium'
+import { getAssetPath } from '../../utils/assetPath'
 import type { MarkerOptions } from './types'
 import { createColoredSvgDataUrl } from '../../utils/svgMarkerUtils'
 
 const blinkListeners = new Map<string, Event.RemoveCallback>()
 
-interface MarkerState {}
+const DEFAULT_MARKER_CONFIG = {
+  width: 32,
+  height: 32,
+  heightOffset: 1,
+  labelFont: 'bold 13px SUIT',
+  labelFillColor: Color.BLACK, // 검은색 글씨
+  labelOutlineColor: Color.WHITE, // 흰색 테두리
+  labelOutlineWidth: 3, // 테두리 두께
+  labelPixelOffsetY: -26,
+  scaleNear: { distance: 100, scale: 1.5 },
+  scaleFar: { distance: 5000, scale: 0.3 },
+} as const
+
+const BLINK_CONFIG = {
+  defaultDuration: 1000,
+  alphaMin: 0.3,
+  alphaMax: 1.0,
+} as const
+
+const HOVER_CONFIG = {
+  // 빌보드(마커 이미지) 확대
+  billboardScaleMultiplier: 1.3,
+  // 라벨 확대
+  labelScaleMultiplier: 1.15,
+  // 라벨 스타일
+  labelFont: 'bold 14px SUIT',
+  labelFillColor: Color.BLACK, // 검은색 글씨
+  labelOutlineColor: Color.WHITE, // 흰색 테두리
+  labelOutlineWidth: 3, // 테두리 두께
+} as const
+
+interface MarkerState {
+  hoveredMarkerId: string | null
+}
 
 interface MarkerActions {
   addMarker: (viewer: CesiumViewer, options: MarkerOptions) => Entity
@@ -28,43 +62,61 @@ interface MarkerActions {
   changeMarkerColor: (viewer: CesiumViewer, markerId: string, svgName: string, newColor: string) => void
   startMarkerBlink: (viewer: CesiumViewer, markerId: string, duration?: number) => void
   stopMarkerBlink: (viewer: CesiumViewer, markerId: string) => void
+  setMarkerHover: (viewer: CesiumViewer, markerId: string | null) => void
 }
 
 type MarkerStore = MarkerState & MarkerActions
 
-export const useMarkerStore = create<MarkerStore>(() => ({
+export const useMarkerStore = create<MarkerStore>((set, get) => ({
+  hoveredMarkerId: null,
+
   addMarker: (viewer: CesiumViewer, options: MarkerOptions) => {
     const position = Cartesian3.fromDegrees(
       options.lon,
       options.lat,
-      options.height ?? 1
+      options.height ?? DEFAULT_MARKER_CONFIG.heightOffset
     )
+
+    const markerHeight = options.heightValue || DEFAULT_MARKER_CONFIG.height
+
+    const scaleByDistance = options.disableScaleByDistance
+      ? undefined
+      : new NearFarScalar(
+          DEFAULT_MARKER_CONFIG.scaleNear.distance,
+          DEFAULT_MARKER_CONFIG.scaleNear.scale,
+          DEFAULT_MARKER_CONFIG.scaleFar.distance,
+          DEFAULT_MARKER_CONFIG.scaleFar.scale
+        )
+
+    const labelPixelOffset = options.label
+      ? new Cartesian2(0, -(markerHeight / 2 + 10))
+      : undefined
 
     const entity = viewer.entities.add({
       id: options.id,
       position: position,
       billboard: {
-        image: options.image || '/images/icons/map/marker.png',
+        image: options.image || getAssetPath('/images/icons/map/marker.png'),
         width: options.width || 32,
         height: options.heightValue || 32,
         heightReference: options.heightReference ?? HeightReference.RELATIVE_TO_GROUND,
-        scaleByDistance: options.disableScaleByDistance ? undefined : new NearFarScalar(100, 1.5, 5000, 0.3),
+        scaleByDistance: scaleByDistance,
         disableDepthTestDistance: options.disableDepthTest ? Number.POSITIVE_INFINITY : undefined,
       },
       label: options.label
         ? {
             text: options.label,
-            font: '14px SUIT',
-            fillColor: options.labelColor
-              ? Color.fromCssColorString(options.labelColor)
-              : Color.BLACK,
-            outlineColor: Color.WHITE,
-            outlineWidth: 3,
+            font: DEFAULT_MARKER_CONFIG.labelFont,
+            fillColor: DEFAULT_MARKER_CONFIG.labelFillColor,
+            outlineColor: DEFAULT_MARKER_CONFIG.labelOutlineColor,
+            outlineWidth: DEFAULT_MARKER_CONFIG.labelOutlineWidth,
+            showBackground: false, // 배경 제거
             style: LabelStyle.FILL_AND_OUTLINE,
             verticalOrigin: VerticalOrigin.BOTTOM,
-            pixelOffset: new Cartesian2(0, -(options.heightValue ? options.heightValue / 2 + 10 : 26)),
+            pixelOffset: labelPixelOffset,
             heightReference: options.heightReference,
-            show: true,
+            // 기본 상태에서 라벨도 숨김
+            show: false,
             disableDepthTestDistance: options.disableDepthTest ? Number.POSITIVE_INFINITY : undefined,
           }
         : undefined,
@@ -126,7 +178,7 @@ export const useMarkerStore = create<MarkerStore>(() => ({
     entity.billboard.image = new ConstantProperty(newImageUrl)
   },
 
-  startMarkerBlink: (viewer: CesiumViewer, markerId: string, duration: number = 1000) => {
+  startMarkerBlink: (viewer: CesiumViewer, markerId: string, duration: number = BLINK_CONFIG.defaultDuration) => {
     const entity = viewer.entities.getById(markerId)
     if (!entity || !entity.billboard) return
 
@@ -143,9 +195,12 @@ export const useMarkerStore = create<MarkerStore>(() => ({
 
       const elapsed = Date.now() - startTime
       const progress = (elapsed % duration) / duration
-      const alpha = 0.65 + Math.sin(progress * Math.PI * 2) * 0.35
+      const sinValue = Math.sin(progress * Math.PI * 2)
+      const alphaRange = BLINK_CONFIG.alphaMax - BLINK_CONFIG.alphaMin
+      const alpha = BLINK_CONFIG.alphaMin + (sinValue + 1) / 2 * alphaRange
 
       entity.billboard.color = new ConstantProperty(Color.WHITE.withAlpha(alpha))
+      viewer.scene.requestRender()
     })
 
     blinkListeners.set(markerId, removeCallback)
@@ -161,6 +216,48 @@ export const useMarkerStore = create<MarkerStore>(() => ({
     const entity = viewer.entities.getById(markerId)
     if (entity && entity.billboard) {
       entity.billboard.color = new ConstantProperty(Color.WHITE)
+      viewer.scene.requestRender()
     }
+  },
+
+  setMarkerHover: (viewer: CesiumViewer, markerId: string | null) => {
+    const { hoveredMarkerId } = get()
+
+    // 이전 호버 마커 복원 (기본 상태로)
+    if (hoveredMarkerId && hoveredMarkerId !== markerId) {
+      const prevEntity = viewer.entities.getById(hoveredMarkerId)
+      if (prevEntity) {
+        // 빌보드(마커 이미지) 원래 크기로 복원
+        if (prevEntity.billboard) {
+          prevEntity.billboard.scale = new ConstantProperty(1.0)
+        }
+        // 라벨 숨김 (공원 마커는 제외)
+        if (prevEntity.label && !hoveredMarkerId.startsWith('park-')) {
+          prevEntity.label.show = new ConstantProperty(false)
+          prevEntity.label.scale = new ConstantProperty(1.0)
+          prevEntity.label.font = new ConstantProperty(DEFAULT_MARKER_CONFIG.labelFont)
+        }
+      }
+    }
+
+    // 새로운 호버 마커 강조 (공원 마커는 제외)
+    if (markerId && !markerId.startsWith('park-')) {
+      const entity = viewer.entities.getById(markerId)
+      if (entity) {
+        // 빌보드(마커 이미지) 확대
+        if (entity.billboard) {
+          entity.billboard.scale = new ConstantProperty(HOVER_CONFIG.billboardScaleMultiplier)
+        }
+        // 라벨 표시 및 확대, 스타일 변경
+        if (entity.label) {
+          entity.label.show = new ConstantProperty(true)
+          entity.label.scale = new ConstantProperty(HOVER_CONFIG.labelScaleMultiplier)
+          entity.label.font = new ConstantProperty(HOVER_CONFIG.labelFont)
+        }
+      }
+    }
+
+    set({ hoveredMarkerId: markerId })
+    viewer.scene.requestRender()
   },
 }))

@@ -36,9 +36,11 @@ export const useEventConditionMutations = () => {
         return response;
     };
 
-    const deleteEventCondition = async (id: number) => {
+    const deleteEventCondition = async (id: number, objectId?: string) => {
         await client.delete(`event-conditions/${id}`);
-        await mutate(`event-conditions`);
+        if (objectId) {
+            await mutate(`event-conditions-${objectId}`);
+        }
     };
 
     return {
