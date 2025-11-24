@@ -140,10 +140,10 @@ export const Default: Story = {
 
 ### 담당자 목록
 
-- `seung-choi` - 최승철
-- `whlee-pluxity` - 이우현
-- `yjsun1996` - 선용준
-- `Nadk-pluxity` - 김낙현
+- `Nadk-pluxity` - 나동규
+- `whlee-pluxity` - 이원희
+- `yjsun1996` - 윤지선
+- `seung-choi` - 최승은
 
 ### API 문서
 

@@ -1,11 +1,14 @@
-import { Button } from '@plug-atlas/ui';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+// External packages
+import { RefreshCw, AlertCircle } from 'lucide-react'
+
+// @plug-atlas packages
+import { Button } from '@plug-atlas/ui'
 
 interface ErrorDisplayProps {
-  onRetry?: () => void;
-  title?: string;
-  message?: string;
-  showRetryButton?: boolean;
+  onRetry?: () => void
+  title?: string
+  message?: string
+  showRetryButton?: boolean
 }
 
 export default function ErrorDisplay({ 
