@@ -1,5 +1,5 @@
 // External packages
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Bell, BellOff, Trash2, X, Mail, MailX } from 'lucide-react'
 
 // @plug-atlas packages
@@ -29,15 +29,17 @@ interface EventConditionCardProps {
   condition: EventCondition
   index: number
   profiles: DeviceProfile[]
+  hasError?: boolean
   onFieldChange: (index: number, field: keyof EventCondition, value: any) => void
   onRemove: (index: number) => void
   onDelete: (conditionId: number) => Promise<void>
 }
 
-export default function EventConditionCard({
+function EventConditionCard({
   condition,
   index,
   profiles,
+  hasError = false,
   onFieldChange,
   onRemove,
   onDelete,
@@ -64,7 +66,11 @@ export default function EventConditionCard({
   return (
     <>
       <div className={`flex items-center gap-2 px-4 py-3 border rounded-lg hover:bg-gray-50 transition-colors ${
-        isNewCondition ? 'border-blue-300 bg-blue-50/30' : 'border-gray-200 bg-white'
+        hasError
+          ? 'border-yellow-400 bg-yellow-50'
+          : isNewCondition
+            ? 'border-blue-300 bg-blue-50/30'
+            : 'border-gray-200 bg-white'
       }`}>
         {/* Field Key */}
         <div className="flex-1 min-w-[7.5rem]">
@@ -188,3 +194,5 @@ export default function EventConditionCard({
     </>
   )
 }
+
+export default memo(EventConditionCard)

@@ -5,6 +5,7 @@ import EventConditionCard from '@/pages/management/devices/sensor/components/det
 interface EventConditionListProps {
   conditions: EventCondition[]
   profiles: DeviceProfile[]
+  errorIndices: Set<number>
   onFieldChange: (index: number, field: keyof EventCondition, value: any) => void
   onRemove: (index: number) => void
   onDelete: (conditionId: number) => Promise<void>
@@ -13,6 +14,7 @@ interface EventConditionListProps {
 export default function EventConditionList({
   conditions,
   profiles,
+  errorIndices,
   onFieldChange,
   onRemove,
   onDelete,
@@ -37,6 +39,7 @@ export default function EventConditionList({
           condition={condition}
           index={index}
           profiles={profiles}
+          hasError={errorIndices.has(index)}
           onFieldChange={onFieldChange}
           onRemove={onRemove}
           onDelete={onDelete}
