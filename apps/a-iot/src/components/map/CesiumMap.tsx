@@ -39,7 +39,7 @@ export default function CesiumMap({
   const { loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, applyHeightOffset } = useTilesetStore()
   const { addMarker, clearAllMarkers, changeMarkerColor, startMarkerBlink, stopMarkerBlink, setMarkerHover } = useMarkerStore()
   const { clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
-  const { focusOn } = useCameraStore()
+  const { focusOn, flyToPosition } = useCameraStore()
   const { setCurrentProvider } = useImageryStore()
 
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
@@ -392,21 +392,23 @@ export default function CesiumMap({
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed() || isLoading) return
-  
+
     const controller = viewer.scene.screenSpaceCameraController
     if (activeTab === 'parks') {
-      controller.maximumZoomDistance = 4000 
+      controller.maximumZoomDistance = 4000
     } else {
-      controller.maximumZoomDistance = 50000000 
+      controller.maximumZoomDistance = 50000000
     }
-  
-    if (activeTab === 'parks' && selectedSiteId) {
+
+    if (activeTab === 'overview') {
+      flyToPosition(viewer, DEFAULT_CAMERA_POSITION)
+    } else if (activeTab === 'parks' && selectedSiteId) {
       const selectedSite = sites.find(site => site.id.toString() === selectedSiteId)
       if (selectedSite?.location?.trim()) {
         focusOn(viewer, selectedSite.location, 500)
       }
     }
-  }, [selectedSiteId, activeTab, isLoading, sites, focusOn])
+  }, [selectedSiteId, activeTab, isLoading, sites, focusOn, flyToPosition])
 
   const handleToggleSeongnamTileset = (visible: boolean) => {
     if (seongnamTilesetRef) {
