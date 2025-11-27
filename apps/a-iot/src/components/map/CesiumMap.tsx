@@ -8,6 +8,7 @@ import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
 import { SVG_MARKERS, type SvgMarkerType, createColoredSvgDataUrl, preloadAllMarkerSvgs } from '../../utils/svgMarkerUtils'
 import { getAssetPath } from '../../utils/assetPath'
+import { createCircularImageDataUrl } from '../../utils/circularImageUtils'
 
 interface CesiumMapProps {
   sites?: Site[]
@@ -267,37 +268,51 @@ export default function CesiumMap({
     clearAllPolygons(viewer)
 
     if (activeTab === 'overview') {
-      sites.forEach((site) => {
-        if (site.location?.trim()) {
-          const coordinates = parseWktToCoordinates(site.location)
-          if (coordinates.length > 0) {
-            const lons = coordinates.map((coord) => coord[0])
-            const lats = coordinates.map((coord) => coord[1])
-            const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2
-            const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
+      const renderSiteMarkers = async () => {
+        for (const site of sites) {
+          if (site.location?.trim()) {
+            const coordinates = parseWktToCoordinates(site.location)
+            if (coordinates.length > 0) {
+              const lons = coordinates.map((coord) => coord[0])
+              const lats = coordinates.map((coord) => coord[1])
+              const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2
+              const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
 
-            const entity = addMarker(viewer, {
-              id: `park-${site.id}`,
-              lon: centerLon,
-              lat: centerLat,
-              height: 20,
-              image: getAssetPath('/images/icons/map/park.png'),
-              width: 45,
-              heightValue: 55,
-              label: site.name,
-              labelColor: '#000000',
-              heightReference: HeightReference.RELATIVE_TO_GROUND,
-              disableDepthTest: true,
-              disableScaleByDistance: true,
-            })
+              let markerImage: string
+              let markerSize: number
+              if (site.thumbnail?.url) {
+                markerImage = await createCircularImageDataUrl(site.thumbnail.url)
+                markerSize = 48
+              } else {
+                markerImage = getAssetPath('/images/icons/map/park.png')
+                markerSize = 45
+              }
 
-            // 전체보기 모드에서는 공원 이름 라벨을 항상 표시
-            if (entity.label) {
-              entity.label.show = new ConstantProperty(true)
+              const entity = addMarker(viewer, {
+                id: `park-${site.id}`,
+                lon: centerLon,
+                lat: centerLat,
+                height: 20,
+                image: markerImage,
+                width: markerSize,
+                heightValue: markerSize,
+                label: site.name,
+                labelColor: '#000000',
+                heightReference: HeightReference.RELATIVE_TO_GROUND,
+                disableDepthTest: true,
+                disableScaleByDistance: true,
+              })
+
+              // 전체보기 모드에서는 공원 이름 라벨을 항상 표시
+              if (entity.label) {
+                entity.label.show = new ConstantProperty(true)
+              }
             }
           }
         }
-      })
+        viewer.scene.requestRender()
+      }
+      renderSiteMarkers()
     } else if (activeTab === 'parks' && selectedSiteId) {
       siteSensors.forEach((sensor) => {
         const svgMarkerType = getSvgMarkerType(sensor.deviceTypeResponse)
