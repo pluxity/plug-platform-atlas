@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter @plug-atlas/a-iot dev",
     "build": "pnpm -r build",
+    "build:aiot": "pnpm --filter @plug-atlas/a-iot build:staging",
     "preview": "pnpm --filter @plug-atlas/a-iot preview",
     "lint": "pnpm -r lint",
     "type-check": "pnpm -r type-check",
