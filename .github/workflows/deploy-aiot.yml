@@ -58,6 +58,20 @@ jobs:
         env:
           # Variables
           VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_VWORLD_API_KEY: ${{ secrets.VITE_VWORLD_API_KEY }}
+          VITE_CESIUM_ION_ACCESS_TOKEN: ${{ secrets.VITE_CESIUM_ION_ACCESS_TOKEN }}
+          VITE_CESIUM_GOOGLE_MAP_ASSET_ID: ${{ vars.VITE_CESIUM_GOOGLE_MAP_ASSET_ID }}
+          VITE_CESIUM_SATELLITE_ASSET_ID: ${{ vars.VITE_CESIUM_SATELLITE_ASSET_ID }}
+          VITE_CESIUM_TERRAIN_ASSET_ID: ${{ vars.VITE_CESIUM_TERRAIN_ASSET_ID }}
+          VITE_CESIUM_GOOGLE_3D_TILES_ASSET_ID: ${{ vars.VITE_CESIUM_GOOGLE_3D_TILES_ASSET_ID }}
+          VITE_CESIUM_CENTER_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_CENTER_PARK_ASSET_ID }}
+          VITE_CESIUM_YD_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_YD_PARK_ASSET_ID }}
+          VITE_CESIUM_CENTER_PARK_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_CENTER_PARK_HEIGHT_OFFSET }}
+          VITE_CESIUM_YD_PARK_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_YD_PARK_HEIGHT_OFFSET }}
+          VITE_CESIUM_SEONGNAM_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_SEONGNAM_HEIGHT_OFFSET }}
+          VITE_LOCAL_TILESET_BASE_URL: ${{ vars.VITE_LOCAL_TILESET_BASE_URL }}
+          
         run: pnpm --filter @plug-atlas/a-iot build && node apps/a-iot/scripts/post-build.js
 
       - name: Compress build artifacts
