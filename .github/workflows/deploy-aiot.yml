@@ -58,7 +58,7 @@ jobs:
         env:
           # Variables
           VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
-        run: pnpm --filter @plug-atlas/a-iot build
+        run: pnpm --filter @plug-atlas/a-iot build && node scripts/post-build.js
 
       - name: Compress build artifacts
         run: |
