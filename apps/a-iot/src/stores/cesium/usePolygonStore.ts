@@ -3,6 +3,7 @@ import {
     Cartesian2,
     Cartesian3,
     Cartographic,
+    ClassificationType,
     Color,
     ConstantProperty,
     defined,
@@ -43,6 +44,11 @@ interface PolygonActions {
     removePolygon: (viewer: CesiumViewer, entityId: string) => void
     clearAllPolygons: (viewer: CesiumViewer) => void
 
+    // GeoJSON 렌더링
+    displayGeoJSONPolygon: (viewer: CesiumViewer, feature: GeoJSONFeature, options?: GeoJSONPolygonOptions) => Entity[]
+    displayGeoJSONFeatureCollection: (viewer: CesiumViewer, featureCollection: GeoJSONFeatureCollection, getOptions?: (feature: GeoJSONFeature) => GeoJSONPolygonOptions) => Entity[]
+    clearDistrictPolygons: (viewer: CesiumViewer) => void
+
     // 상태 관리
     getDrawingState: (viewerId: string) => DrawingState | null
     isDrawingActive: (viewerId: string) => boolean
@@ -63,6 +69,32 @@ interface PolygonDisplayOptions {
     outlineColor?: Color
     fillAlpha?: number
     height?: number
+}
+
+interface GeoJSONPolygonOptions {
+    id?: string
+    name?: string
+    fillColor?: string      // CSS 색상 문자열 (예: 'rgba(59, 130, 246, 0.2)')
+    outlineColor?: string   // CSS 색상 문자열 (예: '#3B82F6')
+    outlineWidth?: number
+    height?: number
+    clampToGround?: boolean // 지형에 클램프 (기본값: true)
+    showLabel?: boolean     // 폴리곤 중심에 라벨 표시 (기본값: true)
+    labelText?: string      // 라벨 텍스트 (기본값: name 또는 properties.sig_kor_nm)
+}
+
+interface GeoJSONFeature {
+    type: 'Feature'
+    properties: Record<string, any>
+    geometry: {
+        type: 'MultiPolygon' | 'Polygon'
+        coordinates: number[][][] | number[][][][]
+    }
+}
+
+interface GeoJSONFeatureCollection {
+    type: 'FeatureCollection'
+    features: GeoJSONFeature[]
 }
 
 type PolygonStore = PolygonState & PolygonActions
@@ -628,6 +660,183 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
             })
         } catch (error) {
             console.error('모든 폴리곤 제거 중 오류 발생:', error)
+        }
+    },
+
+    /**
+     * GeoJSON Feature의 폴리곤을 Cesium에 렌더링합니다.
+     * MultiPolygon과 Polygon 타입을 모두 지원합니다.
+     */
+    displayGeoJSONPolygon: (viewer: CesiumViewer, feature: GeoJSONFeature, options?: GeoJSONPolygonOptions): Entity[] => {
+        const entities: Entity[] = []
+
+        try {
+            const { geometry, properties } = feature
+            const { coordinates, type } = geometry
+
+            // 색상 파싱
+            const fillColor = options?.fillColor
+                ? Color.fromCssColorString(options.fillColor)
+                : Color.BLUE.withAlpha(0.2)
+            const outlineColor = options?.outlineColor
+                ? Color.fromCssColorString(options.outlineColor)
+                : Color.BLUE
+
+            // MultiPolygon과 Polygon 처리
+            const polygonRings: number[][][] = type === 'MultiPolygon'
+                ? (coordinates as number[][][][]).flat()
+                : (coordinates as number[][][])
+
+            polygonRings.forEach((ring, ringIndex) => {
+                // 외곽 링만 처리 (내부 hole은 첫 번째 인덱스 이후)
+                if (ringIndex > 0) return
+
+                const polygonHeight: number = options?.height ?? 0
+                const cartesianCoords = ring
+                    .map(coord => {
+                        const lon = coord[0] as number
+                        const lat = coord[1] as number
+                        return get().safeFromDegrees(lon, lat, polygonHeight)
+                    })
+                    .filter((coord): coord is Cartesian3 => coord !== null)
+
+                if (cartesianCoords.length < 3) {
+                    console.warn('유효한 좌표가 3개 미만입니다.')
+                    return
+                }
+
+                const entityId = options?.id
+                    ? `${options.id}-${ringIndex}`
+                    : `district-${properties.sig_cd || 'unknown'}-${ringIndex}`
+
+                const clampToGround = options?.clampToGround !== false // 기본값 true
+
+                const entity = viewer.entities.add({
+                    id: entityId,
+                    name: options?.name || properties.sig_kor_nm || 'GeoJSON Polygon',
+                    polygon: {
+                        hierarchy: new PolygonHierarchy(cartesianCoords),
+                        material: fillColor,
+                        outline: !clampToGround, // clampToGround일 때 outline 비활성화 (별도 polyline 사용)
+                        outlineColor: outlineColor,
+                        outlineWidth: options?.outlineWidth || 2,
+                        // clampToGround면 height 제거하고 classificationType 사용
+                        ...(clampToGround
+                            ? { classificationType: ClassificationType.BOTH }
+                            : { height: polygonHeight }),
+                    },
+                    // clampToGround일 때 경계선은 별도 polyline으로 표시
+                    ...(clampToGround && {
+                        polyline: {
+                            positions: cartesianCoords,
+                            width: options?.outlineWidth || 2,
+                            material: outlineColor,
+                            clampToGround: true,
+                        },
+                    }),
+                    properties: {
+                        type: 'district',
+                        sig_cd: properties.sig_cd,
+                        sig_kor_nm: properties.sig_kor_nm,
+                    },
+                })
+
+                entities.push(entity)
+
+                // 라벨 추가 (기본값: true)
+                const showLabel = options?.showLabel !== false
+                if (showLabel && ring.length > 0) {
+                    // 폴리곤 중심 계산 (모든 좌표의 평균)
+                    let sumLon = 0, sumLat = 0
+                    ring.forEach(coord => {
+                        sumLon += coord[0] as number
+                        sumLat += coord[1] as number
+                    })
+                    const centerLon = sumLon / ring.length
+                    const centerLat = sumLat / ring.length
+
+                    // "성남시 수정구" -> "수정구"로 변환
+                    const fullName = options?.labelText || options?.name || properties.sig_kor_nm || ''
+                    const shortName = fullName.replace(/^성남시\s*/, '')
+
+                    const labelEntity = viewer.entities.add({
+                        id: `${entityId}-label`,
+                        position: Cartesian3.fromDegrees(centerLon, centerLat, 100),
+                        label: {
+                            text: shortName,
+                            font: 'bold 16px "Pretendard", "Inter", sans-serif',
+                            style: LabelStyle.FILL_AND_OUTLINE,
+                            fillColor: Color.WHITE,
+                            outlineColor: Color.fromCssColorString(options?.outlineColor || '#333333'),
+                            outlineWidth: 3,
+                            verticalOrigin: VerticalOrigin.CENTER,
+                            horizontalOrigin: 0, // CENTER
+                            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                            heightReference: HeightReference.CLAMP_TO_GROUND,
+                        },
+                        properties: {
+                            type: 'district-label',
+                            sig_cd: properties.sig_cd,
+                        },
+                    })
+                    entities.push(labelEntity)
+                }
+            })
+
+            viewer.scene.requestRender()
+        } catch (error) {
+            console.error('GeoJSON 폴리곤 표시 오류:', error)
+        }
+
+        return entities
+    },
+
+    /**
+     * GeoJSON FeatureCollection의 모든 폴리곤을 Cesium에 렌더링합니다.
+     */
+    displayGeoJSONFeatureCollection: (
+        viewer: CesiumViewer,
+        featureCollection: GeoJSONFeatureCollection,
+        getOptions?: (feature: GeoJSONFeature) => GeoJSONPolygonOptions
+    ): Entity[] => {
+        const allEntities: Entity[] = []
+
+        try {
+            featureCollection.features.forEach(feature => {
+                const options = getOptions ? getOptions(feature) : undefined
+                const entities = get().displayGeoJSONPolygon(viewer, feature, options)
+                allEntities.push(...entities)
+            })
+        } catch (error) {
+            console.error('GeoJSON FeatureCollection 표시 오류:', error)
+        }
+
+        return allEntities
+    },
+
+    /**
+     * 행정구역 폴리곤과 라벨을 제거합니다.
+     */
+    clearDistrictPolygons: (viewer: CesiumViewer) => {
+        try {
+            const entitiesToRemove: Entity[] = []
+            viewer.entities.values.forEach((entity: Entity) => {
+                // district 타입의 폴리곤과 라벨 모두 제거
+                const entityType = entity.properties?.type?.getValue(undefined)
+                if (entity.id?.startsWith('district-') ||
+                    entityType === 'district' ||
+                    entityType === 'district-label') {
+                    entitiesToRemove.push(entity)
+                }
+            })
+            entitiesToRemove.forEach(entity => {
+                if (viewer.entities.contains(entity)) {
+                    viewer.entities.remove(entity)
+                }
+            })
+            viewer.scene.requestRender()
+        } catch (error) {
+            console.error('행정구역 폴리곤 제거 중 오류 발생:', error)
         }
     },
 }))

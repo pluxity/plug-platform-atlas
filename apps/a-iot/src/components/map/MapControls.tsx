@@ -1,5 +1,5 @@
 import { Viewer as CesiumViewer } from 'cesium'
-import { Plus, Minus, Home, Layers } from 'lucide-react'
+import { Plus, Minus, Home, Layers, Building2 } from 'lucide-react'
 import { Button } from '@plug-atlas/ui'
 import { useCameraStore, type CameraPosition } from '../../stores/cesium'
 import { useState } from 'react'
@@ -8,12 +8,14 @@ interface MapControlsProps {
   viewer: CesiumViewer | null
   homePosition?: CameraPosition
   onToggleSeongnamTileset?: (visible: boolean) => void
+  onToggleDistrictBoundary?: (visible: boolean) => void
   className?: string
 }
 
-export default function MapControls({ viewer, homePosition, onToggleSeongnamTileset, className = '' }: MapControlsProps) {
+export default function MapControls({ viewer, homePosition, onToggleSeongnamTileset, onToggleDistrictBoundary, className = '' }: MapControlsProps) {
   const { flyToPosition } = useCameraStore()
-  const [seongnamVisible, setSeongnamVisible] = useState(false) // 기본값 off
+  const [seongnamVisible, setSeongnamVisible] = useState(false)
+  const [districtVisible, setDistrictVisible] = useState(true) // 행정구역 경계 기본값 ON (CesiumMap에서 초기화)
 
   const zoomIn = () => {
     if (!viewer || viewer.isDestroyed()) return
@@ -39,6 +41,12 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
     const newVisible = !seongnamVisible
     setSeongnamVisible(newVisible)
     onToggleSeongnamTileset?.(newVisible)
+  }
+
+  const toggleDistrictBoundary = () => {
+    const newVisible = !districtVisible
+    setDistrictVisible(newVisible)
+    onToggleDistrictBoundary?.(newVisible)
   }
 
   return (
@@ -83,12 +91,29 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
         onClick={toggle3DLayers}
         variant="outline"
         size="icon"
-        title="3D 레이어"
-        className={`bg-white/70 backdrop-blur-md shadow-sm hover:bg-white/80 hover:shadow-2xl transition-all ${
-          seongnamVisible ? 'bg-blue-100/80' : ''
+        title="3D 빌딩"
+        className={`backdrop-blur-md transition-all ${
+          seongnamVisible
+            ? 'bg-white shadow-lg hover:shadow-xl border-blue-400'
+            : 'bg-white/70 shadow-sm hover:bg-white/90 hover:shadow-lg'
         }`}
       >
-        <Layers className={`stroke-2 drop-shadow-sm transition-colors ${seongnamVisible ? 'text-blue-600 hover:text-blue-700' : 'text-gray-900 hover:text-gray-950'}`} />
+        <Building2 className={`stroke-2 drop-shadow-sm transition-colors ${seongnamVisible ? 'text-blue-600' : 'text-gray-900 hover:text-gray-950'}`} />
+      </Button>
+
+      <Button
+        type="button"
+        onClick={toggleDistrictBoundary}
+        variant="outline"
+        size="icon"
+        title="행정구역 경계"
+        className={`backdrop-blur-md transition-all ${
+          districtVisible
+            ? 'bg-white shadow-lg hover:shadow-xl border-purple-400'
+            : 'bg-white/70 shadow-sm hover:bg-white/90 hover:shadow-lg'
+        }`}
+      >
+        <Layers className={`stroke-2 drop-shadow-sm transition-colors ${districtVisible ? 'text-purple-600' : 'text-gray-900 hover:text-gray-950'}`} />
       </Button>
     </div>
   )

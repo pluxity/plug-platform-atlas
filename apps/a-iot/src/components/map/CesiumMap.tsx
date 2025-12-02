@@ -1,8 +1,9 @@
-import { useRef, useEffect, useState, useMemo } from 'react'
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartesian2, ConstantProperty } from 'cesium'
 import { throttle } from 'lodash-es'
 import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../../stores/cesium'
 import { Site, FeatureResponse, type FeatureDeviceTypeResponse } from '@/services/types'
+import { fetchSeongnamDistricts, DISTRICT_COLORS, type VWorldFeatureCollection } from '../../services/vworld'
 import MapControls from './MapControls'
 import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
@@ -38,9 +39,13 @@ export default function CesiumMap({
   const { createViewer, initializeResources } = useViewerStore()
   const { loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, applyHeightOffset } = useTilesetStore()
   const { addMarker, clearAllMarkers, changeMarkerColor, startMarkerBlink, stopMarkerBlink, setMarkerHover } = useMarkerStore()
-  const { clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
+  const { clearAllPolygons, parseWktToCoordinates, displayGeoJSONFeatureCollection, clearDistrictPolygons } = usePolygonStore()
   const { focusOn, flyToPosition } = useCameraStore()
   const { setCurrentProvider } = useImageryStore()
+
+  // 행정구역 경계 데이터 캐시
+  const districtDataRef = useRef<VWorldFeatureCollection | null>(null)
+  const districtInitializedRef = useRef(false)
 
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
 
@@ -416,6 +421,52 @@ export default function CesiumMap({
     }
   }
 
+  const handleToggleDistrictBoundary = useCallback(async (visible: boolean) => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    if (visible) {
+      // 행정구역 경계 표시
+      if (!districtDataRef.current) {
+        // 캐시된 데이터가 없으면 로드
+        const data = await fetchSeongnamDistricts()
+        if (data) {
+          districtDataRef.current = data
+        }
+      }
+
+      if (districtDataRef.current) {
+        displayGeoJSONFeatureCollection(
+          viewer,
+          districtDataRef.current as any,
+          (feature) => {
+            const sigCd = feature.properties.sig_cd
+            const colors = DISTRICT_COLORS[sigCd] || { fill: 'rgba(100, 100, 100, 0.2)', outline: '#666666' }
+            return {
+              id: `district-${sigCd}`,
+              name: feature.properties.sig_kor_nm,
+              fillColor: colors.fill,
+              outlineColor: colors.outline,
+              outlineWidth: 3,
+              height: 0,
+            }
+          }
+        )
+      }
+    } else {
+      // 행정구역 경계 숨기기
+      clearDistrictPolygons(viewer)
+    }
+  }, [displayGeoJSONFeatureCollection, clearDistrictPolygons])
+
+  // 초기 로드 시 행정구역 경계 자동 표시
+  useEffect(() => {
+    if (!isLoading && viewerRef.current && !districtInitializedRef.current) {
+      districtInitializedRef.current = true
+      handleToggleDistrictBoundary(true)
+    }
+  }, [isLoading, handleToggleDistrictBoundary])
+
   return (
     <div className={`relative w-full rounded-lg overflow-hidden ${className || 'h-[600px]'}`}>
       <div ref={cesiumContainerRef} className="w-full h-full" />
@@ -429,6 +480,7 @@ export default function CesiumMap({
         viewer={viewerRef.current}
         homePosition={DEFAULT_CAMERA_POSITION}
         onToggleSeongnamTileset={handleToggleSeongnamTileset}
+        onToggleDistrictBoundary={handleToggleDistrictBoundary}
         className="absolute top-1/2 right-4 -translate-y-1/2 z-10"
       />
 
