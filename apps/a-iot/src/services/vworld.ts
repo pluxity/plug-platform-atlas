@@ -44,7 +44,7 @@ export interface VWorldFeatureCollection {
  */
 export async function fetchSeongnamDistricts(): Promise<VWorldFeatureCollection | null> {
   try {
-    const response = await fetch('/data/seongnam-districts.geojson')
+    const response = await fetch('data/seongnam-districts.geojson')
     if (!response.ok) {
       console.warn('GeoJSON 파일을 찾을 수 없습니다:', response.status)
       return null
