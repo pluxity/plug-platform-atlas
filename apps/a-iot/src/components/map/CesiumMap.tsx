@@ -1,13 +1,15 @@
-import { useRef, useEffect, useState, useMemo } from 'react'
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartesian2, ConstantProperty } from 'cesium'
 import { throttle } from 'lodash-es'
 import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../../stores/cesium'
 import { Site, FeatureResponse, type FeatureDeviceTypeResponse } from '@/services/types'
+import { fetchSeongnamDistricts, DISTRICT_COLORS, type VWorldFeatureCollection } from '../../services/vworld'
 import MapControls from './MapControls'
 import MapLayerSelector from './MapLayerSelector'
 import { Spinner } from '@plug-atlas/ui'
 import { SVG_MARKERS, type SvgMarkerType, createColoredSvgDataUrl, preloadAllMarkerSvgs } from '../../utils/svgMarkerUtils'
 import { getAssetPath } from '../../utils/assetPath'
+import { createCircularImageDataUrl } from '../../utils/circularImageUtils'
 
 interface CesiumMapProps {
   sites?: Site[]
@@ -37,9 +39,13 @@ export default function CesiumMap({
   const { createViewer, initializeResources } = useViewerStore()
   const { loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, applyHeightOffset } = useTilesetStore()
   const { addMarker, clearAllMarkers, changeMarkerColor, startMarkerBlink, stopMarkerBlink, setMarkerHover } = useMarkerStore()
-  const { clearAllPolygons, parseWktToCoordinates } = usePolygonStore()
-  const { focusOn } = useCameraStore()
+  const { clearAllPolygons, parseWktToCoordinates, displayGeoJSONFeatureCollection, clearDistrictPolygons } = usePolygonStore()
+  const { focusOn, flyToPosition } = useCameraStore()
   const { setCurrentProvider } = useImageryStore()
+
+  // 행정구역 경계 데이터 캐시
+  const districtDataRef = useRef<VWorldFeatureCollection | null>(null)
+  const districtInitializedRef = useRef(false)
 
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
 
@@ -267,37 +273,51 @@ export default function CesiumMap({
     clearAllPolygons(viewer)
 
     if (activeTab === 'overview') {
-      sites.forEach((site) => {
-        if (site.location?.trim()) {
-          const coordinates = parseWktToCoordinates(site.location)
-          if (coordinates.length > 0) {
-            const lons = coordinates.map((coord) => coord[0])
-            const lats = coordinates.map((coord) => coord[1])
-            const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2
-            const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
+      const renderSiteMarkers = async () => {
+        for (const site of sites) {
+          if (site.location?.trim()) {
+            const coordinates = parseWktToCoordinates(site.location)
+            if (coordinates.length > 0) {
+              const lons = coordinates.map((coord) => coord[0])
+              const lats = coordinates.map((coord) => coord[1])
+              const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2
+              const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
 
-            const entity = addMarker(viewer, {
-              id: `park-${site.id}`,
-              lon: centerLon,
-              lat: centerLat,
-              height: 20,
-              image: getAssetPath('/images/icons/map/park.png'),
-              width: 45,
-              heightValue: 55,
-              label: site.name,
-              labelColor: '#000000',
-              heightReference: HeightReference.RELATIVE_TO_GROUND,
-              disableDepthTest: true,
-              disableScaleByDistance: true,
-            })
+              let markerImage: string
+              let markerSize: number
+              if (site.thumbnail?.url) {
+                markerImage = await createCircularImageDataUrl(site.thumbnail.url)
+                markerSize = 48
+              } else {
+                markerImage = getAssetPath('/images/icons/map/park.png')
+                markerSize = 45
+              }
 
-            // 전체보기 모드에서는 공원 이름 라벨을 항상 표시
-            if (entity.label) {
-              entity.label.show = new ConstantProperty(true)
+              const entity = addMarker(viewer, {
+                id: `park-${site.id}`,
+                lon: centerLon,
+                lat: centerLat,
+                height: 20,
+                image: markerImage,
+                width: markerSize,
+                heightValue: markerSize,
+                label: site.name,
+                labelColor: '#000000',
+                heightReference: HeightReference.RELATIVE_TO_GROUND,
+                disableDepthTest: true,
+                disableScaleByDistance: true,
+              })
+
+              // 전체보기 모드에서는 공원 이름 라벨을 항상 표시
+              if (entity.label) {
+                entity.label.show = new ConstantProperty(true)
+              }
             }
           }
         }
-      })
+        viewer.scene.requestRender()
+      }
+      renderSiteMarkers()
     } else if (activeTab === 'parks' && selectedSiteId) {
       siteSensors.forEach((sensor) => {
         const svgMarkerType = getSvgMarkerType(sensor.deviceTypeResponse)
@@ -377,27 +397,75 @@ export default function CesiumMap({
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed() || isLoading) return
-  
+
     const controller = viewer.scene.screenSpaceCameraController
     if (activeTab === 'parks') {
-      controller.maximumZoomDistance = 4000 
+      controller.maximumZoomDistance = 4000
     } else {
-      controller.maximumZoomDistance = 50000000 
+      controller.maximumZoomDistance = 50000000
     }
-  
-    if (activeTab === 'parks' && selectedSiteId) {
+
+    if (activeTab === 'overview') {
+      flyToPosition(viewer, DEFAULT_CAMERA_POSITION)
+    } else if (activeTab === 'parks' && selectedSiteId) {
       const selectedSite = sites.find(site => site.id.toString() === selectedSiteId)
       if (selectedSite?.location?.trim()) {
         focusOn(viewer, selectedSite.location, 500)
       }
     }
-  }, [selectedSiteId, activeTab, isLoading, sites, focusOn])
+  }, [selectedSiteId, activeTab, isLoading, sites, focusOn, flyToPosition])
 
   const handleToggleSeongnamTileset = (visible: boolean) => {
     if (seongnamTilesetRef) {
       seongnamTilesetRef.show = visible
     }
   }
+
+  const handleToggleDistrictBoundary = useCallback(async (visible: boolean) => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    if (visible) {
+      // 행정구역 경계 표시
+      if (!districtDataRef.current) {
+        // 캐시된 데이터가 없으면 로드
+        const data = await fetchSeongnamDistricts()
+        if (data) {
+          districtDataRef.current = data
+        }
+      }
+
+      if (districtDataRef.current) {
+        displayGeoJSONFeatureCollection(
+          viewer,
+          districtDataRef.current as any,
+          (feature) => {
+            const sigCd = feature.properties.sig_cd
+            const colors = DISTRICT_COLORS[sigCd] || { fill: 'rgba(100, 100, 100, 0.2)', outline: '#666666' }
+            return {
+              id: `district-${sigCd}`,
+              name: feature.properties.sig_kor_nm,
+              fillColor: colors.fill,
+              outlineColor: colors.outline,
+              outlineWidth: 3,
+              height: 0,
+            }
+          }
+        )
+      }
+    } else {
+      // 행정구역 경계 숨기기
+      clearDistrictPolygons(viewer)
+    }
+  }, [displayGeoJSONFeatureCollection, clearDistrictPolygons])
+
+  // 초기 로드 시 행정구역 경계 자동 표시
+  useEffect(() => {
+    if (!isLoading && viewerRef.current && !districtInitializedRef.current) {
+      districtInitializedRef.current = true
+      handleToggleDistrictBoundary(true)
+    }
+  }, [isLoading, handleToggleDistrictBoundary])
 
   return (
     <div className={`relative w-full rounded-lg overflow-hidden ${className || 'h-[600px]'}`}>
@@ -412,6 +480,7 @@ export default function CesiumMap({
         viewer={viewerRef.current}
         homePosition={DEFAULT_CAMERA_POSITION}
         onToggleSeongnamTileset={handleToggleSeongnamTileset}
+        onToggleDistrictBoundary={handleToggleDistrictBoundary}
         className="absolute top-1/2 right-4 -translate-y-1/2 z-10"
       />
 

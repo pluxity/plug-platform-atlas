@@ -58,12 +58,17 @@ export default function SiteForm({
     }, [isOpen, formData, siteForm]);
 
     useEffect(() => {
-        if (initialThumbnailUrl) {
-            setPreviewUrl(initialThumbnailUrl);
-        } else {
-            setPreviewUrl(null);
+        if (isOpen) {
+            if (initialThumbnailUrl) {
+                setPreviewUrl(initialThumbnailUrl);
+            } else {
+                setPreviewUrl(null);
+            }
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
-    }, [initialThumbnailUrl]);
+    }, [isOpen, initialThumbnailUrl]);
 
     const resetForm = useCallback(() => {
         siteForm.reset();
@@ -125,7 +130,11 @@ export default function SiteForm({
                 onOpenChange(open);
             }
         }}>
-            <DialogContent aria-describedby={undefined}>
+            <DialogContent
+                aria-describedby={undefined}
+                className="!max-w-4xl"
+                onEscapeKeyDown={(e) => e.preventDefault()}
+            >
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>

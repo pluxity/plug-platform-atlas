@@ -7,6 +7,7 @@
     "dev": "pnpm --filter @plug-atlas/a-iot dev",
     "dev:multiwave": "pnpm --filter @plug-atlas/multiwave-dt dev",
     "build": "pnpm -r build",
+    "build:aiot": "pnpm --filter @plug-atlas/a-iot build:staging",
     "preview": "pnpm --filter @plug-atlas/a-iot preview",
     "preview:multiwave": "pnpm --filter @plug-atlas/multiwave-dt preview",
     "lint": "pnpm -r lint",

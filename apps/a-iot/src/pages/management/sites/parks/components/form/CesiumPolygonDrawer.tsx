@@ -1,12 +1,19 @@
 import {useEffect, useRef, useState} from 'react'
-import {Button, AspectRatio} from '@plug-atlas/ui'
+import {Button, AspectRatio, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@plug-atlas/ui'
 import {toast} from '@plug-atlas/ui'
 import {
     useViewerStore,
     usePolygonStore,
     useCameraStore,
-    DEFAULT_CAMERA_POSITION
+    DEFAULT_CAMERA_POSITION,
+    type CameraPosition
 } from '../../../../../../stores/cesium'
+
+const TOP_DOWN_CAMERA_POSITION: CameraPosition = {
+    ...DEFAULT_CAMERA_POSITION,
+    pitch: -90,
+    heading: 0,
+}
 import {Color, Viewer as CesiumViewer} from 'cesium'
 import {MapIcon, RotateCcw, CheckCircle, X, Info} from 'lucide-react'
 
@@ -21,7 +28,6 @@ export default function CesiumPolygonDrawer({
                                             }: CesiumPolygonDrawerProps) {
     const cesiumContainerRef = useRef<HTMLDivElement>(null)
     const viewerRef = useRef<CesiumViewer | null>(null)
-    const [showHelp, setShowHelp] = useState(false)
     const [isInitialized, setIsInitialized] = useState(false)
     const initialWktProcessedRef = useRef<string | undefined>(undefined)
 
@@ -91,7 +97,9 @@ export default function CesiumPolygonDrawer({
 
                 setIsInitialized(false)
 
-                const viewer = createViewer(cesiumContainerRef.current!)
+                const viewer = createViewer(cesiumContainerRef.current!, {
+                    requestRenderMode: false,
+                })
 
                 if (!mounted) {
                     viewer.destroy()
@@ -101,7 +109,7 @@ export default function CesiumPolygonDrawer({
                 viewerRef.current = viewer
 
                 await initializeResources(viewer, {
-                    imageryProvider: 'ion-default',
+                    imageryProvider: 'ion-satellite',
                     loadTerrain: false,
                     load3DTiles: false,
                 })
@@ -110,7 +118,7 @@ export default function CesiumPolygonDrawer({
 
                 if (!mounted) return
 
-                setView(viewer, DEFAULT_CAMERA_POSITION)
+                setView(viewer, TOP_DOWN_CAMERA_POSITION)
                 setIsInitialized(true)
             } catch (error) {
                 if (mounted) {
@@ -168,8 +176,9 @@ export default function CesiumPolygonDrawer({
         }
 
         try {
+            clearAllPolygons(viewerRef.current)
+            initialWktProcessedRef.current = undefined
             startDrawing(viewerRef.current, viewerId)
-            setShowHelp(true)
         } catch (error) {
             toast.error('그리기를 시작할 수 없습니다. 페이지를 새로고침해 주세요.')
         }
@@ -183,7 +192,6 @@ export default function CesiumPolygonDrawer({
             if (wktString) {
                 onPolygonComplete(wktString)
                 toast.success('폴리곤이 성공적으로 생성되었습니다!')
-                setShowHelp(false)
             } else {
                 toast.warning('폴리곤을 완성하려면 최소 3개의 점이 필요합니다.')
             }
@@ -197,7 +205,6 @@ export default function CesiumPolygonDrawer({
 
         try {
             cancelDrawing(viewerRef.current, viewerId)
-            setShowHelp(false)
         } catch (error) {
             console.error('그리기 취소 오류:', error)
         }
@@ -251,91 +258,68 @@ export default function CesiumPolygonDrawer({
                         </Button>
                     </div>
                 ) : (
-                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                <span className="text-sm font-medium text-blue-800">영역 그리는 중</span>
-                                <span className="text-xs bg-blue-200 px-2 py-1 rounded-full text-blue-700">
-                                    {pointCount}개 점
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => setShowHelp(!showHelp)}
-                                className="text-blue-600 hover:text-blue-800 p-1"
-                            >
-                                <Info className="w-4 h-4"/>
-                            </button>
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium text-blue-800">영역 그리는 중</span>
+                            <span className="text-xs bg-blue-200 px-2 py-1 rounded-full text-blue-700">
+                                {pointCount}개 점
+                            </span>
                         </div>
 
-                        <div className="flex gap-2 flex-wrap">
-                            <Button
-                                onClick={handleCompleteDrawing}
-                                disabled={!canComplete}
-                                size="sm"
-                                className={canComplete ?
-                                    'bg-green-600 hover:bg-green-700 text-white shadow-sm' :
-                                    'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                }
-                            >
-                                <CheckCircle className="w-4 h-4 mr-1"/>
-                                완료
-                            </Button>
-                            <Button
-                                onClick={handleRemoveLastPoint}
-                                disabled={pointCount === 0}
-                                variant="outline"
-                                size="sm"
-                                className="text-orange-600 border-orange-200 hover:bg-orange-50 disabled:text-gray-400"
-                            >
-                                <RotateCcw className="w-4 h-4 mr-1"/>
-                                실행취소
-                            </Button>
-                            <Button
-                                onClick={handleCancelDrawing}
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 border-red-200 hover:bg-red-50"
-                            >
-                                <X className="w-4 h-4 mr-1"/>
-                                취소
-                            </Button>
-                        </div>
+                        <Button
+                            onClick={handleCompleteDrawing}
+                            disabled={!canComplete}
+                            size="sm"
+                            className={canComplete ?
+                                'bg-green-600 hover:bg-green-700 text-white shadow-sm' :
+                                'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            }
+                        >
+                            <CheckCircle className="w-4 h-4 mr-1"/>
+                            완료
+                        </Button>
+                        <Button
+                            onClick={handleRemoveLastPoint}
+                            disabled={pointCount === 0}
+                            variant="outline"
+                            size="sm"
+                            className="text-orange-600 border-orange-200 hover:bg-orange-50 disabled:text-gray-400"
+                        >
+                            <RotateCcw className="w-4 h-4 mr-1"/>
+                            실행취소
+                        </Button>
+                        <Button
+                            onClick={handleCancelDrawing}
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                            <X className="w-4 h-4 mr-1"/>
+                            취소
+                        </Button>
 
-                        {canComplete && (
-                            <div className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3"/>
-                                우클릭으로 완료하거나 '완료' 버튼을 누르세요
-                            </div>
-                        )}
-
-                        {showHelp && (
-                            <div className="mt-3 pt-3 border-t border-blue-200">
-                                <div className="text-xs text-blue-700 space-y-1">
-                                    <div className="font-semibold mb-1.5">⌨️ 키보드 단축키</div>
-                                    <div className="flex items-center gap-2">
-                                        <kbd
-                                            className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Enter</kbd>
-                                        <span>완료 (3개 이상의 점 필요)</span>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button className="text-blue-600 hover:text-blue-800 p-1">
+                                        <Info className="w-4 h-4"/>
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="max-w-xs">
+                                    <div className="text-xs space-y-2">
+                                        <div>
+                                            <div className="font-semibold mb-1">키보드 단축키</div>
+                                            <div>Enter: 완료 | Backspace: 실행취소 | Esc: 취소</div>
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold mb-1">마우스 조작</div>
+                                            <div>좌클릭: 점 추가 | 우클릭: 완료</div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <kbd
-                                            className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Backspace</kbd>
-                                        <span>마지막 점 제거</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <kbd
-                                            className="px-1.5 py-0.5 bg-white rounded border border-blue-300 font-mono text-[10px]">Esc</kbd>
-                                        <span>그리기 취소</span>
-                                    </div>
-                                    <div className="mt-1.5 pt-1.5 border-t border-blue-200">
-                                        <div className="font-semibold mb-1">🖱️ 마우스 조작</div>
-                                        <div>• 좌클릭: 점 추가</div>
-                                        <div>• 우클릭: 그리기 완료</div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 )}
             </div>

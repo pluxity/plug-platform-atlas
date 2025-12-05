@@ -1,11 +1,16 @@
-import { DataTable } from '@plug-atlas/ui';
-import { Tag, FileText, Layers } from 'lucide-react';
-import {DeviceProfile, DeviceType} from "../../../../../../services/types";
+// External packages
+import { Tag, FileText, Layers } from 'lucide-react'
+
+// @plug-atlas packages
+import { DataTable } from '@plug-atlas/ui'
+
+// Internal imports
+import {DeviceProfile, DeviceType} from '@/services/types'
 
 interface DeviceTypeBasicInfoProps {
-    deviceType: DeviceType;
-    onEdit?: () => void;
-    onDelete?: () => void;
+    deviceType: DeviceType
+    onEdit?: () => void
+    onDelete?: () => void
 }
 
 export default function DeviceTypeBasicInfo({deviceType,}: DeviceTypeBasicInfoProps) {

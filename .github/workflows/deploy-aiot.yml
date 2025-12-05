@@ -1,0 +1,106 @@
+name: Deploy A-IoT
+
+on:
+    # main 브랜치에 push 또는 PR 머지 시 배포
+    push:
+        branches:
+            - main
+        paths:
+            - 'apps/a-iot/**'
+            - 'packages/ui/**'
+
+    # PR이 main으로 머지될 때
+    pull_request:
+        types: [closed]
+        branches:
+        - main
+
+    # 수동 배포
+    workflow_dispatch:
+
+jobs:
+  deploy:
+    # PR 이벤트의 경우 머지된 경우에만 실행
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build A-IoT
+        env:
+          # Variables
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_VWORLD_API_KEY: ${{ secrets.VITE_VWORLD_API_KEY }}
+          VITE_CESIUM_ION_ACCESS_TOKEN: ${{ secrets.VITE_CESIUM_ION_ACCESS_TOKEN }}
+          VITE_CESIUM_GOOGLE_MAP_ASSET_ID: ${{ vars.VITE_CESIUM_GOOGLE_MAP_ASSET_ID }}
+          VITE_CESIUM_SATELLITE_ASSET_ID: ${{ vars.VITE_CESIUM_SATELLITE_ASSET_ID }}
+          VITE_CESIUM_TERRAIN_ASSET_ID: ${{ vars.VITE_CESIUM_TERRAIN_ASSET_ID }}
+          VITE_CESIUM_GOOGLE_3D_TILES_ASSET_ID: ${{ vars.VITE_CESIUM_GOOGLE_3D_TILES_ASSET_ID }}
+          VITE_CESIUM_CENTER_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_CENTER_PARK_ASSET_ID }}
+          VITE_CESIUM_YD_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_YD_PARK_ASSET_ID }}
+          VITE_CESIUM_CENTER_PARK_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_CENTER_PARK_HEIGHT_OFFSET }}
+          VITE_CESIUM_YD_PARK_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_YD_PARK_HEIGHT_OFFSET }}
+          VITE_CESIUM_SEONGNAM_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_SEONGNAM_HEIGHT_OFFSET }}
+          VITE_LOCAL_TILESET_BASE_URL: ${{ vars.VITE_LOCAL_TILESET_BASE_URL }}
+          
+        run: pnpm --filter @plug-atlas/a-iot build && node apps/a-iot/scripts/post-build.js
+
+      - name: Compress build artifacts
+        run: |
+          cd apps/a-iot
+          tar -czf dist.tar.gz -C dist .
+          echo "Compressed size: $(du -h dist.tar.gz | cut -f1)"
+
+      - name: Deploy to Server
+        env:
+          SSHPASS: ${{ secrets.PLX_DEV_PASSWORD }}
+        run: |
+          # 압축 파일 전송
+          sshpass -e scp -o StrictHostKeyChecking=no -P ${{ secrets.PLX_DEV_SSH_PORT }} \
+            apps/a-iot/dist.tar.gz \
+            ${{ secrets.PLX_DEV_USER }}@${{ secrets.PLX_DEV_DOMAIN }}:${{ secrets.VITE_DEPLOY_PATH }}/
+
+          # 서버에서 압축 해제 (post-build.js가 이미 cesium 경로 처리함)
+          sshpass -e ssh -o StrictHostKeyChecking=no -p ${{ secrets.PLX_DEV_SSH_PORT }} \
+            ${{ secrets.PLX_DEV_USER }}@${{ secrets.PLX_DEV_DOMAIN }} \
+            "cd ${{ secrets.VITE_DEPLOY_PATH }} && \
+             rm -rf assets index.html *.js *.css cesium images 2>/dev/null || true && \
+             tar -xzf dist.tar.gz && \
+             rm dist.tar.gz"
+
+      - name: Verify Deployment
+        env:
+          SSHPASS: ${{ secrets.PLX_DEV_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no -p ${{ secrets.PLX_DEV_SSH_PORT }} \
+            ${{ secrets.PLX_DEV_USER }}@${{ secrets.PLX_DEV_DOMAIN }} \
+            "echo 'Deployment completed!' && ls -la ${{ secrets.VITE_DEPLOY_PATH }}"

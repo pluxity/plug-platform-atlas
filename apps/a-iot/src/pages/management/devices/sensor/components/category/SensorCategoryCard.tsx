@@ -1,22 +1,23 @@
-import {Card, CardContent, CardHeader, CardTitle, cn} from '@plug-atlas/ui';
+// @plug-atlas packages
+import {Card, CardContent, CardHeader, CardTitle, cn} from '@plug-atlas/ui'
 
 interface DeviceTypeWithProfiles {
-  id: number;
-  objectId: string;
-  description?: string;
-  version?: string;
+  id: number
+  objectId: string
+  description?: string
+  version?: string
   profiles?: Array<{
-    id?: number;
-    description?: string;
-    [key: string]: any;
-  }>;
-  [key: string]: any;
+    id?: number
+    description?: string
+    [key: string]: any
+  }>
+  [key: string]: any
 }
 
 interface SensorCategoryCardProps {
-  deviceType: DeviceTypeWithProfiles;
-  isSelected?: boolean;
-  onClick?: () => void;
+  deviceType: DeviceTypeWithProfiles
+  isSelected?: boolean
+  onClick?: () => void
 }
 
 export default function SensorCategoryCard({ 

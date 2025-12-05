@@ -74,7 +74,19 @@ export const useViewerStore = create<ViewerFactory>(() => ({
 
     const mergedOptions = { ...DEFAULT_VIEWER_OPTIONS, ...options }
 
-    const viewer = new CesiumViewer(container, mergedOptions)
+    // Credit 컨테이너를 숨겨진 div로 설정하여 Ion 배너 제거
+    let creditContainer = document.getElementById('cesium-credit-container')
+    if (!creditContainer) {
+      creditContainer = document.createElement('div')
+      creditContainer.id = 'cesium-credit-container'
+      creditContainer.style.display = 'none'
+      document.body.appendChild(creditContainer)
+    }
+
+    const viewer = new CesiumViewer(container, {
+      ...mergedOptions,
+      creditContainer,
+    })
 
     viewer.scene.canvas.addEventListener('contextmenu', (e) => {
       e.preventDefault()

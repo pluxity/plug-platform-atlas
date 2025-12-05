@@ -1,13 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { TwoColumnLayout } from '@plug-atlas/ui';
-import { Package } from 'lucide-react';
-import ErrorDisplay from "./components/ErrorDisplay.tsx";
-import SensorCategoryCard from "./components/category/SensorCategoryCard.tsx";
-import DeviceTypeBasicInfo from './components/detail/DeviceTypeBasicInfo.tsx';
-import EventConditionsManager from "./components/detail/EventConditionManager.tsx";
-import { DeviceType } from '../../../../services/types';
-import { useDeviceTypes } from "../../../../services/hooks";
+// External packages
+import { useState, useEffect } from 'react'
+import { useParams } from 'react-router-dom'
+import { Package } from 'lucide-react'
+
+// @plug-atlas packages
+import { TwoColumnLayout } from '@plug-atlas/ui'
+
+// Internal imports
+import { DeviceType } from '@/services/types'
+import { useDeviceTypes } from '@/services/hooks'
+import ErrorDisplay from '@/pages/management/devices/sensor/components/ErrorDisplay'
+import SensorCategoryCard from '@/pages/management/devices/sensor/components/category/SensorCategoryCard'
+import DeviceTypeBasicInfo from '@/pages/management/devices/sensor/components/detail/DeviceTypeBasicInfo'
+import EventConditionsManager from '@/pages/management/devices/sensor/components/detail/EventConditionManager'
 
 export default function SensorCategoryManagementPage() {
     const { objectId } = useParams<{ objectId: string }>();
