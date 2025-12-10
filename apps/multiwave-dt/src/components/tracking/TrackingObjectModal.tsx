@@ -161,7 +161,7 @@ export function TrackingObjectModal() {
     }
   } else if (objectType === 'wildlife') {
     // 동물의 경우 - modal2.png 참고 (간단함)
-    fields.push({ label: '종류', value: currentObject.metadata?.species || '너구리' })
+    fields.push({ label: '종류', value: currentObject.metadata?.species || '야생동물' })
     fields.push({ label: '위도', value: currentObject.position.latitude.toFixed(6) })
     fields.push({ label: '경도', value: currentObject.position.longitude.toFixed(6) })
 
