@@ -1,12 +1,8 @@
-// @plug-atlas packages
 import { Badge, Column } from '@plug-atlas/ui'
-
-// Internal imports
 import { getLevelInfo } from '@/pages/main/events/utils/levelUtils'
 import { getStatusBadgeStyle, getStatusInfo } from '@/pages/main/events/utils/statusUtils'
 import { Event, FeatureResponse } from '@/services/types'
 
-/** 상대 시간 표시 (방금 전, N분 전, N시간 전, 어제, N일 전) */
 function getRelativeTime(dateStr: string): string {
   const now = Date.now()
   const target = new Date(dateStr).getTime()
@@ -23,9 +19,6 @@ function getRelativeTime(dateStr: string): string {
   return `${Math.floor(days / 7)}주 전`
 }
 
-/**
- * 배터리 알람 테이블 컬럼 정의
- */
 export const batteryAlarmColumns: Column<FeatureResponse>[] = [
   {
     key: 'name',
@@ -43,9 +36,6 @@ export const batteryAlarmColumns: Column<FeatureResponse>[] = [
   },
 ];
 
-/**
- * 이벤트 현황 테이블 컬럼 정의
- */
 export const eventColumns: Column<Event>[] = [
   {
     key: 'deviceId',
@@ -96,9 +86,6 @@ export const eventColumns: Column<Event>[] = [
   },
 ];
 
-/**
- * 배터리 잔량 색상 (공원별 배터리 카드용)
- */
 function getBatteryColor(level: number): string {
   if (level <= 10) return 'bg-red-500'
   if (level <= 20) return 'bg-orange-500'
@@ -113,9 +100,6 @@ function getBatteryTextColor(level: number): string {
   return 'text-green-600'
 }
 
-/**
- * 공원별 배터리 현황 테이블 컬럼 정의 (교체 우선순위 강조)
- */
 export const parkBatteryColumns: Column<FeatureResponse>[] = [
   {
     key: 'name',
@@ -156,9 +140,6 @@ export const parkBatteryColumns: Column<FeatureResponse>[] = [
   },
 ]
 
-/**
- * 장치 상태 테이블 컬럼 정의
- */
 export const featureStatusColumns: Column<FeatureResponse>[] = [
   {
     key: 'name',

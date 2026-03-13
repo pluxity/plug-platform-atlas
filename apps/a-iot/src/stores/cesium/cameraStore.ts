@@ -89,12 +89,8 @@ export const useCameraStore = create<CameraStore>(() => ({
 
     if (typeof target === 'string') {
       const parsed = parseWKT(target)
-      if (!parsed) {
-        console.error('Invalid WKT format:', target)
-        return
-      }
+      if (!parsed) return
       coord = { lon: parsed.lon, lat: parsed.lat }
-      // POLYGON인 경우 바운딩 영역 크기를 distance 힌트로 활용
       if (parsed.bounds) {
         const w = parsed.bounds.width * 6378137 * Math.cos(CesiumMath.toRadians(parsed.lat))
         const h = parsed.bounds.height * 6378137

@@ -1,17 +1,14 @@
-// External packages
 import { useState, useMemo } from 'react'
 import { AlertCircle, BatteryWarning, Camera, CheckCircle, Clock, Radio, TreePine, Users } from 'lucide-react'
 import { Cell, Label, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-// @plug-atlas packages
 import { useAdminUsers } from '@plug-atlas/api-hooks'
 import { Card, CardContent, CardHeader, CardTitle, DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
 
-// Internal imports
 import WeatherCard from '@/components/weather/WeatherCard'
 import AirQualityCard from '@/components/air-quality/AirQualityCard'
 import CesiumMap from '@/components/map/CesiumMap'
-import { batteryAlarmColumns, eventColumns, featureStatusColumns, parkBatteryColumns } from '@/pages/main/dashboard/columns'
+import { eventColumns, featureStatusColumns, parkBatteryColumns } from '@/pages/main/dashboard/columns'
 import { useCctvList, useFeatures, useSites } from '@/services/hooks'
 import { Event, FeatureResponse } from '@/services/types'
 import { useEventStore, useNotificationStore } from '@/stores'
@@ -26,7 +23,6 @@ export default function Dashboard() {
   const { data: users = [] } = useAdminUsers()
   const isEventStoreInitialized = useNotificationStore((state) => state.isInitialized)
 
-  // eventStore에서 이벤트 조회 (중복 fetch 제거)
   const getEventsBySite = useEventStore((state) => state.getEventsBySite)
   const getAllEvents = useEventStore((state) => state.getAllEvents)
 
@@ -93,7 +89,6 @@ export default function Dashboard() {
     ]
   }, [sites, sensors, cctvs, users])
 
-  // 전체 이벤트 상태별 통계 (최근 7일 기준, 미처리/진행중은 항상 포함)
   const eventStatusStats = useMemo(() => {
     const allEvents = getAllEvents()
     const sevenDaysAgo = Date.now() - 7 * 86_400_000
@@ -107,14 +102,12 @@ export default function Dashboard() {
     return { active, inProgress, resolved, total: active + inProgress + resolved }
   }, [getAllEvents, isEventStoreInitialized])
 
-  // 파이차트 데이터
   const chartData = useMemo(() => [
     { name: '미처리', value: eventStatusStats.active, fill: '#EF4444' },
     { name: '진행중', value: eventStatusStats.inProgress, fill: '#F59E0B' },
     { name: '해결됨', value: eventStatusStats.resolved, fill: '#10B981' },
   ].filter(item => item.value > 0), [eventStatusStats])
 
-  // 공원별 이벤트 요약 (전체보기 우측 패널용)
   const parkEventSummary = useMemo(() => {
     return sites.map(site => {
       const siteEvents = getEventsBySite(site.id)
@@ -125,7 +118,6 @@ export default function Dashboard() {
     })
   }, [sites, sensors, getEventsBySite, isEventStoreInitialized])
 
-  // 이벤트 필터: 미처리/진행중은 항상 표시, 해결됨은 최근 7일만
   const filterRecentEvents = (eventList: Event[]) => {
     const sevenDaysAgo = Date.now() - 7 * 86_400_000
     return eventList
@@ -139,13 +131,11 @@ export default function Dashboard() {
       .slice(0, 50)
   }
 
-  // 공원별 이벤트 (parks 탭)
   const filteredEvents = useMemo(() => {
     if (!selectedSiteId) return []
     return filterRecentEvents(events)
   }, [events, selectedSiteId])
 
-  // 전체 이벤트 (overview 탭)
   const allFilteredEvents = useMemo(() => {
     return filterRecentEvents(getAllEvents())
   }, [getAllEvents, isEventStoreInitialized])
@@ -167,12 +157,15 @@ export default function Dashboard() {
     ).sort((a, b) => a.name.localeCompare(b.name))
   }, [selectedSiteId, sensors])
 
-  // 공원별 배터리 현황 (배터리 잔량 오름차순 — 낮은 것부터)
   const parkBatteryData = useMemo((): FeatureResponse[] => {
     if (!selectedSiteId) return []
 
     return sensors
-      .filter(sensor => sensor.siteResponse?.id?.toString() === selectedSiteId && sensor.batteryLevel != null)
+      .filter(sensor =>
+        sensor.siteResponse?.id?.toString() === selectedSiteId &&
+        sensor.batteryLevel != null &&
+        sensor.batteryLevel <= 50
+      )
       .sort((a, b) => (a.batteryLevel ?? 100) - (b.batteryLevel ?? 100))
   }, [selectedSiteId, sensors])
 
@@ -215,7 +208,6 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-5.5rem)] gap-3">
-      {/* Row 0: Tabs + (공원선택) + Weather + Air Quality */}
       <div className="flex items-center gap-4 shrink-0">
         <Tabs className="shadow-md inline-flex rounded-xl shrink-0" value={activeTab} onValueChange={handleTabChange} variant="buttons">
           <TabsList className="justify-start gap-0 !border-white rounded-xl">
@@ -264,10 +256,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ==================== 전체보기 레이아웃 ==================== */}
       {activeTab === 'overview' && (
         <>
-          {/* 지도(3/5) + 우측 패널(2/5) — 지도 극대화 */}
           <div className="grid grid-cols-5 gap-3 flex-1 min-h-0">
             <Card className="col-span-3 overflow-hidden relative">
               <CesiumMap
@@ -281,7 +271,6 @@ export default function Dashboard() {
             </Card>
 
             <div className="col-span-2 flex flex-col gap-3 min-h-0">
-              {/* Stats — 2x2 그리드 */}
               <div className="grid grid-cols-2 gap-2 shrink-0">
                 {stats.map((stat) => (
                   <Card key={stat.title} className="py-2.5">
@@ -298,13 +287,11 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* 이벤트 현황 */}
               <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
                 <CardHeader className="pb-1 shrink-0">
                   <CardTitle className="text-base font-bold">이벤트 현황</CardTitle>
                 </CardHeader>
 
-                {/* 파이차트 + 상태바 — 항상 보임 */}
                 <CardContent className="shrink-0 pb-2">
                   {!isEventStoreInitialized ? (
                     <div className="flex items-center justify-center gap-2 text-gray-500 py-4">
@@ -385,7 +372,6 @@ export default function Dashboard() {
                   )}
                 </CardContent>
 
-                {/* 공원별 현황 — 스크롤 영역 */}
                 <div className="border-t border-gray-100 flex-1 min-h-0 overflow-y-auto px-6 py-2">
                   <h4 className="text-xs font-semibold text-gray-700 mb-1.5 sticky top-0 bg-white py-1">공원별 현황</h4>
                   <div className="space-y-1">
@@ -419,61 +405,30 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* 이벤트 리스트(3/5) + 배터리 알람(2/5) — 컴팩트 */}
-          <div className="grid grid-cols-5 gap-3 shrink-0 h-[200px]">
-            <Card className="col-span-3 flex flex-col overflow-hidden">
-              <CardHeader className='px-5 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
-              </CardHeader>
-              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
-                {allFilteredEvents.length === 0 ? (
-                  <div className="flex items-center justify-center text-gray-500 h-full">
-                    이벤트가 없습니다.
-                  </div>
-                ) : (
-                  <DataTable
-                    maxHeight={145}
-                    stickyHeader={true}
-                    columns={eventColumns}
-                    data={allFilteredEvents}
-                  />
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="col-span-2 flex flex-col overflow-hidden">
-              <CardHeader className="px-5 py-2 shrink-0">
-                <CardTitle className="text-sm font-bold">배터리 알람</CardTitle>
-              </CardHeader>
-              <CardContent className="px-5 pb-3 pt-0 flex-1 min-h-0">
-                {(() => {
-                  const lowBatterySensors = sensors
-                    .filter(sensor => sensor.batteryLevel && sensor.batteryLevel <= 20)
-                    .sort((a, b) => a.id - b.id);
-
-                  return lowBatterySensors.length === 0 ? (
-                    <div className="flex items-center justify-center text-gray-500 h-full text-sm">
-                      배터리 잔량 20% 이하 장치 없음
-                    </div>
-                  ) : (
-                    <DataTable
-                      maxHeight={145}
-                      stickyHeader={true}
-                      columns={batteryAlarmColumns}
-                      data={lowBatterySensors}
-                    />
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="shrink-0 h-[200px] flex flex-col overflow-hidden">
+            <CardHeader className='px-5 py-2 shrink-0'>
+              <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
+            </CardHeader>
+            <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+              {allFilteredEvents.length === 0 ? (
+                <div className="flex items-center justify-center text-gray-500 h-full">
+                  이벤트가 없습니다.
+                </div>
+              ) : (
+                <DataTable
+                  maxHeight={145}
+                  stickyHeader={true}
+                  columns={eventColumns}
+                  data={allFilteredEvents}
+                />
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
 
-      {/* ==================== 공원별 보기 레이아웃 ==================== */}
       {activeTab === 'parks' && (
         <>
-          {/* 지도(2/5) + 장치 현황(3/5) — 장치 테이블 중심 */}
           <div className="grid grid-cols-5 gap-3 flex-1 min-h-0">
             <Card className="col-span-2 overflow-hidden relative">
               <CesiumMap
@@ -527,7 +482,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* 이벤트 리스트(3/5) + 배터리 현황(2/5) */}
           <div className="grid grid-cols-5 gap-3 shrink-0 h-[200px]">
             <Card className="col-span-3 flex flex-col overflow-hidden">
               <CardHeader className='px-5 py-2 shrink-0'>
@@ -565,8 +519,9 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="px-5 pb-3 pt-0 flex-1 min-h-0">
                 {parkBatteryData.length === 0 ? (
-                  <div className="flex items-center justify-center text-gray-500 h-full text-sm">
-                    {selectedSiteId ? '배터리 정보가 없습니다.' : '공원을 선택해주세요.'}
+                  <div className="flex flex-col items-center justify-center text-green-600 h-full gap-1">
+                    <CheckCircle className="size-5" />
+                    <span className="text-sm font-medium">모든 장치 배터리 정상</span>
                   </div>
                 ) : (
                   <DataTable

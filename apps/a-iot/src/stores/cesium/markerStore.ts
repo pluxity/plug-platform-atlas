@@ -71,6 +71,14 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
   hoveredMarkerId: null,
 
   addMarker: (viewer: CesiumViewer, options: MarkerOptions) => {
+    // 이미 존재하는 엔티티 제거 (중복 방지)
+    if (options.id) {
+      const existing = viewer.entities.getById(options.id)
+      if (existing) {
+        viewer.entities.remove(existing)
+      }
+    }
+
     const position = Cartesian3.fromDegrees(
       options.lon,
       options.lat,

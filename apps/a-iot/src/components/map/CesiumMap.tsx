@@ -45,9 +45,8 @@ export default function CesiumMap({
   const { focusOn, flyToPosition } = useCameraStore()
   const { setCurrentProvider } = useImageryStore()
 
-  // 행정구역 경계 데이터 캐시
   const districtDataRef = useRef<VWorldFeatureCollection | null>(null)
-  const districtInitializedRef = useRef(false)
+
 
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
 
@@ -198,13 +197,11 @@ export default function CesiumMap({
       const entity = pickedObject?.id
       const entityId = entity?.id?.toString()
 
-      // 센서 마커만 hover 효과 적용 (공원 마커는 제외)
       if (entityId?.startsWith('device-')) {
         setMarkerHover(viewer, entityId)
         viewer.scene.canvas.style.cursor = 'pointer'
       } else {
         setMarkerHover(viewer, null)
-        // 공원 마커는 클릭 가능하므로 포인터 커서 유지
         if (entityId?.startsWith('park-')) {
           viewer.scene.canvas.style.cursor = 'pointer'
         } else {
@@ -258,14 +255,12 @@ export default function CesiumMap({
       case 'DANGER':
         return '#CA0014'
       case 'DISCONNECTED':
-        return '#9CA3AF' // 회색 (gray-400)
+        return '#9CA3AF'
       default:
         return '#11C208'
     }
   }
 
-  // Feature의 eventStatus는 SWR의 자동 revalidate로 업데이트됨
-  // sensors가 변경되면 자동으로 마커 색상과 깜빡임이 업데이트됨
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -314,7 +309,6 @@ export default function CesiumMap({
                 disableScaleByDistance: true,
               })
 
-              // 전체보기 모드에서는 공원 이름 라벨을 항상 표시
               if (entity.label) {
                 entity.label.show = new ConstantProperty(true)
               }
@@ -416,7 +410,6 @@ export default function CesiumMap({
     setDistrictVisible(visible)
 
     if (visible) {
-      // 기존 행정구역 엔티티 제거 후 다시 추가 (중복 방지)
       clearDistrictPolygons(viewer)
 
       if (!districtDataRef.current) {
@@ -460,8 +453,6 @@ export default function CesiumMap({
       controller.maximumZoomDistance = 50000000
     }
 
-    // 전체보기: 3D 빌딩 OFF, 행정구역 ON, 탑뷰
-    // 공원별: 3D 빌딩 ON, 행정구역 OFF, 기울어진 3D 뷰
     if (activeTab === 'overview') {
       if (seongnamTilesetRef) {
         seongnamTilesetRef.show = false
@@ -484,13 +475,6 @@ export default function CesiumMap({
     }
   }, [selectedSiteId, activeTab, isLoading, sites, focusOn, flyToPosition, seongnamTilesetRef, handleToggleDistrictBoundary])
 
-  // 초기 로드 시 행정구역 경계 자동 표시
-  useEffect(() => {
-    if (!isLoading && viewerRef.current && !districtInitializedRef.current) {
-      districtInitializedRef.current = true
-      handleToggleDistrictBoundary(true)
-    }
-  }, [isLoading, handleToggleDistrictBoundary])
 
   return (
     <div className={`relative w-full rounded-lg overflow-hidden ${className || 'h-[600px]'}`}>
