@@ -100,11 +100,15 @@ export const useEventsTimeSeries = (
 ) => {
     const client = useApiClient();
 
-    const queryString = new URLSearchParams({
+    const queryEntries: Record<string, string> = {
         interval: params.interval,
         from: params.from,
-        to: params.to
-    }).toString();
+        to: params.to,
+    };
+    if (params.siteId != null) {
+        queryEntries.siteId = String(params.siteId);
+    }
+    const queryString = new URLSearchParams(queryEntries).toString();
 
     return useSWR<TimeSeriesData | null>(
         `events-time-series?${queryString}`,

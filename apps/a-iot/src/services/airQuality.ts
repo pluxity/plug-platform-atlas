@@ -5,6 +5,7 @@
 import type { AirKoreaResponse, AirQualityData, AirStation } from './types/airQuality'
 
 const AIRKOREA_SERVICE_KEY = import.meta.env.VITE_AIRKOREA_SERVICE_KEY as string
+const BASE_PATH = ((import.meta.env.VITE_BASE_PATH as string) || '').replace(/\/+$/, '')
 
 /** 성남시 대기질 측정소 목록 (위경도 포함) */
 export const SEONGNAM_STATIONS: AirStation[] = [
@@ -52,7 +53,7 @@ export async function fetchAirQualityData(stationName: string): Promise<AirQuali
     ver: '1.0',
   })
 
-  const url = `/airkorea-api/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty?serviceKey=${AIRKOREA_SERVICE_KEY}&${params.toString()}`
+  const url = `${BASE_PATH}/airkorea-api/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty?serviceKey=${AIRKOREA_SERVICE_KEY}&${params.toString()}`
   const response = await fetch(url)
 
   if (!response.ok) {
@@ -85,10 +86,12 @@ export async function fetchAirQualityData(stationName: string): Promise<AirQuali
   return {
     pm10: safeParseFloat(item.pm10Value),
     pm25: safeParseFloat(item.pm25Value),
+    o3: safeParseFloat(item.o3Value),
     khaiValue: safeParseFloat(item.khaiValue),
     khaiGrade: safeGrade(item.khaiGrade),
     pm10Grade: safeGrade(item.pm10Grade),
     pm25Grade: safeGrade(item.pm25Grade),
+    o3Grade: safeGrade(item.o3Grade),
     dataTime: item.dataTime,
     stationName,
   }

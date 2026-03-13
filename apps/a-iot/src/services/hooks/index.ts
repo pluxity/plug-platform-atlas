@@ -98,4 +98,4 @@ export * from './useMobius'
 export { useWeather } from './useWeather'
 
 // Air Quality hooks
-export { useAirQuality } from './useAirQuality'
+export { useAirQuality, useAllStationsAirQuality } from './useAirQuality'

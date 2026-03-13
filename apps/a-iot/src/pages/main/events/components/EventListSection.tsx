@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, DatePicker, Button, Badge } from '@plug-atlas/ui';
 import { useInfiniteEvents, useSites } from '../../../../services/hooks';
-import { sensorTypeOptions, formatDate, startOfDay, endOfDay } from '../utils/timeUtils.ts';
+import { sensorTypeOptions, formatDate, startOfDay, endOfDay, subtractDays } from '../utils/timeUtils.ts';
 import { statusOptions } from '../utils/statusUtils.ts';
 import { levelOptions } from '../utils/levelUtils.ts';
 import EventList from './EventList.tsx';
@@ -19,12 +19,12 @@ export default function EventListSection() {
     const { data: sites } = useSites();
 
     const { from, to } = useMemo(() => {
-        if (!dateRange?.from || !dateRange?.to) {
-            return { from: undefined, to: undefined };
-        }
+        // 날짜 필터가 없으면 최근 6개월 기본 적용
+        const fromDate = dateRange?.from ?? subtractDays(new Date(), 180);
+        const toDate = dateRange?.to ?? new Date();
         return {
-            from: formatDate(startOfDay(dateRange.from), 'yyyyMMddHHmmss'),
-            to: formatDate(endOfDay(dateRange.to), 'yyyyMMddHHmmss')
+            from: formatDate(startOfDay(fromDate), 'yyyyMMddHHmmss'),
+            to: formatDate(endOfDay(toDate), 'yyyyMMddHHmmss')
         };
     }, [dateRange]);
 

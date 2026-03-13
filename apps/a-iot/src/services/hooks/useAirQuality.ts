@@ -4,7 +4,7 @@
  */
 import { useEffect, useRef, useCallback, useMemo } from 'react'
 import useSWR from 'swr'
-import { fetchAirQualityData, findNearestStation, DEFAULT_STATION } from '../airQuality'
+import { fetchAirQualityData, findNearestStation, DEFAULT_STATION, SEONGNAM_STATIONS } from '../airQuality'
 import type { AirQualityData } from '../types/airQuality'
 import type { FeatureResponse } from '../types/feature'
 
@@ -87,6 +87,52 @@ export function useAirQuality(options: UseAirQualityOptions = {}) {
     error,
     stationName: station.name,
     observationTime: data?.dataTime ?? null,
+    refresh,
+  }
+}
+
+/** 성남시 전체 측정소 대기질 데이터 (전체보기용) */
+export function useAllStationsAirQuality() {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const { data, error, isLoading, mutate } = useSWR<AirQualityData[]>(
+    'airquality-all-stations',
+    async () => {
+      const results = await Promise.allSettled(
+        SEONGNAM_STATIONS.map(station => fetchAirQualityData(station.name)),
+      )
+      return results
+        .filter((r): r is PromiseFulfilledResult<AirQualityData> => r.status === 'fulfilled')
+        .map(r => r.value)
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5 * 60 * 1000,
+      errorRetryCount: 3,
+    },
+  )
+
+  const refresh = useCallback(() => mutate(), [mutate])
+
+  useEffect(() => {
+    function schedule() {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      const ms = msUntilNextRefresh()
+      timerRef.current = setTimeout(() => {
+        mutate()
+        schedule()
+      }, ms)
+    }
+    schedule()
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [mutate])
+
+  return {
+    stations: data ?? [],
+    isLoading,
+    error,
     refresh,
   }
 }

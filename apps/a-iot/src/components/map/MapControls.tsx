@@ -2,20 +2,19 @@ import { Viewer as CesiumViewer } from 'cesium'
 import { Plus, Minus, Home, Layers, Building2 } from 'lucide-react'
 import { Button } from '@plug-atlas/ui'
 import { useCameraStore, type CameraPosition } from '../../stores/cesium'
-import { useState } from 'react'
 
 interface MapControlsProps {
   viewer: CesiumViewer | null
   homePosition?: CameraPosition
   onToggleSeongnamTileset?: (visible: boolean) => void
   onToggleDistrictBoundary?: (visible: boolean) => void
+  seongnamVisible?: boolean
+  districtVisible?: boolean
   className?: string
 }
 
-export default function MapControls({ viewer, homePosition, onToggleSeongnamTileset, onToggleDistrictBoundary, className = '' }: MapControlsProps) {
+export default function MapControls({ viewer, homePosition, onToggleSeongnamTileset, onToggleDistrictBoundary, seongnamVisible = false, districtVisible = true, className = '' }: MapControlsProps) {
   const { flyToPosition } = useCameraStore()
-  const [seongnamVisible, setSeongnamVisible] = useState(false)
-  const [districtVisible, setDistrictVisible] = useState(true) // 행정구역 경계 기본값 ON (CesiumMap에서 초기화)
 
   const zoomIn = () => {
     if (!viewer || viewer.isDestroyed()) return
@@ -38,15 +37,11 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
   }
 
   const toggle3DLayers = () => {
-    const newVisible = !seongnamVisible
-    setSeongnamVisible(newVisible)
-    onToggleSeongnamTileset?.(newVisible)
+    onToggleSeongnamTileset?.(!seongnamVisible)
   }
 
   const toggleDistrictBoundary = () => {
-    const newVisible = !districtVisible
-    setDistrictVisible(newVisible)
-    onToggleDistrictBoundary?.(newVisible)
+    onToggleDistrictBoundary?.(!districtVisible)
   }
 
   return (

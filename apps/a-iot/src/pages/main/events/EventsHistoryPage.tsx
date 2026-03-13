@@ -2,13 +2,22 @@ import { useState, useMemo } from 'react';
 import { useEvents } from '../../../services/hooks';
 import EventStatisticsSection from "./components/StatisticsSection.tsx";
 import EventListSection from "./components/EventListSection.tsx";
+import { formatDate, startOfDay, endOfDay, subtractDays } from './utils/timeUtils';
 import type { EventStatus } from '../../../services/types';
 
 export default function EventsHistoryPage() {
   const [globalStatusFilter] = useState('all');
   const [globalSiteFilter] = useState('all');
 
+  // 통계도 최근 6개월 기준
+  const sixMonthsRange = useMemo(() => ({
+    from: formatDate(startOfDay(subtractDays(new Date(), 180)), 'yyyyMMddHHmmss'),
+    to: formatDate(endOfDay(new Date()), 'yyyyMMddHHmmss'),
+  }), []);
+
   const { data: events, error: eventsError } = useEvents({
+    from: sixMonthsRange.from,
+    to: sixMonthsRange.to,
     ...(globalStatusFilter !== 'all' && { status: globalStatusFilter as EventStatus }),
     ...(globalSiteFilter !== 'all' && { siteId: parseInt(globalSiteFilter) })
   });

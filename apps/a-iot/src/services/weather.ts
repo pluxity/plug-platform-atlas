@@ -7,6 +7,7 @@ import type { KmaGridPoint, KmaResponse, WeatherData } from './types/weather'
 export const SEONGNAM_GRID: KmaGridPoint = { name: '성남시', nx: 63, ny: 124 }
 
 const KMA_AUTH_KEY = import.meta.env.VITE_KMA_AUTH_KEY as string
+const BASE_PATH = ((import.meta.env.VITE_BASE_PATH as string) || '').replace(/\/+$/, '')
 
 /**
  * 위경도(WGS84) → KMA 격자 좌표 변환
@@ -94,7 +95,7 @@ export async function fetchWeatherData(grid: KmaGridPoint = SEONGNAM_GRID): Prom
     ny: String(grid.ny),
   })
 
-  const url = `/kma-api/api/typ02/openApi/VilageFcstInfoService_2.0/getUltraSrtNcst?${params.toString()}`
+  const url = `${BASE_PATH}/kma-api/api/typ02/openApi/VilageFcstInfoService_2.0/getUltraSrtNcst?${params.toString()}`
   const response = await fetch(url)
 
   if (!response.ok) {

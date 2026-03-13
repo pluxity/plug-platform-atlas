@@ -35,6 +35,8 @@ export default function CesiumMap({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [seongnamTilesetRef, setSeongnamTilesetRef] = useState<Cesium3DTileset | null>(null)
+  const [tilesetVisible, setTilesetVisible] = useState(false)
+  const [districtVisible, setDistrictVisible] = useState(true)
 
   const { createViewer, initializeResources } = useViewerStore()
   const { loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, applyHeightOffset } = useTilesetStore()
@@ -269,12 +271,15 @@ export default function CesiumMap({
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed() || isLoading || !sites.length) return
 
+    let cancelled = false
+
     clearAllMarkers(viewer)
     clearAllPolygons(viewer)
 
     if (activeTab === 'overview') {
       const renderSiteMarkers = async () => {
         for (const site of sites) {
+          if (cancelled) return
           if (site.location?.trim()) {
             const coordinates = parseWktToCoordinates(site.location)
             if (coordinates.length > 0) {
@@ -287,6 +292,7 @@ export default function CesiumMap({
               let markerSize: number
               if (site.thumbnail?.url) {
                 markerImage = await createCircularImageDataUrl(site.thumbnail.url)
+                if (cancelled) return
                 markerSize = 48
               } else {
                 markerImage = getAssetPath('/images/icons/map/park.png')
@@ -315,7 +321,7 @@ export default function CesiumMap({
             }
           }
         }
-        viewer.scene.requestRender()
+        if (!cancelled) viewer.scene.requestRender()
       }
       renderSiteMarkers()
     } else if (activeTab === 'parks' && selectedSiteId) {
@@ -348,6 +354,8 @@ export default function CesiumMap({
     }
 
     viewer.scene.requestRender()
+
+    return () => { cancelled = true }
   }, [sites, isLoading, activeTab, selectedSiteId, sensors, parseWktToCoordinates, addMarker, clearAllMarkers, clearAllPolygons])
 
   useEffect(() => {
@@ -394,41 +402,24 @@ export default function CesiumMap({
     }
   }, [sensors, isLoading, siteSensors, startMarkerBlink, stopMarkerBlink])
 
-  useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer || viewer.isDestroyed() || isLoading) return
-
-    const controller = viewer.scene.screenSpaceCameraController
-    if (activeTab === 'parks') {
-      controller.maximumZoomDistance = 4000
-    } else {
-      controller.maximumZoomDistance = 50000000
-    }
-
-    if (activeTab === 'overview') {
-      flyToPosition(viewer, DEFAULT_CAMERA_POSITION)
-    } else if (activeTab === 'parks' && selectedSiteId) {
-      const selectedSite = sites.find(site => site.id.toString() === selectedSiteId)
-      if (selectedSite?.location?.trim()) {
-        focusOn(viewer, selectedSite.location, 500)
-      }
-    }
-  }, [selectedSiteId, activeTab, isLoading, sites, focusOn, flyToPosition])
-
-  const handleToggleSeongnamTileset = (visible: boolean) => {
+  const handleToggleSeongnamTileset = useCallback((visible: boolean) => {
     if (seongnamTilesetRef) {
       seongnamTilesetRef.show = visible
+      setTilesetVisible(visible)
     }
-  }
+  }, [seongnamTilesetRef])
 
   const handleToggleDistrictBoundary = useCallback(async (visible: boolean) => {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed()) return
 
+    setDistrictVisible(visible)
+
     if (visible) {
-      // 행정구역 경계 표시
+      // 기존 행정구역 엔티티 제거 후 다시 추가 (중복 방지)
+      clearDistrictPolygons(viewer)
+
       if (!districtDataRef.current) {
-        // 캐시된 데이터가 없으면 로드
         const data = await fetchSeongnamDistricts()
         if (data) {
           districtDataRef.current = data
@@ -454,10 +445,44 @@ export default function CesiumMap({
         )
       }
     } else {
-      // 행정구역 경계 숨기기
       clearDistrictPolygons(viewer)
     }
   }, [displayGeoJSONFeatureCollection, clearDistrictPolygons])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed() || isLoading) return
+
+    const controller = viewer.scene.screenSpaceCameraController
+    if (activeTab === 'parks') {
+      controller.maximumZoomDistance = 4000
+    } else {
+      controller.maximumZoomDistance = 50000000
+    }
+
+    // 전체보기: 3D 빌딩 OFF, 행정구역 ON, 탑뷰
+    // 공원별: 3D 빌딩 ON, 행정구역 OFF, 기울어진 3D 뷰
+    if (activeTab === 'overview') {
+      if (seongnamTilesetRef) {
+        seongnamTilesetRef.show = false
+        setTilesetVisible(false)
+      }
+      handleToggleDistrictBoundary(true)
+      flyToPosition(viewer, DEFAULT_CAMERA_POSITION)
+    } else if (activeTab === 'parks') {
+      if (seongnamTilesetRef) {
+        seongnamTilesetRef.show = true
+        setTilesetVisible(true)
+      }
+      handleToggleDistrictBoundary(false)
+      if (selectedSiteId) {
+        const selectedSite = sites.find(site => site.id.toString() === selectedSiteId)
+        if (selectedSite?.location?.trim()) {
+          focusOn(viewer, selectedSite.location, 800, -30)
+        }
+      }
+    }
+  }, [selectedSiteId, activeTab, isLoading, sites, focusOn, flyToPosition, seongnamTilesetRef, handleToggleDistrictBoundary])
 
   // 초기 로드 시 행정구역 경계 자동 표시
   useEffect(() => {
@@ -481,6 +506,8 @@ export default function CesiumMap({
         homePosition={DEFAULT_CAMERA_POSITION}
         onToggleSeongnamTileset={handleToggleSeongnamTileset}
         onToggleDistrictBoundary={handleToggleDistrictBoundary}
+        seongnamVisible={tilesetVisible}
+        districtVisible={districtVisible}
         className="absolute top-1/2 right-4 -translate-y-1/2 z-10"
       />
 

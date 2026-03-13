@@ -123,9 +123,12 @@ export default function WeatherCard({ siteId, sensors }: WeatherCardProps) {
           )}
         </div>
 
-        {/* 기준시간 + 새로고침 */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">{observationTime} 기준</span>
+        {/* 출처 + 기준시간 + 새로고침 */}
+        <div className="flex items-center gap-2 ml-6">
+          <div className="text-right">
+            <div className="text-[10px] text-gray-400">{observationTime}</div>
+            <div className="text-[10px] text-gray-300">Provided by 기상청</div>
+          </div>
           <button
             onClick={refresh}
             className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"

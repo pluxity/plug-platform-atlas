@@ -62,12 +62,12 @@ function DataTable<T>({
   return (
     <div className={className}>
       <div
-        className={cn("border-y border-[#bbbecf]", maxHeight && "overflow-y-auto")}
+        className={cn("overflow-y-auto", !maxHeight && "h-full")}
         style={maxHeight ? { maxHeight: `${maxHeight}px` } : undefined}
       >
-        <table className="w-full">
+        <table className="w-full border-collapse">
           <thead>
-            <tr className={cn("border-b border-[#bbbecf] border-t-2 bg-[#dfe4eb]", stickyHeader && "sticky top-0 z-10")}>
+            <tr className={cn("border-b border-[#bbbecf] border-t-2 border-t-[#bbbecf] bg-[#dfe4eb]", stickyHeader && "sticky top-0 z-10")}>
               {selectable && (
                 <th className="h-[34px] px-4 py-2 text-center align-middle font-medium w-12 border-r  border-[#bbbecf]">
                   <input

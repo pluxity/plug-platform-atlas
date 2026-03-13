@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
           rewrite: (p) => p.replace(/^\/kma-api/, ''),
         },
         '/airkorea-api': {
-          target: 'http://apis.data.go.kr',
+          target: 'https://apis.data.go.kr',
           changeOrigin: true,
           secure: false,
           rewrite: (p) => p.replace(/^\/airkorea-api/, ''),

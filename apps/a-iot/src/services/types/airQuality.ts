@@ -52,10 +52,12 @@ export interface AirKoreaResponse {
 export interface AirQualityData {
   pm10: number          // 미세먼지 (㎍/㎥)
   pm25: number          // 초미세먼지 (㎍/㎥)
+  o3: number            // 오존 (ppm)
   khaiValue: number     // 통합대기환경지수 (CAI)
   khaiGrade: AirQualityGrade
   pm10Grade: AirQualityGrade
   pm25Grade: AirQualityGrade
+  o3Grade: AirQualityGrade
   dataTime: string      // 측정일시
   stationName: string   // 측정소명
 }
