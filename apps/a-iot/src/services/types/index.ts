@@ -95,3 +95,12 @@ export type {
   WeatherData,
   KmaGridPoint,
 } from './weather'
+
+// Air Quality types
+export type {
+  AirQualityGrade,
+  AirStation,
+  AirQualityItem,
+  AirKoreaResponse,
+  AirQualityData,
+} from './airQuality'

@@ -29,6 +29,12 @@ export default defineConfig(({ mode }) => {
           secure: false,
           rewrite: (p) => p.replace(/^\/kma-api/, ''),
         },
+        '/airkorea-api': {
+          target: 'http://apis.data.go.kr',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (p) => p.replace(/^\/airkorea-api/, ''),
+        },
         '/api': {
           target: 'https://dev.pluxity.com',
           changeOrigin: true,

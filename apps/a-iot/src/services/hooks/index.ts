@@ -96,3 +96,6 @@ export * from './useMobius'
 
 // Weather hooks
 export { useWeather } from './useWeather'
+
+// Air Quality hooks
+export { useAirQuality } from './useAirQuality'

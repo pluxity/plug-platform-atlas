@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, DataTable, Select, SelectCont
 
 // Internal imports
 import WeatherCard from '@/components/weather/WeatherCard'
+import AirQualityCard from '@/components/air-quality/AirQualityCard'
 import CesiumMap from '@/components/map/CesiumMap'
 import { batteryAlarmColumns, eventColumns, featureStatusColumns } from '@/pages/main/dashboard/columns'
 import { getDashboardLevelStyle } from '@/pages/main/events/utils/levelUtils'
@@ -197,9 +198,9 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* Row 0: Tabs */}
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <Tabs className="shadow-md inline-flex rounded-xl" value={activeTab} onValueChange={handleTabChange} variant="buttons">
+      {/* Row 0: Tabs + Weather + Air Quality */}
+      <div className="flex items-center gap-4 mb-4">
+        <Tabs className="shadow-md inline-flex rounded-xl shrink-0" value={activeTab} onValueChange={handleTabChange} variant="buttons">
           <TabsList className="justify-start gap-0 !border-white rounded-xl">
             <TabsTrigger
               value="overview"
@@ -219,14 +220,16 @@ export default function Dashboard() {
             </TabsTrigger>
           </TabsList>
         </Tabs>
-      </div>
-
-      {/* Weather Card */}
-      <div className="mb-4">
-        <WeatherCard
-          siteId={activeTab === 'parks' ? selectedSiteId : null}
-          sensors={sensors}
-        />
+        <div className="flex gap-4 ml-auto">
+          <WeatherCard
+            siteId={activeTab === 'parks' ? selectedSiteId : null}
+            sensors={sensors}
+          />
+          <AirQualityCard
+            siteId={activeTab === 'parks' ? selectedSiteId : null}
+            sensors={sensors}
+          />
+        </div>
       </div>
 
       {/* Row 1: Stats cards 1x4 (compact) */}
