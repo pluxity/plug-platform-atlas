@@ -86,3 +86,12 @@ export * from './action-history'
 
 // Mobius types (from web-core)
 export * from './mobius'
+
+// Weather types
+export type {
+  KmaCategory,
+  KmaObservationItem,
+  KmaResponse,
+  WeatherData,
+  KmaGridPoint,
+} from './weather'

@@ -93,3 +93,6 @@ export * from './useActionHistory'
 
 // Mobius hooks
 export * from './useMobius'
+
+// Weather hooks
+export { useWeather } from './useWeather'

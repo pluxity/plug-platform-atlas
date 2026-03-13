@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import AdminLayout from './components/layout/AdminLayout.tsx'
-import DashboardLayout from './components/layout/DashboardLayout.tsx'
+import AppLayout from './components/layout/AppLayout'
+import PageCard from './components/layout/PageCard'
 import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import ForbiddenPage from './pages/ForbiddenPage'
@@ -16,6 +16,11 @@ import Permissions from './pages/management/users/Permissions'
 import Mobius from './pages/management/system/Mobius'
 import IoTSensor from './pages/main/iot/IoTSensor.tsx'
 
+/** Wrap admin/management pages with white card container */
+function Wrapped({ children }: { children: React.ReactNode }) {
+  return <PageCard>{children}</PageCard>
+}
+
 function App() {
   const basename = import.meta.env.VITE_BASE_PATH === './' ? '/aiot' : (import.meta.env.VITE_BASE_PATH || '/')
 
@@ -26,38 +31,24 @@ function App() {
         <Route path="/forbidden" element={<ForbiddenPage />} />
 
         <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <Dashboard />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/*"
           element={
             <ProtectedRoute>
-              <AdminLayout>
+              <AppLayout>
                 <Routes>
-                  <Route path="/iot-sensors" element={<IoTSensor />} />
-                    <Route path="/events" element={<EventsHistoryPage />} />
-
-                  <Route path="/sites/parks" element={<SitePage />} />
-                  <Route path="/sites/virtual-patrol" element={<VirtualPatrol />} />
-
-                  <Route path="/devices/sensor-categories" element={<SensorCategoriesPage />} />
-                  <Route path="/devices/cctv" element={<CCTV />} />
-
-                  <Route path="/users" element={<Users />} />
-                  <Route path="/users/roles" element={<Roles />} />
-                  <Route path="/users/permissions" element={<Permissions />} />
-
-                  <Route path="/system/mobius" element={<Mobius />} />
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/iot-sensors" element={<Wrapped><IoTSensor /></Wrapped>} />
+                  <Route path="/events" element={<Wrapped><EventsHistoryPage /></Wrapped>} />
+                  <Route path="/sites/parks" element={<Wrapped><SitePage /></Wrapped>} />
+                  <Route path="/sites/virtual-patrol" element={<Wrapped><VirtualPatrol /></Wrapped>} />
+                  <Route path="/devices/sensor-categories" element={<Wrapped><SensorCategoriesPage /></Wrapped>} />
+                  <Route path="/devices/cctv" element={<Wrapped><CCTV /></Wrapped>} />
+                  <Route path="/users" element={<Wrapped><Users /></Wrapped>} />
+                  <Route path="/users/roles" element={<Wrapped><Roles /></Wrapped>} />
+                  <Route path="/users/permissions" element={<Wrapped><Permissions /></Wrapped>} />
+                  <Route path="/system/mobius" element={<Wrapped><Mobius /></Wrapped>} />
                 </Routes>
-              </AdminLayout>
+              </AppLayout>
             </ProtectedRoute>
           }
         />
