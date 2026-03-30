@@ -2,6 +2,7 @@ import {
   AlertCircle,
   BellRing,
   Building2,
+  Cctv,
   Home,
   KeyRound,
   PlugZap,
@@ -35,6 +36,11 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
     title: 'IoT 센서',
     icon: Radio,
     path: '/iot-sensors',
+  },
+  {
+    title: 'CCTV 모니터링',
+    icon: Cctv,
+    path: '/cctv-monitoring',
   },
 ]
 
@@ -110,6 +116,7 @@ export const GNB_MENU_ITEMS: MenuItem[] = [
   { title: '대시보드', icon: Home, path: '/' },
   { title: '이벤트', icon: AlertCircle, path: '/events' },
   { title: 'IoT 센서', icon: Radio, path: '/iot-sensors' },
+  { title: 'CCTV 모니터링', icon: Cctv, path: '/cctv-monitoring' },
   {
     title: '시설 관리',
     icon: Building2,

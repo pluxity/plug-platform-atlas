@@ -42,6 +42,12 @@ export default defineConfig(({ mode }) => {
           ws: true,
           rewrite: (p) => p.replace(/^\/api/, ''),
         },
+        '/eds-api': {
+          target: 'http://115.93.67.42:28087',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (p) => p.replace(/^\/eds-api/, ''),
+        },
       },
     },
   }

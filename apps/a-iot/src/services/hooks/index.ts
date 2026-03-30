@@ -99,3 +99,8 @@ export { useWeather } from './useWeather'
 
 // Air Quality hooks
 export { useAirQuality, useAllStationsAirQuality } from './useAirQuality'
+
+// EDS (CCTV 모니터링) hooks
+export { useEdsAuth } from './useEdsAuth'
+export { useEdsCameras } from './useEdsCameras'
+export { useEdsStream } from './useEdsStream'

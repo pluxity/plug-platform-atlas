@@ -15,6 +15,7 @@ import Roles from './pages/management/users/Roles'
 import Permissions from './pages/management/users/Permissions'
 import Mobius from './pages/management/system/Mobius'
 import IoTSensor from './pages/main/iot/IoTSensor.tsx'
+import CctvMonitoring from './pages/main/cctv-monitoring/CctvMonitoring.tsx'
 
 /** Wrap admin/management pages with white card container */
 function Wrapped({ children }: { children: React.ReactNode }) {
@@ -37,6 +38,7 @@ function App() {
               <AppLayout>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
+                  <Route path="/cctv-monitoring" element={<CctvMonitoring />} />
                   <Route path="/iot-sensors" element={<Wrapped><IoTSensor /></Wrapped>} />
                   <Route path="/events" element={<Wrapped><EventsHistoryPage /></Wrapped>} />
                   <Route path="/sites/parks" element={<Wrapped><SitePage /></Wrapped>} />
