@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { AlertCircle, BatteryWarning, Camera, CheckCircle, Clock, Radio, TreePine, Users } from 'lucide-react'
+import { AlertCircle, BatteryWarning, Camera, CheckCircle, Clock, Radio, Scan, TreePine, Users } from 'lucide-react'
 import { Cell, Label, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { useAdminUsers } from '@plug-atlas/api-hooks'
@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, DataTable, Select, SelectCont
 import WeatherCard from '@/components/weather/WeatherCard'
 import AirQualityCard from '@/components/air-quality/AirQualityCard'
 import CesiumMap from '@/components/map/CesiumMap'
-import { eventColumns, featureStatusColumns, parkBatteryColumns } from '@/pages/main/dashboard/columns'
-import { useCctvList, useFeatures, useSites } from '@/services/hooks'
+import { eventColumns, cctvEventColumns, featureStatusColumns, parkBatteryColumns } from '@/pages/main/dashboard/columns'
+import { useCctvList, useCctvEvents, useFeatures, useSites } from '@/services/hooks'
 import { Event, FeatureResponse } from '@/services/types'
 import { useEventStore, useNotificationStore } from '@/stores'
 import { getAssetPath } from '@/utils/assetPath'
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const { data: sites = [] } = useSites()
   const { data: cctvs = [] } = useCctvList()
+  const { data: cctvEventsData } = useCctvEvents({ size: 50 }, { refreshInterval: 30_000 })
   const { data: sensors = [] } = useFeatures()
   const { data: users = [] } = useAdminUsers()
   const isEventStoreInitialized = useNotificationStore((state) => state.isInitialized)
@@ -405,25 +406,50 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <Card className="shrink-0 h-[200px] flex flex-col overflow-hidden">
-            <CardHeader className='px-5 py-2 shrink-0'>
-              <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
-            </CardHeader>
-            <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
-              {allFilteredEvents.length === 0 ? (
-                <div className="flex items-center justify-center text-gray-500 h-full">
-                  이벤트가 없습니다.
-                </div>
-              ) : (
-                <DataTable
-                  maxHeight={145}
-                  stickyHeader={true}
-                  columns={eventColumns}
-                  data={allFilteredEvents}
-                />
-              )}
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-2 gap-3 shrink-0 h-[200px]">
+            <Card className="flex flex-col overflow-hidden">
+              <CardHeader className='px-5 py-2 shrink-0'>
+                <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
+              </CardHeader>
+              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+                {allFilteredEvents.length === 0 ? (
+                  <div className="flex items-center justify-center text-gray-500 h-full">
+                    이벤트가 없습니다.
+                  </div>
+                ) : (
+                  <DataTable
+                    maxHeight={145}
+                    stickyHeader={true}
+                    columns={eventColumns}
+                    data={allFilteredEvents}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="flex flex-col overflow-hidden">
+              <CardHeader className='px-5 py-2 shrink-0'>
+                <CardTitle className="text-sm font-bold flex items-center gap-1.5">
+                  <Scan className="size-4 text-blue-500" />
+                  AI EDGE 이벤트
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+                {!cctvEventsData?.content?.length ? (
+                  <div className="flex items-center justify-center text-gray-500 h-full">
+                    AI EDGE 이벤트가 없습니다.
+                  </div>
+                ) : (
+                  <DataTable
+                    maxHeight={145}
+                    stickyHeader={true}
+                    columns={cctvEventColumns}
+                    data={cctvEventsData.content}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </>
       )}
 
@@ -482,8 +508,8 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="grid grid-cols-5 gap-3 shrink-0 h-[200px]">
-            <Card className="col-span-3 flex flex-col overflow-hidden">
+          <div className="grid grid-cols-3 gap-3 shrink-0 h-[200px]">
+            <Card className="flex flex-col overflow-hidden">
               <CardHeader className='px-5 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
               </CardHeader>
@@ -503,7 +529,30 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="col-span-2 flex flex-col overflow-hidden">
+            <Card className="flex flex-col overflow-hidden">
+              <CardHeader className='px-5 py-2 shrink-0'>
+                <CardTitle className="text-sm font-bold flex items-center gap-1.5">
+                  <Scan className="size-4 text-blue-500" />
+                  AI EDGE 이벤트
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+                {!cctvEventsData?.content?.length ? (
+                  <div className="flex items-center justify-center text-gray-500 h-full">
+                    AI EDGE 이벤트가 없습니다.
+                  </div>
+                ) : (
+                  <DataTable
+                    maxHeight={145}
+                    stickyHeader={true}
+                    columns={cctvEventColumns}
+                    data={cctvEventsData.content}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="flex flex-col overflow-hidden">
               <CardHeader className="px-5 py-2 shrink-0">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <BatteryWarning className="size-4 text-orange-500" />

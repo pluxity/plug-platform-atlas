@@ -1,77 +1,106 @@
-import { z } from 'zod'
-
 // Site Response (CCTV에 포함됨)
 export interface SiteResponse {
   id: number
   name: string
 }
 
-// CCTV Response
-export const cctvResponseSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  url: z.string().optional(), // Origin URL (API 키: url)
-  viewUrl: z.string().optional(),
-  lon: z.number(),
-  lat: z.number(),
-  height: z.number(),
-  site: z.custom<SiteResponse>().optional(),
-})
+// CCTV 카메라 타입
+export type CctvCameraType =
+  | 'ip'
+  | 'video'
+  | 'ptz'
+  | 'aibox'
+  | 'ai'
+  | 'unmanaged'
+  | 'unsupported'
 
-export type CctvResponse = z.infer<typeof cctvResponseSchema>
+// CCTV Response (백엔드 API 스펙)
+export interface CctvResponse {
+  id: number
+  name: string
+  edsCameraId: string
+  cameraIp: string
+  cameraPort: number
+  lon: number
+  lat: number
+  ptzControl: number
+  cameraType: CctvCameraType
+  cameraStatus: number // 0, 1, 2
+  cameraAddress: string
+  streamResolution: number[]
+  cameraRecordType: number
+  cameraAnalysisConfigured: number
+  site: SiteResponse | null
+}
 
-// CCTV Create Request
-export const cctvCreateRequestSchema = z.object({
-  name: z.string().min(1, 'CCTV 이름을 입력해주세요').max(50, 'CCTV 이름은 최대 50자까지 입력 가능합니다'),
-  url: z.string().min(1, 'CCTV URL을 입력해주세요').refine(
-    (url) => {
-      try {
-        new URL(url)
-        return url.startsWith('rtsp://') || url.startsWith('http://') || url.startsWith('https://')
-      } catch {
-        return false
-      }
-    },
-    { message: 'rtsp://, http://, https:// 프로토콜을 사용한 올바른 URL을 입력해주세요' }
-  ),
-  lon: z.number()
-    .refine((val) => val !== 0, { message: '지도에서 CCTV 위치를 선택해주세요' })
-    .refine((val) => val >= -180 && val <= 180, { message: '경도는 -180 ~ 180 범위여야 합니다' }),
-  lat: z.number()
-    .refine((val) => val !== 0, { message: '지도에서 CCTV 위치를 선택해주세요' })
-    .refine((val) => val >= -90 && val <= 90, { message: '위도는 -90 ~ 90 범위여야 합니다' }),
-  height: z.number()
-    .min(0.1, 'CCTV 높이는 0.1m 이상이어야 합니다')
-    .max(100, 'CCTV 높이는 100m 이하여야 합니다'),
-})
+// CCTV 스트림 결과
+export interface CctvStreamResult {
+  session: string
+  stream_url: string
+}
 
-export type CctvCreateRequest = z.infer<typeof cctvCreateRequestSchema>
-
-// CCTV Update Request (name만 필수)
-export const cctvUpdateRequestSchema = z.object({
-  name: z.string().min(1, 'CCTV 이름을 입력해주세요').max(50, 'CCTV 이름은 최대 50자까지 입력 가능합니다'),
-  url: z.string().min(1, 'CCTV URL을 입력해주세요').refine(
-    (url) => {
-      try {
-        new URL(url)
-        return url.startsWith('rtsp://') || url.startsWith('http://') || url.startsWith('https://')
-      } catch {
-        return false
-      }
-    },
-    { message: 'rtsp://, http://, https:// 프로토콜을 사용한 올바른 URL을 입력해주세요' }
-  ).optional(),
-  lon: z.number().optional(),
-  lat: z.number().optional(),
-  height: z.number()
-    .min(0.1, 'CCTV 높이는 0.1m 이상이어야 합니다')
-    .max(100, 'CCTV 높이는 100m 이하여야 합니다')
-    .optional(),
-})
-
-export type CctvUpdateRequest = z.infer<typeof cctvUpdateRequestSchema>
+// CCTV 좌표 수정 요청
+export interface CctvCoordinateRequest {
+  lon: number
+  lat: number
+}
 
 // CCTV List Query Params
 export interface CctvListParams {
   siteId?: number
+}
+
+// ── CCTV 이벤트 (AI EDGE) ──
+
+export type CctvEventType =
+  | 'LOITERING' | 'PATH_PASS' | 'DIRECTIONAL_MOVE' | 'ENTER' | 'EXIT'
+  | 'STOP' | 'ABANDONED' | 'LINE_CROSS' | 'SMOKE' | 'FLAME'
+  | 'FALL_DOWN' | 'CROWD' | 'VIOLENCE' | 'MULTI_LINE_CROSS'
+  | 'VEHICLE_ACCIDENT' | 'VEHICLE_STOP' | 'TRAFFIC_JAM' | 'COLOR_CHANGE'
+  | 'VEHICLE_PARKING' | 'REMOVED' | 'DANGER_WATER_LEVEL' | 'AREA_COLOR'
+  | 'STAY' | 'STAY_OVERCROWDED' | 'STAY_TIMEOUT' | 'STAY_ALONE'
+  | 'NO_HELMET' | 'LEFT_ALONE' | 'APPROACH' | 'SEPARATE'
+  | 'ACTION_RECOGNITION' | 'VEHICLE_TAILGATING' | 'JAYWALKING'
+  | 'FARE_EVASION' | 'NO_MASK' | 'NO_SAFETY_VEST' | 'PEDESTRIAN_DANGER'
+  | 'PEDESTRIAN_STATISTICS' | 'FLASHLIGHT' | 'LICENSE_PLATE_RECOGNITION'
+  | 'GAUGE_RECOGNITION' | 'CAKE_RECOGNITION' | 'SAFETY_HOOK_UNLATCHED'
+  | 'NO_KORAIL_UNIFORM' | 'CROWD_DENSITY' | 'FACE_RECOGNITION'
+  | 'VEHICLE_PLATE' | 'WEAPON_THREAT'
+
+export type CctvEventStatus = 'STARTED' | 'IN_PROGRESS' | 'ENDED'
+
+export interface CctvEventResponse {
+  id: number
+  index: number
+  eventId: number
+  profileName: string
+  cameraId: string
+  eventType: CctvEventType
+  eventStart: string
+  eventEnd: string
+  frameTime: string
+  eventStatus: CctvEventStatus
+  eventZoneId: number
+  eventZoneName: string
+  latitude: number
+  longitude: number
+  detectedVehicleNumber: string | null
+  thumbnail: { url: string } | null
+  createdAt: string
+}
+
+export interface CctvEventsParams {
+  page?: number
+  size?: number
+  from?: string
+  to?: string
+}
+
+export interface CctvEventsPageResponse {
+  content: CctvEventResponse[]
+  totalElements: number
+  pageNumber: number
+  pageSize: number
+  first: boolean
+  last: boolean
 }

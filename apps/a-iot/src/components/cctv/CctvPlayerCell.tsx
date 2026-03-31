@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react'
 import { X, AlertCircle, Loader2 } from 'lucide-react'
 import IvxPlayerCanvas from './IvxPlayerCanvas'
-import { useEdsStream } from '@/services/hooks/useEdsStream'
-import type { EdsCamera } from '@/lib/eds/eds-types'
+import { useCctvRealtimeStream } from '@/services/hooks'
+import type { CctvResponse } from '@/services/types'
 
 type CellStatus = 'idle' | 'connecting' | 'playing' | 'error'
 
 interface CctvPlayerCellProps {
-  camera: EdsCamera | null
+  camera: CctvResponse | null
   onRemove: () => void
 }
 
@@ -15,7 +15,7 @@ export default function CctvPlayerCell({
   camera,
   onRemove,
 }: CctvPlayerCellProps) {
-  const { getStreamUrl } = useEdsStream()
+  const getStreamUrl = useCctvRealtimeStream()
   const [streamUrl, setStreamUrl] = useState<string | null>(null)
   const [session, setSession] = useState<string | null>(null)
   const [status, setStatus] = useState<CellStatus>('idle')
@@ -23,11 +23,11 @@ export default function CctvPlayerCell({
 
   // 카메라가 할당되면 스트림 URL 요청
   const startStream = useCallback(
-    async (cam: EdsCamera) => {
+    async (cam: CctvResponse) => {
       setStatus('connecting')
       setErrorMsg(null)
       try {
-        const result = await getStreamUrl(cam.camera_id)
+        const result = await getStreamUrl(cam.id)
         setStreamUrl(result.stream_url)
         setSession(result.session ?? null)
         setStatus('playing')
@@ -40,9 +40,9 @@ export default function CctvPlayerCell({
   )
 
   // camera가 변경될 때 자동 연결
-  const prevCameraRef = useState<string | null>(null)
-  if (camera && camera.camera_id !== prevCameraRef[0]) {
-    prevCameraRef[1](camera.camera_id)
+  const prevCameraRef = useState<number | null>(null)
+  if (camera && camera.id !== prevCameraRef[0]) {
+    prevCameraRef[1](camera.id)
     startStream(camera)
   } else if (!camera && prevCameraRef[0]) {
     prevCameraRef[1](null)
@@ -76,7 +76,7 @@ export default function CctvPlayerCell({
       {/* 카메라명 오버레이 */}
       <div className="absolute left-0 top-0 z-20 flex items-center gap-2 rounded-br-lg bg-black/60 px-3 py-1.5">
         <span className="text-xs font-medium text-white">
-          {camera.camera_name}
+          {camera.name}
         </span>
       </div>
 

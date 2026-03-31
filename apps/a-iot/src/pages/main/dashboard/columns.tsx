@@ -2,6 +2,8 @@ import { Badge, Column } from '@plug-atlas/ui'
 import { getLevelInfo } from '@/pages/main/events/utils/levelUtils'
 import { getStatusBadgeStyle, getStatusInfo } from '@/pages/main/events/utils/statusUtils'
 import { Event, FeatureResponse } from '@/services/types'
+import type { CctvEventResponse, CctvEventType, CctvEventStatus } from '@/services/types'
+import { getCctvEventTypeLabel, getCctvEventStatusInfo } from '@/pages/main/events/utils/cctvEventUtils'
 
 function getRelativeTime(dateStr: string): string {
   const now = Date.now()
@@ -136,6 +138,43 @@ export const parkBatteryColumns: Column<FeatureResponse>[] = [
       if (level <= 10) return <Badge variant="destructive" className="text-[10px] px-1.5">교체 필요</Badge>
       if (level <= 20) return <Badge className="text-[10px] px-1.5 bg-orange-100 text-orange-700 hover:bg-orange-100">교체 권장</Badge>
       return <Badge variant="secondary" className="text-[10px] px-1.5">정상</Badge>
+    },
+  },
+]
+
+export const cctvEventColumns: Column<CctvEventResponse>[] = [
+  {
+    key: 'cameraId',
+    header: '카메라',
+    cell: (value) => (
+      <span className="text-xs font-mono">{value ? String(value) : '-'}</span>
+    ),
+  },
+  {
+    key: 'eventType',
+    header: '이벤트',
+    cell: (value) => (
+      <span className="text-xs font-medium">{getCctvEventTypeLabel(value as CctvEventType)}</span>
+    ),
+  },
+  {
+    key: 'eventStatus',
+    header: '상태',
+    cell: (value) => {
+      const info = getCctvEventStatusInfo(value as CctvEventStatus)
+      return <Badge className={`text-[10px] px-1.5 ${info.className}`}>{info.label}</Badge>
+    },
+  },
+  {
+    key: 'createdAt',
+    header: '발생시간',
+    cell: (_, row) => {
+      if (!row.createdAt) return '-'
+      const absolute = new Date(row.createdAt).toLocaleString('ko-KR', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+      })
+      return <span title={absolute}>{getRelativeTime(row.createdAt)}</span>
     },
   },
 ]

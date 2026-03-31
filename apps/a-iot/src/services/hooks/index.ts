@@ -2,9 +2,12 @@
 export {
   useCctvList,
   useCctv,
-  useCreateCctv,
-  useUpdateCctv,
-  useDeleteCctv,
+  useUpdateCctvCoordinates,
+  useCctvRealtimeStream,
+  useCctvRecordStream,
+  useCctvEvents,
+  useInfiniteCctvEvents,
+  useSyncCctv,
 } from './useCctv'
 
 export {

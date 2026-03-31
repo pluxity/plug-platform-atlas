@@ -2,15 +2,15 @@
 export type {
   SiteResponse,
   CctvResponse,
-  CctvCreateRequest,
-  CctvUpdateRequest,
+  CctvCameraType,
+  CctvStreamResult,
+  CctvCoordinateRequest,
   CctvListParams,
-} from './cctv'
-
-export {
-  cctvResponseSchema,
-  cctvCreateRequestSchema,
-  cctvUpdateRequestSchema,
+  CctvEventResponse,
+  CctvEventType,
+  CctvEventStatus,
+  CctvEventsParams,
+  CctvEventsPageResponse,
 } from './cctv'
 
 export type {

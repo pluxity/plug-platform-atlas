@@ -45,7 +45,7 @@ export type IVXMediaPlayerConstructor = new (
 export async function loadIvxPlayer(): Promise<{
   IVXMediaPlayer: IVXMediaPlayerConstructor
 }> {
-  const basePath = import.meta.env.BASE_URL || '/'
+  const basePath = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/')
   const module = await import(
     /* @vite-ignore */ `${basePath}ivx-wplayer/index.js`
   )

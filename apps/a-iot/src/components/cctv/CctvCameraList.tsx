@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react'
 import { Input } from '@plug-atlas/ui'
 import { Search, Video, VideoOff } from 'lucide-react'
-import type { EdsCamera } from '@/lib/eds/eds-types'
+import type { CctvResponse } from '@/services/types'
 
 interface CctvCameraListProps {
-  cameras: EdsCamera[]
+  cameras: CctvResponse[]
   isLoading: boolean
-  activeCameraIds: Set<string>
-  onSelectCamera: (camera: EdsCamera) => void
+  activeCameraIds: Set<number>
+  onSelectCamera: (camera: CctvResponse) => void
 }
 
 export default function CctvCameraList({
@@ -23,8 +23,8 @@ export default function CctvCameraList({
     const q = search.toLowerCase()
     return cameras.filter(
       (c) =>
-        c.camera_name.toLowerCase().includes(q) ||
-        c.camera_id.toLowerCase().includes(q),
+        c.name.toLowerCase().includes(q) ||
+        c.edsCameraId.toLowerCase().includes(q),
     )
   }, [cameras, search])
 
@@ -55,11 +55,11 @@ export default function CctvCameraList({
         ) : (
           <ul className="divide-y">
             {filtered.map((camera) => {
-              const isActive = activeCameraIds.has(camera.camera_id)
-              const isOnline = camera.camera_status === 1
+              const isActive = activeCameraIds.has(camera.id)
+              const isOnline = camera.cameraStatus === 1
 
               return (
-                <li key={camera.camera_id}>
+                <li key={camera.id}>
                   <button
                     onClick={() => onSelectCamera(camera)}
                     disabled={isActive}
@@ -76,10 +76,10 @@ export default function CctvCameraList({
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">
-                        {camera.camera_name}
+                        {camera.name}
                       </div>
                       <div className="truncate text-xs text-gray-400">
-                        {camera.camera_id}
+                        {camera.edsCameraId}
                       </div>
                     </div>
                     {isActive && (

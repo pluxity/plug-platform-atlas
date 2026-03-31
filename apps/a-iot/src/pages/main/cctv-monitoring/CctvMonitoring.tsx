@@ -1,10 +1,9 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Loader2, AlertCircle, Square, Grid2x2, Grid3x3 } from 'lucide-react'
-import { useEdsAuth } from '@/services/hooks/useEdsAuth'
-import { useEdsCameras } from '@/services/hooks/useEdsCameras'
+import { useCctvList } from '@/services/hooks'
 import CctvCameraList from '@/components/cctv/CctvCameraList'
 import CctvPlayerCell from '@/components/cctv/CctvPlayerCell'
-import type { EdsCamera } from '@/lib/eds/eds-types'
+import type { CctvResponse } from '@/services/types'
 
 type LayoutMode = '1x1' | '2x2' | '3x3'
 
@@ -15,25 +14,24 @@ const LAYOUT_CELLS: Record<LayoutMode, number> = {
 }
 
 export default function CctvMonitoring() {
-  const { isReady, error: authError } = useEdsAuth()
-  const { data: cameras = [], isLoading: camerasLoading } = useEdsCameras()
+  const { data: cameras = [], isLoading, error } = useCctvList()
 
   const [layout, setLayout] = useState<LayoutMode>('2x2')
-  const [cells, setCells] = useState<(EdsCamera | null)[]>(Array(9).fill(null))
+  const [cells, setCells] = useState<(CctvResponse | null)[]>(Array(9).fill(null))
 
   const cellCount = LAYOUT_CELLS[layout]
   const visibleCells = cells.slice(0, cellCount)
 
   const activeCameraIds = useMemo(() => {
-    const ids = new Set<string>()
+    const ids = new Set<number>()
     cells.forEach((c) => {
-      if (c) ids.add(c.camera_id)
+      if (c) ids.add(c.id)
     })
     return ids
   }, [cells])
 
   const handleSelectCamera = useCallback(
-    (camera: EdsCamera) => {
+    (camera: CctvResponse) => {
       setCells((prev) => {
         const next = [...prev]
         const emptyIdx = next.findIndex((c, i) => i < cellCount && c === null)
@@ -63,26 +61,25 @@ export default function CctvMonitoring() {
         ? 'grid-cols-2 grid-rows-2'
         : 'grid-cols-3 grid-rows-3'
 
-  // EDS 인증 중
-  if (!isReady) {
+  if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
-        {authError ? (
-          <div className="flex flex-col items-center gap-3 text-center">
-            <AlertCircle className="h-10 w-10 text-red-400" />
-            <p className="text-sm font-medium text-red-600">
-              CCTV 시스템 연결 실패
-            </p>
-            <p className="text-xs text-gray-500">{authError}</p>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-            <span className="text-sm text-gray-500">
-              CCTV 시스템 연결 중...
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+          <span className="text-sm text-gray-500">CCTV 목록 로딩 중...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <AlertCircle className="h-10 w-10 text-red-400" />
+          <p className="text-sm font-medium text-red-600">CCTV 목록 조회 실패</p>
+          <p className="text-xs text-gray-500">{error.message}</p>
+        </div>
       </div>
     )
   }
@@ -92,13 +89,13 @@ export default function CctvMonitoring() {
       {/* 사이드바 - 카메라 목록 */}
       <CctvCameraList
         cameras={cameras}
-        isLoading={camerasLoading}
+        isLoading={isLoading}
         activeCameraIds={activeCameraIds}
         onSelectCamera={handleSelectCamera}
       />
 
       {/* 메인 영역 */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* 툴바 */}
         <div className="flex items-center gap-1 border-b bg-white px-4 py-2">
           <span className="mr-2 text-sm font-medium text-gray-600">
@@ -128,7 +125,7 @@ export default function CctvMonitoring() {
         </div>
 
         {/* 영상 그리드 */}
-        <div className={`grid flex-1 gap-1 bg-gray-900 p-1 ${gridClass}`}>
+        <div className={`grid min-h-0 flex-1 gap-1 bg-gray-900 p-1 ${gridClass}`}>
           {visibleCells.map((camera, idx) => (
             <CctvPlayerCell
               key={`cell-${idx}`}

@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     server: {
-      port: 4000,
+      port: 5000,
       host: true,
       proxy: {
         '/kma-api': {
