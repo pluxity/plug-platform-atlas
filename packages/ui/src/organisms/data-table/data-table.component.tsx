@@ -59,17 +59,22 @@ function DataTable<T>({
     }
   }
 
+  const thBase = "h-[34px] px-4 py-2 text-center align-middle font-medium bg-[#dfe4eb] border-t-2 border-t-[#bbbecf] border-b border-b-[#bbbecf]"
+  const thSticky = stickyHeader ? "sticky top-0 z-10" : ""
+  const tdBase = "px-4 py-2 text-center align-middle border-b border-b-[#bbbecf]"
+  const borderR = "border-r border-r-[#bbbecf]"
+
   return (
     <div className={className}>
       <div
-        className={cn("border-y border-[#bbbecf]", maxHeight && "overflow-y-auto")}
+        className={cn("overflow-y-auto", !maxHeight && "h-full")}
         style={maxHeight ? { maxHeight: `${maxHeight}px` } : undefined}
       >
-        <table className="w-full">
+        <table className="w-full border-separate border-spacing-0">
           <thead>
-            <tr className={cn("border-b border-[#bbbecf] border-t-2 bg-[#dfe4eb]", stickyHeader && "sticky top-0 z-10")}>
+            <tr>
               {selectable && (
-                <th className="h-[34px] px-4 py-2 text-center align-middle font-medium w-12 border-r  border-[#bbbecf]">
+                <th className={cn(thBase, thSticky, borderR, "w-12")}>
                   <input
                     type="checkbox"
                     checked={selectedRows.length === data.length && data.length > 0}
@@ -82,15 +87,15 @@ function DataTable<T>({
                 <th
                   key={String(column.key)}
                   className={cn(
-                    "h-[34px] px-4 py-2 text-center align-middle font-medium text-muted-foreground",
-                    index < columns.length - 1 && "border-r  border-[#bbbecf]"
+                    thBase, thSticky, "text-muted-foreground",
+                    index < columns.length - 1 && borderR
                   )}
                 >
                   {column.header}
                 </th>
               ))}
               {hasActions && (
-                <th className="h-[34px] px-4 py-2 text-center align-middle font-medium text-muted-foreground border-l  border-[#bbbecf]">
+                <th className={cn(thBase, thSticky, "text-muted-foreground border-l border-l-[#bbbecf]")}>
                   액션
                 </th>
               )}
@@ -105,14 +110,14 @@ function DataTable<T>({
                 <tr
                   key={rowId}
                   className={cn(
-                    "border-b border-[#bbbecf] h-[34px] transition-colors",
+                    "h-[34px] transition-colors",
                     onRowClick && "cursor-pointer hover:bg-muted/50",
                     isSelected && "bg-primary-50"
                   )}
                   onClick={() => onRowClick?.(row, index)}
                 >
                   {selectable && (
-                    <td className="px-4 py-2 text-center align-middle border-r border-[#bbbecf]">
+                    <td className={cn(tdBase, borderR)}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -129,8 +134,8 @@ function DataTable<T>({
                     <td
                       key={String(column.key)}
                       className={cn(
-                        "px-4 py-2 text-center align-middle",
-                        colIndex < columns.length - 1 && "border-r border-[#bbbecf]"
+                        tdBase,
+                        colIndex < columns.length - 1 && borderR
                       )}
                     >
                       {column.cell
@@ -139,7 +144,7 @@ function DataTable<T>({
                     </td>
                   ))}
                   {hasActions && (
-                    <td className="px-4 py-2 text-center align-middle border-l border-[#bbbecf]">
+                    <td className={cn(tdBase, "border-l border-l-[#bbbecf]")}>
                       <div className="flex items-center justify-center gap-2">
                         {onRowEdit && (
                           <button

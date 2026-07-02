@@ -55,7 +55,7 @@ interface CameraState {
 interface CameraActions {
   flyToPosition: (viewer: CesiumViewer, position: CameraPosition) => void
   setView: (viewer: CesiumViewer, position: CameraPosition) => void
-  focusOn: (viewer: CesiumViewer, target: FocusTarget, distance?: number) => void
+  focusOn: (viewer: CesiumViewer, target: FocusTarget, distance?: number, pitch?: number) => void
 }
 
 type CameraStore = CameraState & CameraActions
@@ -83,35 +83,29 @@ export const useCameraStore = create<CameraStore>(() => ({
     })
   },
 
-  focusOn: (viewer: CesiumViewer, target: FocusTarget, distance: number = 1500) => {
+  focusOn: (viewer: CesiumViewer, target: FocusTarget, distance: number = 1500, pitch: number = -45) => {
     let coord: { lon: number; lat: number } | null = null
-    let bounds: Rectangle | undefined
+    let boundsRadius = 0
 
     if (typeof target === 'string') {
       const parsed = parseWKT(target)
-      if (!parsed) {
-        console.error('Invalid WKT format:', target)
-        return
-      }
+      if (!parsed) return
       coord = { lon: parsed.lon, lat: parsed.lat }
-      bounds = parsed.bounds
+      if (parsed.bounds) {
+        const w = parsed.bounds.width * 6378137 * Math.cos(CesiumMath.toRadians(parsed.lat))
+        const h = parsed.bounds.height * 6378137
+        boundsRadius = Math.max(w, h) / 2
+      }
     } else {
       coord = target
     }
 
-    if (bounds) {
-      viewer.camera.flyTo({
-        destination: bounds,
-        duration: 1.0,
-      })
-      return
-    }
-
+    const effectiveDistance = boundsRadius > 0 ? Math.max(distance, boundsRadius * 2) : distance
     const targetPosition = Cartesian3.fromDegrees(coord.lon, coord.lat, 0)
     const offset = new HeadingPitchRange(
       CesiumMath.toRadians(0),
-      CesiumMath.toRadians(-45),
-      distance
+      CesiumMath.toRadians(pitch),
+      effectiveDistance
     )
     const boundingSphere = new BoundingSphere(targetPosition, 0)
     viewer.camera.flyToBoundingSphere(boundingSphere, {

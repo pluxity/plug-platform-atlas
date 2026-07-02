@@ -59,8 +59,7 @@ export const useTilesetStore = create<TilesetStore>(() => ({
       viewer.scene.primitives.add(tileset)
 
       return tileset
-    } catch (error) {
-      console.error(`Failed to load Ion Asset ${assetId}:`, error)
+    } catch {
       return null
     }
   },
@@ -75,15 +74,12 @@ export const useTilesetStore = create<TilesetStore>(() => ({
 
       if (viewer.isDestroyed()) return null
 
-      tileset.tileFailed.addEventListener(() => {
-        // Silent
-      })
+      tileset.tileFailed.addEventListener(() => {})
 
       viewer.scene.primitives.add(tileset)
 
       return tileset
-    } catch (error) {
-      console.error('Failed to load Seongnam tileset from localhost:', error)
+    } catch {
       return null
     }
   },

@@ -2,15 +2,15 @@
 export type {
   SiteResponse,
   CctvResponse,
-  CctvCreateRequest,
-  CctvUpdateRequest,
+  CctvCameraType,
+  CctvStreamResult,
+  CctvCoordinateRequest,
   CctvListParams,
-} from './cctv'
-
-export {
-  cctvResponseSchema,
-  cctvCreateRequestSchema,
-  cctvUpdateRequestSchema,
+  CctvEventResponse,
+  CctvEventType,
+  CctvEventStatus,
+  CctvEventsParams,
+  CctvEventsPageResponse,
 } from './cctv'
 
 export type {
@@ -86,3 +86,21 @@ export * from './action-history'
 
 // Mobius types (from web-core)
 export * from './mobius'
+
+// Weather types
+export type {
+  KmaCategory,
+  KmaObservationItem,
+  KmaResponse,
+  WeatherData,
+  KmaGridPoint,
+} from './weather'
+
+// Air Quality types
+export type {
+  AirQualityGrade,
+  AirStation,
+  AirQualityItem,
+  AirKoreaResponse,
+  AirQualityData,
+} from './airQuality'

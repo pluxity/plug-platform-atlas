@@ -709,6 +709,12 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
                     ? `${options.id}-${ringIndex}`
                     : `district-${properties.sig_cd || 'unknown'}-${ringIndex}`
 
+                // 이미 존재하는 엔티티 제거 (중복 방지)
+                const existing = viewer.entities.getById(entityId)
+                if (existing) {
+                    viewer.entities.remove(existing)
+                }
+
                 const clampToGround = options?.clampToGround !== false // 기본값 true
 
                 const entity = viewer.entities.add({
@@ -758,6 +764,12 @@ export const usePolygonStore = create<PolygonStore>((set, get) => ({
                     // "성남시 수정구" -> "수정구"로 변환
                     const fullName = options?.labelText || options?.name || properties.sig_kor_nm || ''
                     const shortName = fullName.replace(/^성남시\s*/, '')
+
+                    // 이미 존재하는 라벨 엔티티 제거 (중복 방지)
+                    const existingLabel = viewer.entities.getById(`${entityId}-label`)
+                    if (existingLabel) {
+                        viewer.entities.remove(existingLabel)
+                    }
 
                     const labelEntity = viewer.entities.add({
                         id: `${entityId}-label`,

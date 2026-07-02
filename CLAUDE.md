@@ -148,8 +148,8 @@ export const Default: Story = {
 ### API 문서
 
 ⚠️ **모든 Feature 이슈는 반드시 API 문서를 참고 자료에 포함해야 합니다:**
-- **API 문서**: http://dev.pluxity.com/api/api-docs
-- **Swagger UI**: http://dev.pluxity.com/api/swagger-ui/index.html
+- **API 문서**: https://dev.pluxity.com/api/api-docs
+- **Swagger UI**: https://dev.pluxity.com/api/swagger-ui/index.html
 
 ---
 

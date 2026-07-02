@@ -44,6 +44,7 @@ export interface TimeSeriesQueryParams {
     interval: EventCollectInterval;
     from: string;
     to: string;
+    siteId?: number;
 }
 
 export interface TimeSeriesData {

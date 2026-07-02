@@ -4,3 +4,8 @@
 /* Then load Tailwind and shared globals */
 @import "tailwindcss";
 @import "../../../packages/ui/src/globals.css";
+
+/* Layout theme tokens */
+@theme {
+  --color-page-bg: #f1f5f9;
+}

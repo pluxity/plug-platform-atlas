@@ -45,15 +45,10 @@ export interface VWorldFeatureCollection {
 export async function fetchSeongnamDistricts(): Promise<VWorldFeatureCollection | null> {
   try {
     const response = await fetch('data/seongnam-districts.geojson')
-    if (!response.ok) {
-      console.warn('GeoJSON 파일을 찾을 수 없습니다:', response.status)
-      return null
-    }
+    if (!response.ok) return null
     const data = await response.json()
-    console.log('성남시 행정구역 데이터 로드 완료:', data.features?.length, '개 구')
     return data
-  } catch (error) {
-    console.error('GeoJSON 파일 로드 실패:', error)
+  } catch {
     return null
   }
 }
