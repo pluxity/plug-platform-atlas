@@ -45,18 +45,37 @@ plug-platform-atlas/
 
 ### 구조
 ```
-apps/a-iot/src/components/
-├── CesiumMap.tsx           # Viewer 초기화
-├── SeongnamTileset.tsx     # 타일셋 로딩 & 관리
-└── AppLayout.tsx           # 레이아웃
+apps/a-iot/src/
+├── components/map/
+│   ├── CesiumMap.tsx           # 메인 지도 (마커·폴리곤·타일셋 오케스트레이션)
+│   ├── MapControls.tsx         # 성남 타일셋/행정구역 토글 등 컨트롤
+│   └── MapLayerSelector.tsx    # 일반 ↔ 위성 지도 전환
+└── stores/cesium/
+    ├── viewerStore.ts          # Viewer 생성·초기화, Ion 토큰·배너·카메라 제한
+    ├── tilesetStore.ts         # Ion/로컬 타일셋 로딩, 높이 오프셋, 자동 숨김
+    ├── imageryStore.ts         # Imagery 레이어 전환
+    ├── usePolygonStore.ts      # 폴리곤 그리기(WKT)·행정구역 GeoJSON 렌더링
+    ├── cameraStore.ts          # 카메라 제어(focusOn, flyToPosition)
+    ├── markerStore.ts          # 마커 생성·색상·깜빡임·호버
+    ├── lodStore.ts             # 카메라 거리 기반 LOD
+    └── constants.ts            # Asset ID·높이 오프셋 등 환경변수 기반 설정
 ```
+> 상세 API는 `apps/a-iot/src/stores/cesium/README.md` 참고.
 
 ### 주요 기능
-- World Terrain 통합
-- LOD 최적화 (maximumScreenSpaceError: 32, cache: 3GB)
-- 카메라 고도 기반 lazy loading (< 2km)
-- 성남시 3D 타일셋 (+30m height offset)
-- nginx 로컬 서버 (`http://localhost/seongnam/sn_3d/`)
+- Cesium World Terrain 통합, 기본 imagery는 위성(`ion-satellite`, Asset 2)
+- LOD 최적화 (maximumScreenSpaceError: 48, cache 1GB + overflow 512MB)
+- 카메라 고도 기반 타일셋 자동 숨김 (`TILESET_AUTO_HIDE_THRESHOLD` = 15,000m)
+- 성남시 3D 타일셋 (+20m height offset), `https://dev.pluxity.com/3d-tiles` 에서 서빙
+- Ion 크레딧 배너는 숨겨진 credit container로 제거 (⚠️ Ion ToS 크레딧 표시 요건과 상충 — 상용 배포 시 검토 필요)
+- 모든 Ion Asset ID·토큰은 `.env.*` 환경변수로 관리 (`.env.development`/`.env.production`은 gitignore, `.env.example` 참고)
+
+### 공원(Site) 3D 타일셋
+
+- 공원 데이터(Site)는 API로 관리되나, **3D 타일셋 Asset ID는 `constants.ts`에 하드코딩** (`ION_ASSETS.TILESETS`: 중앙공원·율동공원)
+- `loadAllIonTilesets()`가 정의된 모든 공원 타일셋을 항상 로드하고 카메라 거리로만 표시/숨김
+- ⚠️ **새 공원 타일셋 추가 시 코드 수정 4곳 필요**: `.env.*`(Asset ID) → `constants.ts`(`ION_ASSETS.TILESETS` + `TILESET_HEIGHT_OFFSETS`) → `vite-env.d.ts`(타입)
+- 개선 방향(별도 이슈): Site 엔티티에 `ionAssetId`/`heightOffset` 필드 추가 → 지도가 `sites` 기반 동적 로드 → 코드 수정 없이 공원 추가만으로 반영
 
 ---
 
@@ -155,6 +174,14 @@ export const Default: Story = {
 
 ## 최근 작업
 
+### 2026-07-07
+- **CLAUDE.md 최신화**: Cesium 3D 지도 섹션을 실제 코드와 동기화
+  - 구조 갱신: 컴포넌트는 `components/map/`, Cesium 로직은 `stores/cesium/` (store 기반)
+  - 값 정정: mSSE 32→48, cache 3GB→1GB(+512MB overflow), 성남 오프셋 +30m→+20m, auto-hide threshold 15,000m
+  - 로컬 타일셋 서빙 위치: nginx localhost → `https://dev.pluxity.com/3d-tiles`
+  - Ion 크레딧 배너 제거 방식 및 ToS 검토 필요 사항 명시
+- **공원 3D 타일셋 결합 구조 문서화**: 타일셋 Asset ID가 `constants.ts`에 하드코딩되어 공원 추가 시 코드 수정 필요함을 명시 + 동적 로드 개선 방향 제안
+
 ### 2025-10-24
 - **GitHub Project Manager 스킬 생성**:
   - 이슈/PR 관리 자동화 스킬 개발 (전역 스킬로 설치)
@@ -184,4 +211,4 @@ export const Default: Story = {
 
 ---
 
-**마지막 업데이트**: 2025-10-24
+**마지막 업데이트**: 2026-07-07
