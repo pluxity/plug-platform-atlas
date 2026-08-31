@@ -4,8 +4,14 @@ import { getAssetPath } from '../../utils/assetPath'
 import GNBMenuItem from './GNBMenuItem'
 import GNBUserMenu from './GNBUserMenu'
 import GNBNotification from './GNBNotification'
+import { useIsAdmin } from '../../hooks/useIsAdmin'
 
 export default function GNB() {
+  const isAdmin = useIsAdmin()
+  const menuItems = GNB_MENU_ITEMS.filter(
+    (item) => !item.hidden && (!item.adminOnly || isAdmin),
+  )
+
   return (
     <header className="sticky top-0 z-50 h-14 bg-white border-b border-gray-200 flex items-center px-4">
       {/* Logo */}
@@ -20,7 +26,7 @@ export default function GNB() {
 
       {/* Menu Items */}
       <nav className="flex items-center gap-0.5">
-        {GNB_MENU_ITEMS.map((item) => (
+        {menuItems.map((item) => (
           <GNBMenuItem key={item.title} item={item} />
         ))}
       </nav>

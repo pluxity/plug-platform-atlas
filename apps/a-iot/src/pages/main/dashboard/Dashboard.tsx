@@ -3,20 +3,25 @@ import { AlertCircle, BatteryWarning, Camera, CheckCircle, Clock, Radio, Scan, T
 import { Cell, Label, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { useAdminUsers } from '@plug-atlas/api-hooks'
-import { Card, CardContent, CardHeader, CardTitle, DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
+import { Card, CardContent, CardHeader, CardTitle, DataTable, Dialog, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
 
 import WeatherCard from '@/components/weather/WeatherCard'
 import AirQualityCard from '@/components/air-quality/AirQualityCard'
 import CesiumMap from '@/components/map/CesiumMap'
 import { eventColumns, cctvEventColumns, featureStatusColumns, parkBatteryColumns } from '@/pages/main/dashboard/columns'
 import { useCctvList, useCctvEvents, useFeatures, useSites } from '@/services/hooks'
+import EventDetailModal from '@/pages/main/events/components/modal/EventDetailModal'
+import CctvEventDetailModal from '@/pages/main/events/components/modal/CctvEventDetailModal'
 import { Event, FeatureResponse } from '@/services/types'
+import type { CctvEventResponse } from '@/services/types'
 import { useEventStore, useNotificationStore } from '@/stores'
 import { getAssetPath } from '@/utils/assetPath'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'parks'>('overview')
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [selectedCctvEvent, setSelectedCctvEvent] = useState<CctvEventResponse | null>(null)
   const { data: sites = [] } = useSites()
   const { data: cctvs = [] } = useCctvList()
   const { data: cctvEventsData } = useCctvEvents({ size: 50 }, { refreshInterval: 30_000 })
@@ -33,6 +38,12 @@ export default function Dashboard() {
     }
     return getAllEvents()
   }, [selectedSiteId, getEventsBySite, getAllEvents, isEventStoreInitialized])
+
+  const cameraNameMap = useMemo(() => {
+    const map = new Map<string, string>()
+    cctvs.forEach((c) => map.set(c.edsCameraId, c.name))
+    return map
+  }, [cctvs])
 
   const handleTabChange = (value: string) => {
     if (value === 'overview' || value === 'parks') {
@@ -422,6 +433,7 @@ export default function Dashboard() {
                     stickyHeader={true}
                     columns={eventColumns}
                     data={allFilteredEvents}
+                    onRowClick={(row) => setSelectedEvent(row)}
                   />
                 )}
               </CardContent>
@@ -445,6 +457,7 @@ export default function Dashboard() {
                     stickyHeader={true}
                     columns={cctvEventColumns}
                     data={cctvEventsData.content}
+                    onRowClick={(row) => setSelectedCctvEvent(row)}
                   />
                 )}
               </CardContent>
@@ -524,6 +537,7 @@ export default function Dashboard() {
                     stickyHeader={true}
                     columns={eventColumns}
                     data={filteredEvents}
+                    onRowClick={(row) => setSelectedEvent(row)}
                   />
                 )}
               </CardContent>
@@ -547,6 +561,7 @@ export default function Dashboard() {
                     stickyHeader={true}
                     columns={cctvEventColumns}
                     data={cctvEventsData.content}
+                    onRowClick={(row) => setSelectedCctvEvent(row)}
                   />
                 )}
               </CardContent>
@@ -585,6 +600,22 @@ export default function Dashboard() {
           </div>
         </>
       )}
+
+      <Dialog
+        open={selectedEvent !== null}
+        onOpenChange={(open) => { if (!open) setSelectedEvent(null) }}
+      >
+        {selectedEvent && <EventDetailModal event={selectedEvent} />}
+      </Dialog>
+
+      <CctvEventDetailModal
+        event={selectedCctvEvent}
+        cameraName={selectedCctvEvent ? (cameraNameMap.get(selectedCctvEvent.cameraId) || selectedCctvEvent.cameraId) : ''}
+        cameraLon={selectedCctvEvent ? cctvs.find((c) => c.edsCameraId === selectedCctvEvent.cameraId)?.lon : undefined}
+        cameraLat={selectedCctvEvent ? cctvs.find((c) => c.edsCameraId === selectedCctvEvent.cameraId)?.lat : undefined}
+        open={selectedCctvEvent !== null}
+        onOpenChange={(open) => { if (!open) setSelectedCctvEvent(null) }}
+      />
     </div>
   )
 }
