@@ -15,11 +15,21 @@ import Roles from './pages/management/users/Roles'
 import Permissions from './pages/management/users/Permissions'
 import Mobius from './pages/management/system/Mobius'
 import IoTSensor from './pages/main/iot/IoTSensor.tsx'
-import CctvMonitoring from './pages/main/cctv-monitoring/CctvMonitoring.tsx'
+// 2026-08-31 임시 숨김 — CCTV 모니터링(라이브) 비활성화
+// import CctvMonitoring from './pages/main/cctv-monitoring/CctvMonitoring.tsx'
 
-/** Wrap admin/management pages with white card container */
+/** Wrap pages with white card container */
 function Wrapped({ children }: { children: React.ReactNode }) {
   return <PageCard>{children}</PageCard>
+}
+
+/** 관리 페이지: ADMIN 역할 보유자만 접근 가능 (비관리자는 /forbidden 으로) */
+function AdminOnly({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute adminOnly>
+      <PageCard>{children}</PageCard>
+    </ProtectedRoute>
+  )
 }
 
 function App() {
@@ -38,17 +48,18 @@ function App() {
               <AppLayout>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
-                  <Route path="/cctv-monitoring" element={<CctvMonitoring />} />
+                  {/* 2026-08-31 임시 숨김 — CCTV 모니터링(라이브) 비활성화. 복구 시 menu.ts 의 hidden 플래그도 함께 해제 */}
+                  {/* <Route path="/cctv-monitoring" element={<CctvMonitoring />} /> */}
                   <Route path="/iot-sensors" element={<Wrapped><IoTSensor /></Wrapped>} />
                   <Route path="/events" element={<Wrapped><EventsHistoryPage /></Wrapped>} />
-                  <Route path="/sites/parks" element={<Wrapped><SitePage /></Wrapped>} />
-                  <Route path="/sites/virtual-patrol" element={<Wrapped><VirtualPatrol /></Wrapped>} />
-                  <Route path="/devices/sensor-categories" element={<Wrapped><SensorCategoriesPage /></Wrapped>} />
-                  <Route path="/devices/cctv" element={<Wrapped><CCTV /></Wrapped>} />
-                  <Route path="/users" element={<Wrapped><Users /></Wrapped>} />
-                  <Route path="/users/roles" element={<Wrapped><Roles /></Wrapped>} />
-                  <Route path="/users/permissions" element={<Wrapped><Permissions /></Wrapped>} />
-                  <Route path="/system/mobius" element={<Wrapped><Mobius /></Wrapped>} />
+                  <Route path="/sites/parks" element={<AdminOnly><SitePage /></AdminOnly>} />
+                  <Route path="/sites/virtual-patrol" element={<AdminOnly><VirtualPatrol /></AdminOnly>} />
+                  <Route path="/devices/sensor-categories" element={<AdminOnly><SensorCategoriesPage /></AdminOnly>} />
+                  <Route path="/devices/cctv" element={<AdminOnly><CCTV /></AdminOnly>} />
+                  <Route path="/users" element={<AdminOnly><Users /></AdminOnly>} />
+                  <Route path="/users/roles" element={<AdminOnly><Roles /></AdminOnly>} />
+                  <Route path="/users/permissions" element={<AdminOnly><Permissions /></AdminOnly>} />
+                  <Route path="/system/mobius" element={<AdminOnly><Mobius /></AdminOnly>} />
                 </Routes>
               </AppLayout>
             </ProtectedRoute>
