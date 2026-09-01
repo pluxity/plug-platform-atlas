@@ -2,10 +2,12 @@ export const ION_ASSETS = {
   TERRAIN: Number(import.meta.env.VITE_CESIUM_TERRAIN_ASSET_ID) || 3825983,
   GOOGLE_MAP_IMAGERY: Number(import.meta.env.VITE_CESIUM_GOOGLE_MAP_ASSET_ID) || 2,
   GOOGLE_PHOTOREALISTIC_3D_TILES: Number(import.meta.env.VITE_CESIUM_GOOGLE_3D_TILES_ASSET_ID) || 2275207,
+  // 공원 타일셋은 환경별로 Ion 계정이 달라 하드코딩 폴백을 두지 않는다.
+  // 값이 없으면 0 이 되고 loadAllIonTilesets 가 건너뛴다 (경고 로그 출력).
   TILESETS: {
-    CENTER_PARK: Number(import.meta.env.VITE_CESIUM_CENTER_PARK_ASSET_ID) || 5155876,
-    YD_PARK: Number(import.meta.env.VITE_CESIUM_YD_PARK_ASSET_ID) || 5155878,
-    WIRYE_PARK: Number(import.meta.env.VITE_CESIUM_WIRYE_PARK_ASSET_ID) || 5155877,
+    CENTER_PARK: Number(import.meta.env.VITE_CESIUM_CENTER_PARK_ASSET_ID) || 0,
+    YD_PARK: Number(import.meta.env.VITE_CESIUM_YD_PARK_ASSET_ID) || 0,
+    WIRYE_PARK: Number(import.meta.env.VITE_CESIUM_WIRYE_PARK_ASSET_ID) || 0,
   },
 } as const
 

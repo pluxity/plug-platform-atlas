@@ -59,7 +59,8 @@ export const useTilesetStore = create<TilesetStore>(() => ({
       viewer.scene.primitives.add(tileset)
 
       return tileset
-    } catch {
+    } catch (error) {
+      console.warn(`[tileset] Ion asset ${assetId} 로드 실패 — 자산 ID/토큰 계정이 일치하는지 확인하세요.`, error)
       return null
     }
   },
@@ -104,6 +105,11 @@ export const useTilesetStore = create<TilesetStore>(() => ({
     const tilesets = new Map<number, Cesium3DTileset>()
 
     for (const [tilesetName, assetId] of Object.entries(ION_ASSETS.TILESETS)) {
+      if (!assetId) {
+        console.warn(`[tileset] ${tilesetName} Asset ID 가 설정되지 않아 건너뜁니다. 환경변수를 확인하세요.`)
+        continue
+      }
+
       const tileset = await useTilesetStore.getState().loadIonTileset(viewer, assetId)
       if (tileset && !viewer.isDestroyed()) {
         tilesets.set(assetId, tileset)
