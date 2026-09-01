@@ -54,6 +54,44 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify required build variables
+        env:
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_CESIUM_ION_ACCESS_TOKEN: ${{ secrets.VITE_CESIUM_ION_ACCESS_TOKEN }}
+          VITE_CESIUM_TERRAIN_ASSET_ID: ${{ vars.VITE_CESIUM_TERRAIN_ASSET_ID }}
+          VITE_CESIUM_CENTER_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_CENTER_PARK_ASSET_ID }}
+          VITE_CESIUM_YD_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_YD_PARK_ASSET_ID }}
+          VITE_CESIUM_WIRYE_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_WIRYE_PARK_ASSET_ID }}
+          VITE_LOCAL_TILESET_BASE_URL: ${{ vars.VITE_LOCAL_TILESET_BASE_URL }}
+          VITE_VWORLD_API_KEY: ${{ secrets.VITE_VWORLD_API_KEY }}
+          VITE_KMA_AUTH_KEY: ${{ secrets.VITE_KMA_AUTH_KEY }}
+          VITE_AIRKOREA_SERVICE_KEY: ${{ secrets.VITE_AIRKOREA_SERVICE_KEY }}
+        run: |
+          # .env.* 파일은 gitignore 라 CI 에 없다.
+          # 여기 나열된 값이 비면 코드가 조용히 폴백하거나 undefined 로 배포되므로 빌드를 멈춘다.
+          missing=""
+          REQUIRED="VITE_BASE_PATH VITE_API_URL
+            VITE_CESIUM_ION_ACCESS_TOKEN VITE_CESIUM_TERRAIN_ASSET_ID
+            VITE_CESIUM_CENTER_PARK_ASSET_ID VITE_CESIUM_YD_PARK_ASSET_ID
+            VITE_CESIUM_WIRYE_PARK_ASSET_ID VITE_LOCAL_TILESET_BASE_URL
+            VITE_VWORLD_API_KEY VITE_KMA_AUTH_KEY VITE_AIRKOREA_SERVICE_KEY"
+          for v in $REQUIRED; do
+            eval "val=\${$v}"
+            if [ -z "$val" ]; then missing="$missing $v"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::필수 빌드 변수가 비어 있습니다:$missing"
+            echo "Settings > Secrets and variables > Actions 에서 등록하세요."
+            exit 1
+          fi
+          case "$VITE_LOCAL_TILESET_BASE_URL" in
+            http://*)
+              echo "::error::VITE_LOCAL_TILESET_BASE_URL 이 http 입니다. https 페이지에서 mixed content 로 차단됩니다."
+              exit 1 ;;
+          esac
+          echo "필수 변수 누락 없음"
+
       - name: Build A-IoT
         env:
           # Variables
@@ -67,10 +105,14 @@ jobs:
           VITE_CESIUM_GOOGLE_3D_TILES_ASSET_ID: ${{ vars.VITE_CESIUM_GOOGLE_3D_TILES_ASSET_ID }}
           VITE_CESIUM_CENTER_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_CENTER_PARK_ASSET_ID }}
           VITE_CESIUM_YD_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_YD_PARK_ASSET_ID }}
+          VITE_CESIUM_WIRYE_PARK_ASSET_ID: ${{ vars.VITE_CESIUM_WIRYE_PARK_ASSET_ID }}
           VITE_CESIUM_CENTER_PARK_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_CENTER_PARK_HEIGHT_OFFSET }}
           VITE_CESIUM_YD_PARK_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_YD_PARK_HEIGHT_OFFSET }}
+          VITE_CESIUM_WIRYE_PARK_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_WIRYE_PARK_HEIGHT_OFFSET }}
           VITE_CESIUM_SEONGNAM_HEIGHT_OFFSET: ${{ vars.VITE_CESIUM_SEONGNAM_HEIGHT_OFFSET }}
           VITE_LOCAL_TILESET_BASE_URL: ${{ vars.VITE_LOCAL_TILESET_BASE_URL }}
+          VITE_KMA_AUTH_KEY: ${{ secrets.VITE_KMA_AUTH_KEY }}
+          VITE_AIRKOREA_SERVICE_KEY: ${{ secrets.VITE_AIRKOREA_SERVICE_KEY }}
           
         run: pnpm --filter @plug-atlas/a-iot build && node apps/a-iot/scripts/post-build.js
 
@@ -78,24 +120,36 @@ jobs:
         run: |
           cd apps/a-iot
           tar -czf dist.tar.gz -C dist .
+          gzip -t dist.tar.gz
+          sha256sum dist.tar.gz | cut -d' ' -f1 > dist.tar.gz.sha256
           echo "Compressed size: $(du -h dist.tar.gz | cut -f1)"
+          echo "SHA256: $(cat dist.tar.gz.sha256)"
 
       - name: Deploy to Server
         env:
           SSHPASS: ${{ secrets.PLX_DEV_PASSWORD }}
         run: |
-          # 압축 파일 전송
+          # 압축 파일 + 체크섬 전송
           sshpass -e scp -o StrictHostKeyChecking=no -P ${{ secrets.PLX_DEV_SSH_PORT }} \
-            apps/a-iot/dist.tar.gz \
+            apps/a-iot/dist.tar.gz apps/a-iot/dist.tar.gz.sha256 \
             ${{ secrets.PLX_DEV_USER }}@${{ secrets.PLX_DEV_DOMAIN }}:${{ secrets.VITE_DEPLOY_PATH }}/
 
-          # 서버에서 압축 해제 (post-build.js가 이미 cesium 경로 처리함)
+          # 무결성 검증 -> 임시 디렉터리에 해제 -> 성공했을 때만 교체
+          # 기존처럼 rm -rf 를 먼저 하면 해제 실패 시 사이트가 통째로 날아간다
+          # (2026-08-31 tar CRC 오류로 실제 발생)
           sshpass -e ssh -o StrictHostKeyChecking=no -p ${{ secrets.PLX_DEV_SSH_PORT }} \
             ${{ secrets.PLX_DEV_USER }}@${{ secrets.PLX_DEV_DOMAIN }} \
-            "cd ${{ secrets.VITE_DEPLOY_PATH }} && \
-             rm -rf assets index.html *.js *.css cesium images 2>/dev/null || true && \
-             tar -xzf dist.tar.gz && \
-             rm dist.tar.gz"
+            'set -e
+             cd '"${{ secrets.VITE_DEPLOY_PATH }}"'
+             echo "$(cat dist.tar.gz.sha256)  dist.tar.gz" | sha256sum -c -
+             gzip -t dist.tar.gz
+             rm -rf .deploy-tmp && mkdir -p .deploy-tmp
+             tar -xzf dist.tar.gz -C .deploy-tmp
+             test -f .deploy-tmp/index.html
+             test -d .deploy-tmp/assets
+             rm -rf assets cesium images data ivx-wplayer index.html
+             cp -a .deploy-tmp/. .
+             rm -rf .deploy-tmp dist.tar.gz dist.tar.gz.sha256' 
 
       - name: Verify Deployment
         env:
@@ -103,4 +157,24 @@ jobs:
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no -p ${{ secrets.PLX_DEV_SSH_PORT }} \
             ${{ secrets.PLX_DEV_USER }}@${{ secrets.PLX_DEV_DOMAIN }} \
-            "echo 'Deployment completed!' && ls -la ${{ secrets.VITE_DEPLOY_PATH }}"
+            "ls -la ${{ secrets.VITE_DEPLOY_PATH }}"
+
+      - name: Smoke test deployed site
+        run: |
+          # index.html 이 참조하는 JS 가 실제로 JS 로 응답하는지 확인한다.
+          # 산출물이 불완전하면 SPA fallback 이 걸려 text/html 이 오고 화면은 빈 채로 뜬다.
+          BASE_PATH="${{ vars.VITE_BASE_PATH }}"
+          BASE="https://dev.pluxity.com${BASE_PATH%/}/"
+          echo "확인 대상: $BASE"
+          HTML=$(curl -sS --max-time 30 "$BASE")
+          JS=$(printf '%s' "$HTML" | grep -oE 'src="[^"]+/assets/index-[^"]+[.]js"' | head -1 | sed 's/^src="//; s/"$//')
+          if [ -z "$JS" ]; then
+            echo "::error::index.html 에서 JS 참조를 찾지 못했습니다."
+            exit 1
+          fi
+          CT=$(curl -sS -o /dev/null --max-time 30 -w '%{content_type}' "https://dev.pluxity.com$JS")
+          echo "$JS -> $CT"
+          case "$CT" in
+            *javascript*) echo "배포 정상" ;;
+            *) echo "::error::JS 대신 $CT 를 반환했습니다. 배포 산출물이 불완전합니다."; exit 1 ;;
+          esac
