@@ -179,24 +179,65 @@ export const cctvEventColumns: Column<CctvEventResponse>[] = [
   },
 ]
 
+/**
+ * 장치 유형. 현재는 IoT 센서만 연동돼 있으나 CCTV·스마트폴이 순차 추가될 예정이라
+ * 컬럼 구조를 유형 확장에 견디도록 잡아둔다.
+ */
+export type DeviceKind = 'IOT' | 'CCTV' | 'SMART_POLE'
+
+const DEVICE_KIND_LABEL: Record<DeviceKind, string> = {
+  IOT: 'IoT',
+  CCTV: 'CCTV',
+  SMART_POLE: '스마트폴',
+}
+
+const DEVICE_KIND_STYLE: Record<DeviceKind, string> = {
+  IOT: 'bg-blue-50 text-blue-700',
+  CCTV: 'bg-purple-50 text-purple-700',
+  SMART_POLE: 'bg-teal-50 text-teal-700',
+}
+
+export function DeviceKindBadge({ kind }: { kind: DeviceKind }) {
+  return (
+    <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${DEVICE_KIND_STYLE[kind]}`}>
+      {DEVICE_KIND_LABEL[kind]}
+    </span>
+  )
+}
+
+/**
+ * deviceId 는 'SNIOT-P-FIR-015' 처럼 전 장치 공통 접두사(SNIOT-P-)를 갖고 있고
+ * 뒷부분은 장치명과 같은 정보다. 공통 접두사를 떼어 표시 폭을 줄인다.
+ */
+function shortDeviceId(deviceId?: string | null): string {
+  if (!deviceId) return ''
+  return deviceId.replace(/^SNIOT-[A-Z]-/, '')
+}
+
 export const featureStatusColumns: Column<FeatureResponse>[] = [
+  {
+    // Column<T> 의 key 는 T 의 필드여야 해서 장치 유형을 담는 deviceTypeResponse 를 쓴다.
+    key: 'deviceTypeResponse',
+    header: '유형',
+    cell: () => <DeviceKindBadge kind="IOT" />,
+  },
   {
     key: 'name',
     header: '장치명',
     cell: (_, row) => (
-      row.name ? String(row.name) : '-'
-    ),
-  },
-  {
-    key: 'deviceId',
-    header: '디바이스 ID',
-    cell: (_, row) => (
-      row.deviceId ? String(row.deviceId) : '-'
+      <div className="min-w-0">
+        <div className="text-xs font-medium truncate">{row.name || '-'}</div>
+        {row.deviceId && (
+          <div className="text-[10px] text-gray-400 truncate" title={String(row.deviceId)}>
+            {shortDeviceId(String(row.deviceId))}
+          </div>
+        )}
+      </div>
     ),
   },
   {
     key: 'eventStatus',
-    header: '연결 상태',
+    header: '상태',
     cell: (_, row) => {
       const isDisconnected = row.eventStatus === 'DISCONNECTED'
       return (
@@ -207,10 +248,13 @@ export const featureStatusColumns: Column<FeatureResponse>[] = [
     }
   },
   {
+    // 유형별 가변 슬롯. IoT 는 배터리, CCTV·스마트폴은 각자 지표가 들어갈 자리다.
     key: 'batteryLevel',
-    header: '배터리',
+    header: '비고',
     cell: (_, row) => (
-      row.batteryLevel != null ? `${row.batteryLevel}%` : '-'
+      row.batteryLevel != null
+        ? <span className="text-xs tabular-nums">배터리 {row.batteryLevel}%</span>
+        : <span className="text-xs text-gray-400">-</span>
     ),
   },
 ];

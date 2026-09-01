@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, DataTable, Dialog, Select, Se
 import WeatherCard from '@/components/weather/WeatherCard'
 import AirQualityCard from '@/components/air-quality/AirQualityCard'
 import CesiumMap from '@/components/map/CesiumMap'
-import { eventColumns, cctvEventColumns, featureStatusColumns, parkBatteryColumns } from '@/pages/main/dashboard/columns'
+import { eventColumns, cctvEventColumns, featureStatusColumns } from '@/pages/main/dashboard/columns'
 import { useCctvList, useCctvEvents, useFeatures, useSites } from '@/services/hooks'
 import EventDetailModal from '@/pages/main/events/components/modal/EventDetailModal'
 import CctvEventDetailModal from '@/pages/main/events/components/modal/CctvEventDetailModal'
@@ -483,25 +483,56 @@ export default function Dashboard() {
       )}
 
       {activeTab === 'parks' && (
+        /* 공원별 탭은 이미 대상 공원이 정해진 상태라 지도는 위치 확인용 보조,
+           주 데이터는 그 공원의 장치·이벤트다. 개요 탭과 지도/데이터 비중을 반대로 둔다. */
         <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
-          {/* 좌측 — 장치 현황 · 배터리 현황 */}
-          <div className="col-span-3 flex flex-col gap-3 min-h-0">
+          {/* 좌측 — 지도 + 장비 요약 오버레이 (개요 탭 공원 오버레이와 같은 자리) */}
+          <Card className="col-span-5 overflow-hidden relative">
+            <CesiumMap
+              sites={sites}
+              activeTab={activeTab}
+              selectedSiteId={selectedSiteId}
+              onSiteSelect={handleSiteSelect}
+              sensors={sensors}
+              className="h-full w-full"
+            />
+
+            <div className="absolute top-4 left-4 z-10 rounded-lg bg-white/85 backdrop-blur-md shadow-lg px-3 py-2">
+              <p className="text-xs font-bold text-gray-900 mb-1">
+                {sites.find(site => site.id.toString() === selectedSiteId)?.name ?? '공원 미선택'}
+              </p>
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className="text-gray-500">장비 <span className="font-bold text-gray-800">{deviceStats.total}</span></span>
+                <span className="text-gray-300">|</span>
+                <span className="text-green-600">정상 <span className="font-bold">{deviceStats.connected}</span></span>
+                <span className="text-gray-300">|</span>
+                <span className="text-gray-500">끊김 <span className="font-bold text-red-500">{deviceStats.disconnected}</span></span>
+              </div>
+            </div>
+          </Card>
+
+          {/* 우측 — 장치·이벤트 데이터 레일 */}
+          <div className="col-span-7 flex flex-col gap-3 min-h-0">
             {selectedSiteId ? (
               <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
                 <CardHeader className="pb-1 shrink-0">
-                  <CardTitle className="text-base font-bold">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
                     {sites.find(site => site.id.toString() === selectedSiteId)?.name} | 장치 현황
+                    {(batteryStats.critical > 0 || batteryStats.low > 0) && (
+                      <span className="flex items-center gap-1.5 text-xs font-normal">
+                        <BatteryWarning className="size-4 text-orange-500" />
+                        {batteryStats.critical > 0 && (
+                          <span className="text-red-500 font-medium">교체필요 {batteryStats.critical}</span>
+                        )}
+                        {batteryStats.critical > 0 && batteryStats.low > 0 && <span className="text-gray-300">·</span>}
+                        {batteryStats.low > 0 && (
+                          <span className="text-orange-500 font-medium">교체권장 {batteryStats.low}</span>
+                        )}
+                      </span>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0 flex flex-col">
-                  <div className="flex items-center gap-3 text-sm mb-2 shrink-0">
-                    <span className="text-gray-500">장비수 <span className="font-bold text-gray-800">{deviceStats.total}</span></span>
-                    <span className="text-gray-300">|</span>
-                    <span className="text-green-600">정상 <span className="font-bold">{deviceStats.connected}</span></span>
-                    <span className="text-gray-300">|</span>
-                    <span className="text-gray-400">연결 끊김 <span className="font-bold text-red-500">{deviceStats.disconnected}</span></span>
-                  </div>
-
                   <div className="flex-1 min-h-0">
                     {featureStatusData.length === 0 ? (
                       <div className="flex items-center justify-center text-gray-500 h-full">
@@ -526,51 +557,6 @@ export default function Dashboard() {
               </Card>
             )}
 
-            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
-              <CardHeader className="px-5 py-2 shrink-0">
-                <CardTitle className="text-sm font-bold flex items-center gap-2">
-                  <BatteryWarning className="size-4 text-orange-500" />
-                  배터리 현황
-                  {(batteryStats.critical > 0 || batteryStats.low > 0) && (
-                    <span className="text-xs font-normal text-gray-400">
-                      {batteryStats.critical > 0 && <span className="text-red-500 font-medium">교체필요 {batteryStats.critical}</span>}
-                      {batteryStats.critical > 0 && batteryStats.low > 0 && ' · '}
-                      {batteryStats.low > 0 && <span className="text-orange-500 font-medium">교체권장 {batteryStats.low}</span>}
-                    </span>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-5 pb-3 pt-0 flex-1 min-h-0">
-                {parkBatteryData.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center text-green-600 h-full gap-1">
-                    <CheckCircle className="size-5" />
-                    <span className="text-sm font-medium">모든 장치 배터리 정상</span>
-                  </div>
-                ) : (
-                  <DataTable
-                    stickyHeader={true}
-                    columns={parkBatteryColumns}
-                    data={parkBatteryData}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* 중앙 — 지도 */}
-          <Card className="col-span-6 overflow-hidden relative">
-            <CesiumMap
-              sites={sites}
-              activeTab={activeTab}
-              selectedSiteId={selectedSiteId}
-              onSiteSelect={handleSiteSelect}
-              sensors={sensors}
-              className="h-full w-full"
-            />
-          </Card>
-
-          {/* 우측 — 실시간 이벤트 피드 */}
-          <div className="col-span-3 flex flex-col gap-3 min-h-0">
             <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
               <CardHeader className='px-5 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
