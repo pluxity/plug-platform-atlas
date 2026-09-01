@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { AlertCircle, BatteryWarning, Camera, CheckCircle, Clock, Radio, Scan, TreePine, Users } from 'lucide-react'
-import { Cell, Label, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { AlertCircle, BatteryWarning, Camera, CheckCircle, ChevronDown, Clock, Radio, Scan, TreePine, Users } from 'lucide-react'
+import { Cell, Label, Pie, PieChart, Tooltip } from 'recharts'
 
 import { useAdminUsers } from '@plug-atlas/api-hooks'
 import { Card, CardContent, CardHeader, CardTitle, DataTable, Dialog, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [selectedCctvEvent, setSelectedCctvEvent] = useState<CctvEventResponse | null>(null)
+  const [isParkPanelOpen, setIsParkPanelOpen] = useState(true)
   const { data: sites = [] } = useSites()
   const { data: cctvs = [] } = useCctvList()
   const { data: cctvEventsData } = useCctvEvents({ size: 50 }, { refreshInterval: 30_000 })
@@ -269,156 +270,172 @@ export default function Dashboard() {
       </div>
 
       {activeTab === 'overview' && (
-        <>
-          <div className="grid grid-cols-5 gap-3 flex-1 min-h-0">
-            <Card className="col-span-3 overflow-hidden relative">
-              <CesiumMap
-                sites={sites}
-                activeTab={activeTab}
-                selectedSiteId={selectedSiteId}
-                onSiteSelect={handleSiteSelect}
-                sensors={sensors}
-                className="h-full w-full"
-              />
+        <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
+          {/* 좌측 — 지도. 공원 목록은 지도 위 오버레이라 공원이 늘어도 레이아웃 공간을 쓰지 않는다 */}
+          <Card className="col-span-7 overflow-hidden relative">
+            <CesiumMap
+              sites={sites}
+              activeTab={activeTab}
+              selectedSiteId={selectedSiteId}
+              onSiteSelect={handleSiteSelect}
+              sensors={sensors}
+              className="h-full w-full"
+            />
+
+            <div className="absolute top-4 left-4 z-10 w-64 rounded-lg bg-white/85 backdrop-blur-md shadow-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIsParkPanelOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-white/60 transition-colors"
+              >
+                <span className="text-xs font-bold text-gray-900">
+                  공원 현황
+                  <span className="ml-1.5 font-normal text-gray-500">{parkEventSummary.length}</span>
+                </span>
+                <ChevronDown className={`size-4 text-gray-500 transition-transform ${isParkPanelOpen ? '' : '-rotate-90'}`} />
+              </button>
+
+              {isParkPanelOpen && (
+                /* 한 행 32px 기준 5개까지 보이고 그 이상은 스크롤 */
+                <div className="max-h-40 overflow-y-auto border-t border-gray-200/70">
+                  {parkEventSummary.length === 0 ? (
+                    <p className="px-3 py-3 text-xs text-gray-500">등록된 공원이 없습니다.</p>
+                  ) : (
+                    parkEventSummary.map(({ site, activeCount, inProgressCount, sensorCount }) => (
+                      <button
+                        key={site.id}
+                        type="button"
+                        onClick={() => handleSiteSelect(site.id.toString())}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-white/70 transition-colors"
+                      >
+                        <span className="flex items-center gap-1.5 min-w-0">
+                          <TreePine className="size-3.5 text-green-600 shrink-0" />
+                          <span className="text-xs font-medium truncate">{site.name}</span>
+                          <span className="text-[10px] text-gray-400 shrink-0">{sensorCount}</span>
+                        </span>
+                        {activeCount === 0 && inProgressCount === 0 ? (
+                          <span className="text-[10px] font-medium text-green-600 shrink-0">정상</span>
+                        ) : (
+                          <span className="flex items-center gap-1 shrink-0">
+                            {activeCount > 0 && (
+                              <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">{activeCount}</span>
+                            )}
+                            {inProgressCount > 0 && (
+                              <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">{inProgressCount}</span>
+                            )}
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* 우측 — 실시간 이벤트 레일 */}
+          <div className="col-span-5 flex flex-col gap-3 min-h-0">
+            {/* 거의 변하지 않는 지표는 칩 한 줄로 */}
+            <Card className="shrink-0">
+              <CardContent className="flex items-center justify-between gap-2 px-4 py-2.5">
+                {stats.map((stat) => (
+                  <div key={stat.title} className="flex items-center gap-2 min-w-0">
+                    <div className={`p-1.5 rounded-lg shrink-0 ${stat.iconBg}`}>
+                      <img src={stat.iconImage} alt={stat.title} className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-base font-bold leading-none">{stat.value}</p>
+                      <p className="text-[10px] text-gray-500 truncate">{stat.title}</p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
             </Card>
 
-            <div className="col-span-2 flex flex-col gap-3 min-h-0">
-              <div className="grid grid-cols-2 gap-2 shrink-0">
-                {stats.map((stat) => (
-                  <Card key={stat.title} className="py-2.5">
-                    <CardContent className="flex items-center gap-3 px-4 py-0">
-                      <div className={`p-2 rounded-xl shrink-0 ${stat.iconBg}`}>
-                        <img src={stat.iconImage} alt={stat.title} className="size-5" />
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold leading-tight">{stat.value}</p>
-                        <p className="text-[10px] text-gray-500">{stat.title}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
-                <CardHeader className="pb-1 shrink-0">
-                  <CardTitle className="text-base font-bold">이벤트 현황</CardTitle>
-                </CardHeader>
-
-                <CardContent className="shrink-0 pb-2">
-                  {!isEventStoreInitialized ? (
-                    <div className="flex items-center justify-center gap-2 text-gray-500 py-4">
-                      <Spinner size="sm" />
-                      <span>이벤트 로딩 중...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <ResponsiveContainer width={120} height={120}>
-                        <PieChart>
-                          <Tooltip />
-                          <Pie
-                            data={eventStatusStats.total === 0
-                              ? [{ name: '정상', value: 1, fill: '#10B981' }]
-                              : chartData}
-                            dataKey="value"
-                            nameKey="name"
-                            innerRadius={30}
-                            outerRadius={48}
-                            strokeWidth={2}
-                            stroke="#fff"
-                          >
-                            {(eventStatusStats.total === 0
-                              ? [{ name: '정상', value: 1, fill: '#10B981' }]
-                              : chartData
-                            ).map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                            <Label
-                              position="center"
-                              content={({ viewBox }) => {
-                                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                  return (
-                                    <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                                      {eventStatusStats.total === 0 ? (
-                                        <>
-                                          <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 2} className="fill-green-600 text-[10px] font-bold">이상</tspan>
-                                          <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 12} className="fill-green-600 text-[10px] font-bold">없음</tspan>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-lg font-bold">{eventStatusStats.total}</tspan>
-                                          <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 14} className="fill-muted-foreground text-[10px]">총 이벤트</tspan>
-                                        </>
-                                      )}
-                                    </text>
-                                  )
-                                }
-                              }}
-                            />
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="flex flex-col gap-1.5 flex-1">
-                        <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 border-l-4 border-red-500">
-                          <div className="flex items-center gap-1.5">
-                            <AlertCircle className="size-3.5 text-red-600" />
-                            <span className="text-xs font-medium text-red-900">미처리</span>
-                          </div>
-                          <span className="text-base font-bold text-red-700">{eventStatusStats.active}</span>
-                        </div>
-                        <div className="flex items-center justify-between p-2 rounded-lg bg-amber-50 border-l-4 border-amber-500">
-                          <div className="flex items-center gap-1.5">
-                            <Clock className="size-3.5 text-amber-600" />
-                            <span className="text-xs font-medium text-amber-900">진행중</span>
-                          </div>
-                          <span className="text-base font-bold text-amber-700">{eventStatusStats.inProgress}</span>
-                        </div>
-                        <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 border-l-4 border-green-500">
-                          <div className="flex items-center gap-1.5">
-                            <CheckCircle className="size-3.5 text-green-600" />
-                            <span className="text-xs font-medium text-green-900">해결됨</span>
-                          </div>
-                          <span className="text-base font-bold text-green-700">{eventStatusStats.resolved}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-
-                <div className="border-t border-gray-100 flex-1 min-h-0 overflow-y-auto px-6 py-2">
-                  <h4 className="text-xs font-semibold text-gray-700 mb-1.5 sticky top-0 bg-white py-1">공원별 현황</h4>
-                  <div className="space-y-1">
-                    {parkEventSummary.map(({ site, activeCount, inProgressCount, sensorCount }) => (
-                      <div
-                        key={site.id}
-                        className="flex items-center justify-between p-2 rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
-                        onClick={() => handleSiteSelect(site.id.toString())}
+            <Card className="shrink-0">
+              <CardHeader className="pb-1 shrink-0">
+                <CardTitle className="text-base font-bold">이벤트 현황</CardTitle>
+              </CardHeader>
+              <CardContent className="shrink-0 pb-2">
+                {!isEventStoreInitialized ? (
+                <div className="flex items-center justify-center gap-2 text-gray-500 py-4">
+                  <Spinner size="sm" />
+                  <span>이벤트 로딩 중...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                    <PieChart width={120} height={120}>
+                      <Tooltip />
+                      <Pie
+                        data={eventStatusStats.total === 0
+                          ? [{ name: '정상', value: 1, fill: '#10B981' }]
+                          : chartData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={30}
+                        outerRadius={48}
+                        strokeWidth={2}
+                        stroke="#fff"
                       >
-                        <div className="flex items-center gap-2">
-                          <TreePine className="size-3.5 text-green-600" />
-                          <span className="text-xs font-medium">{site.name}</span>
-                          <span className="text-[10px] text-gray-400">센서 {sensorCount}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {activeCount > 0 && (
-                            <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">미처리 {activeCount}</span>
-                          )}
-                          {inProgressCount > 0 && (
-                            <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">진행중 {inProgressCount}</span>
-                          )}
-                          {activeCount === 0 && inProgressCount === 0 && (
-                            <span className="text-[10px] text-green-600 font-medium">정상</span>
-                          )}
-                        </div>
+                        {(eventStatusStats.total === 0
+                          ? [{ name: '정상', value: 1, fill: '#10B981' }]
+                          : chartData
+                        ).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                        <Label
+                          position="center"
+                          content={({ viewBox }) => {
+                            if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                              return (
+                                <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                                  {eventStatusStats.total === 0 ? (
+                                    <>
+                                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 2} className="fill-green-600 text-[10px] font-bold">이상</tspan>
+                                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 12} className="fill-green-600 text-[10px] font-bold">없음</tspan>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-lg font-bold">{eventStatusStats.total}</tspan>
+                                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 14} className="fill-muted-foreground text-[10px]">총 이벤트</tspan>
+                                    </>
+                                  )}
+                                </text>
+                              )
+                            }
+                          }}
+                        />
+                      </Pie>
+                    </PieChart>
+                  <div className="flex flex-col gap-1.5 flex-1">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 border-l-4 border-red-500">
+                      <div className="flex items-center gap-1.5">
+                        <AlertCircle className="size-3.5 text-red-600" />
+                        <span className="text-xs font-medium text-red-900">미처리</span>
                       </div>
-                    ))}
+                      <span className="text-base font-bold text-red-700">{eventStatusStats.active}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-amber-50 border-l-4 border-amber-500">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="size-3.5 text-amber-600" />
+                        <span className="text-xs font-medium text-amber-900">진행중</span>
+                      </div>
+                      <span className="text-base font-bold text-amber-700">{eventStatusStats.inProgress}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 border-l-4 border-green-500">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle className="size-3.5 text-green-600" />
+                        <span className="text-xs font-medium text-green-900">해결됨</span>
+                      </div>
+                      <span className="text-base font-bold text-green-700">{eventStatusStats.resolved}</span>
+                    </div>
                   </div>
                 </div>
-              </Card>
-            </div>
-          </div>
+              )}
+            </CardContent>
+            </Card>
 
-          <div className="grid grid-cols-2 gap-3 shrink-0 h-[200px]">
-            <Card className="flex flex-col overflow-hidden">
+            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
               <CardHeader className='px-5 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
               </CardHeader>
@@ -429,7 +446,6 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <DataTable
-                    maxHeight={145}
                     stickyHeader={true}
                     columns={eventColumns}
                     data={allFilteredEvents}
@@ -439,7 +455,8 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col overflow-hidden">
+
+            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
               <CardHeader className='px-5 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold flex items-center gap-1.5">
                   <Scan className="size-4 text-blue-500" />
@@ -453,7 +470,6 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <DataTable
-                    maxHeight={145}
                     stickyHeader={true}
                     columns={cctvEventColumns}
                     data={cctvEventsData.content}
@@ -463,25 +479,15 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
-        </>
+        </div>
       )}
 
       {activeTab === 'parks' && (
-        <>
-          <div className="grid grid-cols-5 gap-3 flex-1 min-h-0">
-            <Card className="col-span-2 overflow-hidden relative">
-              <CesiumMap
-                sites={sites}
-                activeTab={activeTab}
-                selectedSiteId={selectedSiteId}
-                onSiteSelect={handleSiteSelect}
-                sensors={sensors}
-                className="h-full w-full"
-              />
-            </Card>
-
+        <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
+          {/* 좌측 — 장치 현황 · 배터리 현황 */}
+          <div className="col-span-3 flex flex-col gap-3 min-h-0">
             {selectedSiteId ? (
-              <Card className="col-span-3 flex flex-col overflow-hidden">
+              <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
                 <CardHeader className="pb-1 shrink-0">
                   <CardTitle className="text-base font-bold">
                     {sites.find(site => site.id.toString() === selectedSiteId)?.name} | 장치 현황
@@ -513,61 +519,14 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="col-span-3">
+              <Card className="flex-1 min-h-0">
                 <CardContent className="flex items-center justify-center h-full text-gray-400">
                   공원을 선택해주세요.
                 </CardContent>
               </Card>
             )}
-          </div>
 
-          <div className="grid grid-cols-3 gap-3 shrink-0 h-[200px]">
-            <Card className="flex flex-col overflow-hidden">
-              <CardHeader className='px-5 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
-              </CardHeader>
-              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
-                {filteredEvents.length === 0 ? (
-                  <div className="flex items-center justify-center text-gray-500 h-full">
-                    {selectedSiteId ? '이벤트가 없습니다.' : '공원을 선택해주세요.'}
-                  </div>
-                ) : (
-                  <DataTable
-                    maxHeight={145}
-                    stickyHeader={true}
-                    columns={eventColumns}
-                    data={filteredEvents}
-                    onRowClick={(row) => setSelectedEvent(row)}
-                  />
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="flex flex-col overflow-hidden">
-              <CardHeader className='px-5 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold flex items-center gap-1.5">
-                  <Scan className="size-4 text-blue-500" />
-                  AI EDGE 이벤트
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
-                {!cctvEventsData?.content?.length ? (
-                  <div className="flex items-center justify-center text-gray-500 h-full">
-                    AI EDGE 이벤트가 없습니다.
-                  </div>
-                ) : (
-                  <DataTable
-                    maxHeight={145}
-                    stickyHeader={true}
-                    columns={cctvEventColumns}
-                    data={cctvEventsData.content}
-                    onRowClick={(row) => setSelectedCctvEvent(row)}
-                  />
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="flex flex-col overflow-hidden">
+            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
               <CardHeader className="px-5 py-2 shrink-0">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <BatteryWarning className="size-4 text-orange-500" />
@@ -589,7 +548,6 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <DataTable
-                    maxHeight={145}
                     stickyHeader={true}
                     columns={parkBatteryColumns}
                     data={parkBatteryData}
@@ -598,7 +556,65 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
-        </>
+
+          {/* 중앙 — 지도 */}
+          <Card className="col-span-6 overflow-hidden relative">
+            <CesiumMap
+              sites={sites}
+              activeTab={activeTab}
+              selectedSiteId={selectedSiteId}
+              onSiteSelect={handleSiteSelect}
+              sensors={sensors}
+              className="h-full w-full"
+            />
+          </Card>
+
+          {/* 우측 — 실시간 이벤트 피드 */}
+          <div className="col-span-3 flex flex-col gap-3 min-h-0">
+            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
+              <CardHeader className='px-5 py-2 shrink-0'>
+                <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
+              </CardHeader>
+              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+                {filteredEvents.length === 0 ? (
+                  <div className="flex items-center justify-center text-gray-500 h-full">
+                    {selectedSiteId ? '이벤트가 없습니다.' : '공원을 선택해주세요.'}
+                  </div>
+                ) : (
+                  <DataTable
+                    stickyHeader={true}
+                    columns={eventColumns}
+                    data={filteredEvents}
+                    onRowClick={(row) => setSelectedEvent(row)}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
+              <CardHeader className='px-5 py-2 shrink-0'>
+                <CardTitle className="text-sm font-bold flex items-center gap-1.5">
+                  <Scan className="size-4 text-blue-500" />
+                  AI EDGE 이벤트
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+                {!cctvEventsData?.content?.length ? (
+                  <div className="flex items-center justify-center text-gray-500 h-full">
+                    AI EDGE 이벤트가 없습니다.
+                  </div>
+                ) : (
+                  <DataTable
+                    stickyHeader={true}
+                    columns={cctvEventColumns}
+                    data={cctvEventsData.content}
+                    onRowClick={(row) => setSelectedCctvEvent(row)}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
 
       <Dialog
