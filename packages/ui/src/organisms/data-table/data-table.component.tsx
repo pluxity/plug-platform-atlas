@@ -19,6 +19,8 @@ export interface DataTableProps<T> {
   onSelectionChange?: (selectedIndexes: number[]) => void
   getRowId?: (row: T, index: number) => string
   maxHeight?: number
+  /** compact: 행 높이를 줄여 한 화면에 더 많은 행을 보여준다 */
+  density?: 'default' | 'compact'
   stickyHeader?: boolean
 }
 
@@ -34,6 +36,7 @@ function DataTable<T>({
   onSelectionChange,
   getRowId,
   maxHeight,
+  density = 'default',
   stickyHeader = false,
 }: DataTableProps<T>) {
   const hasActions = onRowEdit || onRowDelete
@@ -59,9 +62,15 @@ function DataTable<T>({
     }
   }
 
-  const thBase = "h-[34px] px-4 py-2 text-center align-middle font-medium bg-[#dfe4eb] border-t-2 border-t-[#bbbecf] border-b border-b-[#bbbecf]"
+  const thBase = cn(
+    "px-3 text-center align-middle font-medium bg-[#dfe4eb] border-t-2 border-t-[#bbbecf] border-b border-b-[#bbbecf]",
+    density === "compact" ? "h-7 py-1 text-xs" : "h-[34px] py-2",
+  )
   const thSticky = stickyHeader ? "sticky top-0 z-10" : ""
-  const tdBase = "px-4 py-2 text-center align-middle border-b border-b-[#bbbecf]"
+  const tdBase = cn(
+    "px-3 text-center align-middle border-b border-b-[#bbbecf]",
+    density === "compact" ? "py-1 text-xs" : "py-2",
+  )
   const borderR = "border-r border-r-[#bbbecf]"
 
   return (

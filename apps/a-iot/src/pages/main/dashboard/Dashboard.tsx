@@ -353,7 +353,7 @@ export default function Dashboard() {
             </Card>
 
             <Card className="shrink-0">
-              <CardHeader className="pb-1 shrink-0">
+              <CardHeader className="px-4 py-2 shrink-0">
                 <CardTitle className="text-base font-bold">이벤트 현황</CardTitle>
               </CardHeader>
               <CardContent className="shrink-0 pb-2">
@@ -435,17 +435,18 @@ export default function Dashboard() {
             </CardContent>
             </Card>
 
-            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
-              <CardHeader className='px-5 py-2 shrink-0'>
+            <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
+              <CardHeader className='px-4 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
               </CardHeader>
-              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+              <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
                 {allFilteredEvents.length === 0 ? (
                   <div className="flex items-center justify-center text-gray-500 h-full">
                     이벤트가 없습니다.
                   </div>
                 ) : (
                   <DataTable
+                    density="compact"
                     stickyHeader={true}
                     columns={eventColumns}
                     data={allFilteredEvents}
@@ -456,20 +457,21 @@ export default function Dashboard() {
             </Card>
 
 
-            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
-              <CardHeader className='px-5 py-2 shrink-0'>
+            <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
+              <CardHeader className='px-4 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold flex items-center gap-1.5">
                   <Scan className="size-4 text-blue-500" />
                   AI EDGE 이벤트
                 </CardTitle>
               </CardHeader>
-              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+              <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
                 {!cctvEventsData?.content?.length ? (
                   <div className="flex items-center justify-center text-gray-500 h-full">
                     AI EDGE 이벤트가 없습니다.
                   </div>
                 ) : (
                   <DataTable
+                    density="compact"
                     stickyHeader={true}
                     columns={cctvEventColumns}
                     data={cctvEventsData.content}
@@ -514,8 +516,8 @@ export default function Dashboard() {
           {/* 우측 — 장치·이벤트 데이터 레일 */}
           <div className="col-span-7 flex flex-col gap-3 min-h-0">
             {selectedSiteId ? (
-              <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
-                <CardHeader className="pb-1 shrink-0">
+              <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
+                <CardHeader className="px-4 py-2 shrink-0">
                   <CardTitle className="text-base font-bold flex items-center gap-2">
                     {sites.find(site => site.id.toString() === selectedSiteId)?.name} | 장치 현황
                     {(batteryStats.critical > 0 || batteryStats.low > 0) && (
@@ -532,7 +534,7 @@ export default function Dashboard() {
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="flex-1 min-h-0 flex flex-col">
+                <CardContent className="px-2 pb-2 pt-0 flex-1 min-h-0 flex flex-col">
                   <div className="flex-1 min-h-0">
                     {featureStatusData.length === 0 ? (
                       <div className="flex items-center justify-center text-gray-500 h-full">
@@ -557,17 +559,18 @@ export default function Dashboard() {
               </Card>
             )}
 
-            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
-              <CardHeader className='px-5 py-2 shrink-0'>
+            <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
+              <CardHeader className='px-4 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
               </CardHeader>
-              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+              <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
                 {filteredEvents.length === 0 ? (
                   <div className="flex items-center justify-center text-gray-500 h-full">
                     {selectedSiteId ? '이벤트가 없습니다.' : '공원을 선택해주세요.'}
                   </div>
                 ) : (
                   <DataTable
+                    density="compact"
                     stickyHeader={true}
                     columns={eventColumns}
                     data={filteredEvents}
@@ -577,20 +580,21 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col overflow-hidden flex-1 min-h-0">
-              <CardHeader className='px-5 py-2 shrink-0'>
+            <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
+              <CardHeader className='px-4 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold flex items-center gap-1.5">
                   <Scan className="size-4 text-blue-500" />
                   AI EDGE 이벤트
                 </CardTitle>
               </CardHeader>
-              <CardContent className='px-5 pb-3 pt-0 flex-1 min-h-0'>
+              <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
                 {!cctvEventsData?.content?.length ? (
                   <div className="flex items-center justify-center text-gray-500 h-full">
                     AI EDGE 이벤트가 없습니다.
                   </div>
                 ) : (
                   <DataTable
+                    density="compact"
                     stickyHeader={true}
                     columns={cctvEventColumns}
                     data={cctvEventsData.content}
