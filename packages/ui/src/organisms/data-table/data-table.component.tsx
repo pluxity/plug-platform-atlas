@@ -65,7 +65,10 @@ function DataTable<T>({
   const borderR = "border-r border-r-[#bbbecf]"
 
   return (
-    <div className={className}>
+    // maxHeight 가 없으면 내부 스크롤 영역이 h-full 로 동작하는데, 이 래퍼에 높이가
+    // 없으면 100% 가 auto 로 풀려 스크롤이 생기지 않는다. 높이가 확정된 부모(flex 등)
+    // 안에서 경계가 잡히도록 래퍼에도 h-full 을 준다. 부모가 auto 면 CSS 상 무시된다.
+    <div className={cn(!maxHeight && "h-full min-h-0", className)}>
       <div
         className={cn("overflow-y-auto", !maxHeight && "h-full")}
         style={maxHeight ? { maxHeight: `${maxHeight}px` } : undefined}
