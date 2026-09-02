@@ -446,6 +446,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <DataTable
+                    className="h-full"
                     density="compact"
                     stickyHeader={true}
                     columns={eventColumns}
@@ -471,6 +472,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <DataTable
+                    className="h-full"
                     density="compact"
                     stickyHeader={true}
                     columns={cctvEventColumns}
@@ -570,6 +572,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <DataTable
+                    className="h-full"
                     density="compact"
                     stickyHeader={true}
                     columns={eventColumns}
@@ -594,6 +597,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <DataTable
+                    className="h-full"
                     density="compact"
                     stickyHeader={true}
                     columns={cctvEventColumns}
