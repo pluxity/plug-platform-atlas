@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TimeSeriesData } from "../../../../services/types";
 import { formatTimestampByInterval } from '../utils/timeUtils.ts';
@@ -10,9 +11,14 @@ interface EventTimeSeriesProps {
 }
 
 export default function EventTimeSeries({ data, isLoading, interval }: EventTimeSeriesProps) {
+    // 로딩/빈 데이터/차트 세 상태가 같은 영역을 차지하도록 공통 컨테이너로 감싼다
+    const frame = (children: ReactNode) => (
+        <div className="rounded-lg border border-gray-200 bg-white p-4">{children}</div>
+    );
+
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center">
+        return frame(
+            <div className="flex h-[350px] items-center justify-center">
                 <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 <span className="ml-3 text-sm text-gray-500">차트 데이터 로딩 중...</span>
             </div>
@@ -20,7 +26,11 @@ export default function EventTimeSeries({ data, isLoading, interval }: EventTime
     }
 
     if (!data || !data.timestamps || data.timestamps.length === 0) {
-        return (<p className="text-center text-gray-500">차트 데이터가 없습니다.</p>);
+        return frame(
+            <div className="flex h-[350px] items-center justify-center">
+                <p className="text-sm text-gray-500">차트 데이터가 없습니다.</p>
+            </div>
+        );
     }
 
     const chartData = data.timestamps.map((timestamp, index) => ({
@@ -30,7 +40,7 @@ export default function EventTimeSeries({ data, isLoading, interval }: EventTime
         완료: data.metrics?.resolvedCnt?.values[index] || 0,
     }));
 
-    return (
+    return frame(
         <ResponsiveContainer width="100%" height={350}>
             <BarChart data={chartData} margin={{ top: 20, right: 5, left: -60, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />

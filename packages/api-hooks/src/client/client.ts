@@ -104,8 +104,17 @@ export class ApiClient {
     return this.refreshPromise
   }
 
+  /**
+   * ky 는 prefixUrl 사용 시 '/' 로 시작하는 경로를 허용하지 않고 즉시 throw 한다.
+   * (ky/distribution/core/Ky.js: "`input` must not begin with a slash when using `prefixUrl`")
+   * 호출부에서 실수로 붙인 앞 슬래시를 제거해 요청이 조용히 실패하는 것을 막는다.
+   */
+  private normalizePath(url: string): string {
+    return url.replace(/^\/+/, '')
+  }
+
   public async get<T>(url: string, options?: Options): Promise<T> {
-    const response = await this.client.get(url, options)
+    const response = await this.client.get(this.normalizePath(url), options)
     return response.json<T>()
   }
 
@@ -114,7 +123,7 @@ export class ApiClient {
         ? { ...options, body: json }
         : { ...options, json }
 
-    const response = await this.client.post(url, requestOptions)
+    const response = await this.client.post(this.normalizePath(url), requestOptions)
 
     if (response.status === 201) {
       const location = response.headers.get('location')
@@ -136,7 +145,7 @@ export class ApiClient {
   }
 
   public async put<T = void>(url: string, json?: unknown, options?: Options): Promise<T | void> {
-    const response = await this.client.put(url, { ...options, json })
+    const response = await this.client.put(this.normalizePath(url), { ...options, json })
     if (response.status === 204) return
 
     const text = await response.text()
@@ -146,7 +155,7 @@ export class ApiClient {
   }
 
   public async patch<T = void>(url: string, json?: unknown, options?: Options): Promise<T | void> {
-    const response = await this.client.patch(url, { ...options, json })
+    const response = await this.client.patch(this.normalizePath(url), { ...options, json })
     if (response.status === 204) return
 
     const text = await response.text()
@@ -156,7 +165,7 @@ export class ApiClient {
   }
 
   public async delete<T = void>(url: string, options?: Options): Promise<T | void> {
-    const response = await this.client.delete(url, options)
+    const response = await this.client.delete(this.normalizePath(url), options)
     if (response.status === 204) return
 
     const text = await response.text()
