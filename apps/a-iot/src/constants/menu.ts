@@ -6,7 +6,9 @@ import {
   Home,
   KeyRound,
   PlugZap,
+  MonitorSpeaker,
   Radio,
+  ScrollText,
   Settings,
   Shield,
   TreePine,
@@ -47,6 +49,26 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
     icon: Cctv,
     path: '/cctv-monitoring',
     hidden: true,
+  },
+  {
+    // 안내방송 — 백엔드(aiot-api #24~#26) 미구현이라 메뉴에서만 숨긴다.
+    // 라우트는 살아 있어 URL 직접 접근으로 검증 가능하다.
+    // 백엔드 연동 후 hidden 을 지우면 바로 노출된다.
+    title: '안내방송',
+    icon: MonitorSpeaker,
+    hidden: true,
+    children: [
+      {
+        title: 'LED 메시지 송출',
+        icon: MonitorSpeaker,
+        path: '/announcement/led/dispatch',
+      },
+      {
+        title: 'LED 메시지 프리셋',
+        icon: ScrollText,
+        path: '/announcement/led/presets',
+      },
+    ],
   },
 ]
 
