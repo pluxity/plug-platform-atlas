@@ -36,7 +36,7 @@ import {
   type LedDisplayOptions,
   type LedPreset,
 } from '../../../../services/types/led'
-import { LED_API_MOCK } from '../../../../services/led/ledApi'
+import { USE_MOCK } from '../../../../services/led'
 import { SearchBar } from '../../../../components/elements/SearchBar'
 import { TablePagination } from '../../../../components/elements/Pagination'
 import { LedPreview } from './components/LedPreview'
@@ -194,7 +194,7 @@ export default function LedPresets() {
             자주 쓰는 문구를 저장해 두고 송출 화면에서 선택합니다.
           </p>
         </div>
-        {LED_API_MOCK && (
+        {USE_MOCK && (
           <Badge variant="secondary" className="shrink-0">
             목업 데이터 · 새로고침 시 초기화
           </Badge>

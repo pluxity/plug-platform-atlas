@@ -37,7 +37,7 @@ import {
   type LedDisplayOptions,
 } from '../../../../services/types/led'
 import { useSiteAccess } from '../../../../hooks/useSiteAccess'
-import { LED_API_MOCK } from '../../../../services/led/ledApi'
+import { USE_MOCK } from '../../../../services/led'
 import { LedPreview } from './components/LedPreview'
 import { LedDisplayOptionsFields } from './components/LedDisplayOptionsFields'
 import { LedTargetSelector } from './components/LedTargetSelector'
@@ -98,13 +98,10 @@ export default function LedDispatch() {
     setConfirmOpen(false)
     try {
       const dispatchResult = await dispatchMessage({
-        request: {
-          panelIds: selectedPanels.map((panel) => panel.id),
-          content: content.trim(),
-          presetId: mode === 'preset' && selectedPreset ? selectedPreset.id : null,
-          displayOptions,
-        },
-        panels: visiblePanels,
+        panelIds: selectedPanels.map((panel) => panel.id),
+        content: content.trim(),
+        presetId: mode === 'preset' && selectedPreset ? selectedPreset.id : null,
+        displayOptions,
       })
 
       setResult(dispatchResult)
@@ -157,7 +154,7 @@ export default function LedDispatch() {
             {!access.isAdmin && ' 접근 권한이 있는 공원만 표시됩니다.'}
           </p>
         </div>
-        {LED_API_MOCK && (
+        {USE_MOCK && (
           <Badge variant="secondary" className="shrink-0">
             목업 데이터 · 실제 송출되지 않음
           </Badge>

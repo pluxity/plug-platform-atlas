@@ -1,21 +1,14 @@
 /**
  * LED 전광판 SWR 훅
  *
- * 실제 통신은 services/led/ledApi.ts 어댑터가 맡는다.
- * 백엔드가 나오면 어댑터의 LED_API_MOCK 만 끄면 되고 이 파일은 그대로 쓴다.
+ * 통신은 services/led 의 ledApi 가 맡는다. 이 파일은 목업인지 실 API 인지 모른다.
  */
 import useSWR, { type SWRConfiguration } from 'swr'
 import useSWRMutation from 'swr/mutation'
 import { useApiClient } from '@plug-atlas/api-hooks'
-import {
-  createPreset,
-  deletePreset,
-  dispatchMessage,
-  fetchPanels,
-  fetchPresets,
-  updatePreset,
-} from '../led/ledApi'
+import { ledApi } from '../led'
 import type {
+  LedActiveDisplay,
   LedDispatchRequest,
   LedDispatchResult,
   LedPanel,
@@ -27,24 +20,23 @@ import { useSites } from './useSite'
 
 const PANELS_KEY = 'led-panels'
 const PRESETS_KEY = 'led-presets'
+const ACTIVE_KEY = 'led-active-displays'
 
 /**
  * 전광판 목록.
  *
- * 목업 단계에서는 실제 공원 목록 위에 전광판을 얹기 때문에 sites 를 먼저 받는다.
- * 실 API 로 전환하면 sites 의존은 무시되고 서버 응답을 그대로 쓴다.
+ * 공원 조회가 끝나기를 기다리되 실패해도 진행한다.
+ * (목업이 공원 없이도 대체 공원으로 화면을 띄울 수 있게 하기 위함)
  */
 export function useLedPanels(options?: SWRConfiguration<LedPanel[], Error>) {
   const client = useApiClient()
   const { data: sites, isLoading: isSitesLoading, error: sitesError } = useSites()
 
-  // 공원 조회가 끝나기를 기다리되, 실패해도 계속 진행한다.
-  // 목업은 공원이 없으면 대체 공원으로 채우므로 백엔드 없이도 화면이 뜬다.
   const sitesSettled = sites !== undefined || !!sitesError
 
   const swr = useSWR<LedPanel[]>(
     sitesSettled ? PANELS_KEY : null,
-    () => fetchPanels(client, sites ?? []),
+    () => ledApi.fetchPanels(client, sites ?? []),
     options,
   )
 
@@ -59,12 +51,9 @@ export function useLedPanels(options?: SWRConfiguration<LedPanel[], Error>) {
 export function useLedPresets(options?: SWRConfiguration<LedPreset[], Error>) {
   const client = useApiClient()
 
-  const swr = useSWR<LedPreset[]>(PRESETS_KEY, () => fetchPresets(client), options)
+  const swr = useSWR<LedPreset[]>(PRESETS_KEY, () => ledApi.fetchPresets(client), options)
 
-  return {
-    ...swr,
-    presets: swr.data ?? [],
-  }
+  return { ...swr, presets: swr.data ?? [] }
 }
 
 export function useCreateLedPreset() {
@@ -72,7 +61,7 @@ export function useCreateLedPreset() {
 
   return useSWRMutation(
     PRESETS_KEY,
-    (_key: string, { arg }: { arg: LedPresetCreateRequest }) => createPreset(client, arg),
+    (_key: string, { arg }: { arg: LedPresetCreateRequest }) => ledApi.createPreset(client, arg),
   )
 }
 
@@ -82,7 +71,7 @@ export function useUpdateLedPreset() {
   return useSWRMutation(
     PRESETS_KEY,
     (_key: string, { arg }: { arg: { id: number; data: LedPresetUpdateRequest } }) =>
-      updatePreset(client, arg.id, arg.data),
+      ledApi.updatePreset(client, arg.id, arg.data),
   )
 }
 
@@ -91,25 +80,44 @@ export function useDeleteLedPreset() {
 
   return useSWRMutation(
     PRESETS_KEY,
-    (_key: string, { arg }: { arg: number }) => deletePreset(client, arg),
+    (_key: string, { arg }: { arg: number }) => ledApi.deletePreset(client, arg),
+  )
+}
+
+/** 메시지 송출 */
+export function useDispatchLedMessage() {
+  const client = useApiClient()
+
+  return useSWRMutation<LedDispatchResult, Error, string, LedDispatchRequest>(
+    'led-dispatch',
+    (_key, { arg }) => ledApi.dispatch(client, arg),
   )
 }
 
 /**
- * 메시지 송출.
+ * 현재 표출 중인 내용.
  *
- * 목업이 오프라인 장비를 실패로 돌려주므로 부분 실패 경로도 그대로 확인된다.
+ * 자동 송출(이벤트 조건 → LED)이 붙으면 사람이 누르지 않은 메시지가 올라가므로,
+ * 지금 무엇이 표출 중인지 보고 내릴 수 있어야 한다.
  */
-export function useDispatchLedMessage() {
+export function useLedActiveDisplays(options?: SWRConfiguration<LedActiveDisplay[], Error>) {
   const client = useApiClient()
 
-  return useSWRMutation<
-    LedDispatchResult,
-    Error,
-    string,
-    { request: LedDispatchRequest; panels: LedPanel[] }
-  >(
-    'led-dispatch',
-    (_key, { arg }) => dispatchMessage(client, arg.request, arg.panels),
+  const swr = useSWR<LedActiveDisplay[]>(
+    ACTIVE_KEY,
+    () => ledApi.fetchActiveDisplays(client),
+    options,
+  )
+
+  return { ...swr, displays: swr.data ?? [] }
+}
+
+/** 표출 해제 */
+export function useClearLedDisplays() {
+  const client = useApiClient()
+
+  return useSWRMutation<LedDispatchResult, Error, string, number[]>(
+    ACTIVE_KEY,
+    (_key, { arg }) => ledApi.clearDisplays(client, arg),
   )
 }

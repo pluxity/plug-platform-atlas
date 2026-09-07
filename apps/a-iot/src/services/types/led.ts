@@ -104,3 +104,24 @@ export interface LedDispatchResult {
 /** 메시지 본문 제한 — 전광판 특성상 짧아야 한다 */
 export const LED_CONTENT_MAX_LENGTH = 200
 export const LED_TITLE_MAX_LENGTH = 50
+
+/**
+ * 현재 표출 중인 내용.
+ *
+ * 자동 송출(이벤트 조건 → LED)이 붙으면 사람이 누르지 않은 메시지가 전광판에
+ * 올라간다. 잘못된 조건 하나가 이상한 문구를 계속 띄울 수 있으므로,
+ * 지금 무엇이 올라가 있는지 보고 내릴 수 있어야 한다.
+ */
+export interface LedActiveDisplay {
+  panelId: number
+  panelName: string
+  siteId: number
+  content: string
+  /** 자동 송출인지 사람이 보낸 것인지 */
+  source: LedDispatchSource
+  dispatchedAt: string
+  /** 송출자. 자동 송출이면 없음 */
+  dispatchedBy?: string
+}
+
+export type LedDispatchSource = 'MANUAL' | 'AUTO'
