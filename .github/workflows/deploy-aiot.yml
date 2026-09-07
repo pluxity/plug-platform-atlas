@@ -2,6 +2,9 @@ name: Deploy A-IoT
 
 on:
     # main 브랜치에 push 또는 PR 머지 시 배포
+    # PR 을 main 에 머지하면 GitHub 이 여기에 push 이벤트를 발생시킨다.
+    # 따로 pull_request(types: closed) 트리거를 두면 같은 머지에 잡이 2개 돌고,
+    # 둘이 같은 서버의 같은 dist.tar.gz 를 쓰다가 서로 지워서 배포가 깨진다.
     push:
         branches:
             - main
@@ -9,19 +12,17 @@ on:
             - 'apps/a-iot/**'
             - 'packages/ui/**'
 
-    # PR이 main으로 머지될 때
-    pull_request:
-        types: [closed]
-        branches:
-        - main
-
     # 수동 배포
     workflow_dispatch:
 
+# 배포는 항상 한 번에 하나만. 연속 머지나 수동 배포가 겹쳐도 큐잉된다.
+# 배포 도중 취소하면 서버에 산출물이 반쯤 얹힌 채로 남으므로 취소하지 않는다.
+concurrency:
+    group: deploy-aiot
+    cancel-in-progress: false
+
 jobs:
   deploy:
-    # PR 이벤트의 경우 머지된 경우에만 실행
-    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
