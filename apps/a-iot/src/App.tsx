@@ -17,6 +17,7 @@ import Mobius from './pages/management/system/Mobius'
 import IoTSensor from './pages/main/iot/IoTSensor.tsx'
 import LedDispatch from './pages/main/announcement/led/LedDispatch.tsx'
 import LedPresets from './pages/main/announcement/led/LedPresets.tsx'
+import AnnouncementHistory from './pages/main/announcement/AnnouncementHistory.tsx'
 // 2026-08-31 임시 숨김 — CCTV 모니터링(라이브) 비활성화
 // import CctvMonitoring from './pages/main/cctv-monitoring/CctvMonitoring.tsx'
 
@@ -55,12 +56,13 @@ function App() {
                   <Route path="/iot-sensors" element={<Wrapped><IoTSensor /></Wrapped>} />
                   <Route path="/events" element={<Wrapped><EventsHistoryPage /></Wrapped>} />
                   {/*
-                    안내방송 — 메뉴에서는 숨겨져 있으나(menu.ts hidden) 라우트는 살려 둔다.
-                    백엔드(aiot-api #24~#26) 연동 전까지 URL 로 직접 열어 검증한다.
-                    공원 단위 권한은 화면 안에서 useSiteAccess 로 거른다.
+                    안내방송. 공원 단위 권한은 각 화면에서 useSiteAccess 로 거른다.
+                    송출·프리셋은 목업(백엔드 aiot-api #24~#26 미구현),
+                    송출 이력은 실제 API(GET /announcements, #16 완료)를 쓴다.
                   */}
                   <Route path="/announcement/led/dispatch" element={<Wrapped><LedDispatch /></Wrapped>} />
                   <Route path="/announcement/led/presets" element={<Wrapped><LedPresets /></Wrapped>} />
+                  <Route path="/announcement/history" element={<Wrapped><AnnouncementHistory /></Wrapped>} />
                   <Route path="/sites/parks" element={<AdminOnly><SitePage /></AdminOnly>} />
                   <Route path="/sites/virtual-patrol" element={<AdminOnly><VirtualPatrol /></AdminOnly>} />
                   <Route path="/devices/sensor-categories" element={<AdminOnly><SensorCategoriesPage /></AdminOnly>} />

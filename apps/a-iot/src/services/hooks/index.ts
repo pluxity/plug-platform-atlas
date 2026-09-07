@@ -117,3 +117,6 @@ export {
   useDeleteLedPreset,
   useDispatchLedMessage,
 } from './useLed'
+
+// 안내방송 hooks (실제 API)
+export { useAnnouncements } from './useAnnouncement'

@@ -3,6 +3,7 @@ import {
   BellRing,
   Building2,
   Cctv,
+  History,
   Home,
   KeyRound,
   PlugZap,
@@ -60,13 +61,12 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
      * 전광판 "장치 등록"은 반대로 ADMIN 전용이라 시설 관리에 있다.
      * CCTV 가 이미 같은 선으로 갈려 있다 — CCTV 관리(시설관리) vs CCTV 모니터링(MAIN).
      *
-     * 백엔드(aiot-api #24~#26) 미구현이라 지금은 숨긴다.
-     * 라우트는 살아 있어 URL 직접 접근으로 검증 가능하다.
-     * 연동 후 hidden 만 지우면 노출된다. TTS 화면(#105~#107)도 여기로 들어온다.
+     * 송출·프리셋은 아직 목업이다(백엔드 aiot-api #24~#26 미구현).
+     * 송출 이력은 실제 API 를 쓴다(GET /announcements, #16 완료).
+     * TTS 화면(#105~#107)도 여기로 들어온다.
      */
     title: '안내방송',
     icon: MonitorSpeaker,
-    hidden: true,
     children: [
       {
         title: 'LED 메시지 송출',
@@ -77,6 +77,11 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
         title: 'LED 메시지 프리셋',
         icon: ScrollText,
         path: '/announcement/led/presets',
+      },
+      {
+        title: '송출 이력',
+        icon: History,
+        path: '/announcement/history',
       },
     ],
   },

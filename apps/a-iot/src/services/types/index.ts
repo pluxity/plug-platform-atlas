@@ -122,3 +122,10 @@ export {
   LED_CONTENT_MAX_LENGTH,
   LED_TITLE_MAX_LENGTH,
 } from './led'
+
+// 안내방송 types (실제 API — 목업 아님)
+export type {
+  Announcement,
+  AnnouncementPage,
+  AnnouncementQueryParams,
+} from './announcement'
