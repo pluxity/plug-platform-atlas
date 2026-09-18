@@ -3,13 +3,16 @@ import { AlertCircle, BatteryWarning, Camera, CheckCircle, ChevronDown, Clock, R
 import { Cell, Label, Pie, PieChart, Tooltip } from 'recharts'
 
 import { useAdminUsers } from '@plug-atlas/api-hooks'
-import { Card, CardContent, CardHeader, CardTitle, DataTable, Dialog, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
+import { Card, CardContent, CardHeader, CardTitle, DataTable, Dialog, DialogContent, DialogTitle, DialogDescription, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
 
 import WeatherCard from '@/components/weather/WeatherCard'
 import AirQualityCard from '@/components/air-quality/AirQualityCard'
 import CesiumMap from '@/components/map/CesiumMap'
 import { eventColumns, cctvEventColumns, featureStatusColumns } from '@/pages/main/dashboard/columns'
-import { useCctvList, useCctvEvents, useFeatures, useSites } from '@/services/hooks'
+import { useCctvEvents, useFeatures, useSites } from '@/services/hooks'
+import { useAiEdgeDevices } from '@/services/hooks/useAiEdgeDevices'
+import DeviceDetails from '@/components/ai-edge/DeviceDetails'
+import DeviceLoadErrors from '@/components/ai-edge/DeviceLoadErrors'
 import EventDetailModal from '@/pages/main/events/components/modal/EventDetailModal'
 import CctvEventDetailModal from '@/pages/main/events/components/modal/CctvEventDetailModal'
 import { Event, FeatureResponse } from '@/services/types'
@@ -24,7 +27,10 @@ export default function Dashboard() {
   const [selectedCctvEvent, setSelectedCctvEvent] = useState<CctvEventResponse | null>(null)
   const [isParkPanelOpen, setIsParkPanelOpen] = useState(true)
   const { data: sites = [] } = useSites()
-  const { data: cctvs = [] } = useCctvList()
+  const { devices: aiEdgeDevices, cctvs: cctvQuery, mics: micQuery } = useAiEdgeDevices()
+  const cctvs = cctvQuery.data ?? []
+  const [selectedDeviceKey, setSelectedDeviceKey] = useState<string | null>(null)
+  const selectedDevice = aiEdgeDevices.find(device => device.key === selectedDeviceKey)
   const { data: cctvEventsData } = useCctvEvents({ size: 50 }, { refreshInterval: 30_000 })
   const { data: sensors = [] } = useFeatures()
   const { data: users = [] } = useAdminUsers()
@@ -84,10 +90,10 @@ export default function Dashboard() {
         iconBg: 'bg-yellow-100',
       },
       {
-        title: 'CCTV',
-        value: cctvs.length,
+        title: 'AI EDGE',
+        value: aiEdgeDevices.length,
         icon: Camera,
-        description: '설치된 CCTV',
+        description: '연동된 CCTV·MIC',
         iconImage: getAssetPath('/images/icons/dashboard/cctv.png'),
         iconBg: 'bg-blue-100',
       },
@@ -100,7 +106,7 @@ export default function Dashboard() {
         iconBg: 'bg-purple-100',
       },
     ]
-  }, [sites, sensors, cctvs, users])
+  }, [sites, sensors, aiEdgeDevices, users])
 
   const eventStatusStats = useMemo(() => {
     const allEvents = getAllEvents()
@@ -269,16 +275,23 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <DeviceLoadErrors cctvs={cctvQuery} mics={micQuery} />
       {activeTab === 'overview' && (
         <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
           {/* 좌측 — 지도. 공원 목록은 지도 위 오버레이라 공원이 늘어도 레이아웃 공간을 쓰지 않는다 */}
           <Card className="col-span-7 overflow-hidden relative">
             <CesiumMap
+              deviceScope="all"
+              showSensorsInOverview
+              showAiEdgeInOverview
               sites={sites}
               activeTab={activeTab}
               selectedSiteId={selectedSiteId}
               onSiteSelect={handleSiteSelect}
               sensors={sensors}
+              aiEdgeDevices={aiEdgeDevices}
+              selectedDeviceKey={selectedDeviceKey}
+              onDeviceSelect={device => setSelectedDeviceKey(device.key)}
               className="h-full w-full"
             />
 
@@ -493,11 +506,17 @@ export default function Dashboard() {
           {/* 좌측 — 지도 + 장비 요약 오버레이 (개요 탭 공원 오버레이와 같은 자리) */}
           <Card className="col-span-5 overflow-hidden relative">
             <CesiumMap
+              deviceScope="all"
+              showSensorsInOverview
+              showAiEdgeInOverview
               sites={sites}
               activeTab={activeTab}
               selectedSiteId={selectedSiteId}
               onSiteSelect={handleSiteSelect}
               sensors={sensors}
+              aiEdgeDevices={aiEdgeDevices}
+              selectedDeviceKey={selectedDeviceKey}
+              onDeviceSelect={device => setSelectedDeviceKey(device.key)}
               className="h-full w-full"
             />
 
@@ -506,7 +525,7 @@ export default function Dashboard() {
                 {sites.find(site => site.id.toString() === selectedSiteId)?.name ?? '공원 미선택'}
               </p>
               <div className="flex items-center gap-2 text-[11px]">
-                <span className="text-gray-500">장비 <span className="font-bold text-gray-800">{deviceStats.total}</span></span>
+                <span className="text-gray-500">IoT 센서 <span className="font-bold text-gray-800">{deviceStats.total}</span></span>
                 <span className="text-gray-300">|</span>
                 <span className="text-green-600">정상 <span className="font-bold">{deviceStats.connected}</span></span>
                 <span className="text-gray-300">|</span>
@@ -618,6 +637,13 @@ export default function Dashboard() {
         {selectedEvent && <EventDetailModal event={selectedEvent} />}
       </Dialog>
 
+      <Dialog open={!!selectedDevice} onOpenChange={open => { if (!open) setSelectedDeviceKey(null) }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogTitle>AI EDGE 디바이스 상세</DialogTitle>
+          <DialogDescription>선택한 장비의 설치 위치와 연동 정보를 확인합니다.</DialogDescription>
+          {selectedDevice && <DeviceDetails device={selectedDevice} onClose={() => setSelectedDeviceKey(null)} />}
+        </DialogContent>
+      </Dialog>
       <CctvEventDetailModal
         event={selectedCctvEvent}
         cameraName={selectedCctvEvent ? (cameraNameMap.get(selectedCctvEvent.cameraId) || selectedCctvEvent.cameraId) : ''}

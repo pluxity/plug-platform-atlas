@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
-import useSWR, { type SWRConfiguration } from 'swr'
+import useSWR, { useSWRConfig, type SWRConfiguration } from 'swr'
+import { isDeviceCacheKey } from '../../lib/ai-edge-device'
 import useSWRInfinite, { type SWRInfiniteConfiguration } from 'swr/infinite'
 import useSWRMutation, { type SWRMutationConfiguration } from 'swr/mutation'
 import { useApiClient } from '@plug-atlas/api-hooks'
@@ -30,7 +31,7 @@ export function useCctvList(params?: CctvListParams, options?: SWRConfiguration<
   return useSWR(
     url,
     async () => {
-      const response = await client.get<DataResponse<CctvResponse[]>>(url)
+      const response = await client.get<DataResponse<CctvResponse[]>>(url, { handleForbiddenLocally: true })
       return response.data
     },
     options
@@ -58,11 +59,13 @@ export function useCctv(id: number | null, options?: SWRConfiguration<CctvRespon
  */
 export function useUpdateCctvCoordinates(options?: SWRMutationConfiguration<void, Error, string, { id: number; data: CctvCoordinateRequest }>) {
   const client = useApiClient()
+  const { mutate } = useSWRConfig()
 
   return useSWRMutation(
     'cctvs',
     async (_key: string, { arg }: { arg: { id: number; data: CctvCoordinateRequest } }) => {
-      await client.patch(`cctvs/${arg.id}/coordinates`, arg.data)
+      await client.patch(`cctvs/${arg.id}/coordinates`, arg.data, { handleForbiddenLocally: true })
+      await mutate(key => isDeviceCacheKey(key, 'cctvs'))
     },
     options
   )
@@ -176,11 +179,13 @@ export function useInfiniteCctvEvents(
  */
 export function useSyncCctv(options?: SWRMutationConfiguration<void, Error, string, null>) {
   const client = useApiClient()
+  const { mutate } = useSWRConfig()
 
   return useSWRMutation(
     'cctvs',
     async () => {
-      await client.post('cctvs/sync')
+      await client.post('cctvs/sync', undefined, { handleForbiddenLocally: true })
+      await mutate(key => isDeviceCacheKey(key, 'cctvs'))
     },
     options
   )

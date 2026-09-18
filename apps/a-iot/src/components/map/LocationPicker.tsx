@@ -15,10 +15,11 @@ import {
 } from '../../stores/cesium'
 import { Button, Spinner } from '@plug-atlas/ui'
 import { getAssetPath } from '../../utils/assetPath'
+import { getDevicePosition } from '../../lib/ai-edge-device'
 
 interface LocationPickerProps {
-  lon: number
-  lat: number
+  lon: number | null
+  lat: number | null
   onLocationChange: (lon: number, lat: number) => void
   cctvHeight?: number
   containerHeight?: number
@@ -41,6 +42,7 @@ export default function LocationPicker({
   const viewerRef = useRef<CesiumViewer | null>(null)
   const handlerRef = useRef<ScreenSpaceEventHandler | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [contextMenu, setContextMenu] = useState<{
     show: boolean
     x: number
@@ -83,6 +85,7 @@ export default function LocationPicker({
         setIsLoading(false)
       } catch (error) {
         if (mounted) {
+          setError(true)
           setIsLoading(false)
         }
       }
@@ -103,15 +106,16 @@ export default function LocationPicker({
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed()) return
 
-    if (lon && lon !== 0 && lat && lat !== 0) {
-      focusOn(viewer, { lon, lat }, 1500)
+    const position = getDevicePosition(lon, lat)
+    if (position) {
+      focusOn(viewer, { lon: position.longitude, lat: position.latitude }, 1500)
     } else {
       setView(viewer, {
         ...DEFAULT_CAMERA_POSITION,
         lat: DEFAULT_CAMERA_POSITION.lat - 0.05,
       })
     }
-  }, [viewerRef.current, lon, lat, setView, focusOn])
+  }, [isLoading, lon, lat, setView, focusOn])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -125,7 +129,7 @@ export default function LocationPicker({
     }, ScreenSpaceEventType.LEFT_CLICK)
 
     handler.setInputAction((click: ScreenSpaceEventHandler.PositionedEvent) => {
-      let cartesian: Cartesian3 | undefined = viewer.scene.pickPosition(click.position)
+      let cartesian: Cartesian3 | undefined = viewer.scene.pickPositionSupported ? viewer.scene.pickPosition(click.position) : undefined
 
       if (!defined(cartesian)) {
         cartesian =
@@ -154,7 +158,7 @@ export default function LocationPicker({
         handlerRef.current = null
       }
     }
-  }, [viewerRef.current])
+  }, [isLoading])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -162,18 +166,19 @@ export default function LocationPicker({
 
     removeMarker(viewer, 'location-marker')
 
-    if (lon && lat && lon !== 0 && lat !== 0) {
+    const position = getDevicePosition(lon, lat)
+    if (position) {
       addMarker(viewer, {
         id: 'location-marker',
-        lon,
-        lat,
+        lon: position.longitude,
+        lat: position.latitude,
         height: cctvHeight,
         image: markerImage,
         width: markerWidth,
         heightValue: markerHeight,
       })
     }
-  }, [viewerRef.current, lon, lat, cctvHeight, markerImage, markerWidth, markerHeight, addMarker, removeMarker])
+  }, [isLoading, lon, lat, cctvHeight, markerImage, markerWidth, markerHeight, addMarker, removeMarker])
 
   const handleSetMarker = useCallback(() => {
     if (!contextMenu) return
@@ -188,6 +193,7 @@ export default function LocationPicker({
       className="overflow-hidden relative"
     >
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {error && <p role="alert" className="absolute inset-x-0 top-0 bg-background p-3 text-sm text-destructive">지도를 불러오지 못했습니다. 아래 입력란에서 좌표를 지정할 수 있습니다.</p>}
 
       {isLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-20 gap-3">

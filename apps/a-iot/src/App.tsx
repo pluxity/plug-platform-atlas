@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import PageCard from './components/layout/PageCard'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -8,7 +8,7 @@ import Dashboard from './pages/main/dashboard/Dashboard.tsx'
 import SitePage from './pages/management/sites/parks/SitePage.tsx'
 import VirtualPatrol from './pages/management/sites/VirtualPatrol'
 import SensorCategoriesPage from './pages/management/devices/sensor/SensorCategoriesPage.tsx'
-import CCTV from './pages/management/devices/cctv/CCTV.tsx'
+import AiEdgeDevices from './pages/main/ai-edge/AiEdgeDevices'
 import EventsHistoryPage from './pages/main/events/EventsHistoryPage'
 import Users from './pages/management/users/Users'
 import Roles from './pages/management/users/Roles'
@@ -54,11 +54,11 @@ function App() {
                   {/* 2026-08-31 임시 숨김 — CCTV 모니터링(라이브) 비활성화. 복구 시 menu.ts 의 hidden 플래그도 함께 해제 */}
                   {/* <Route path="/cctv-monitoring" element={<CctvMonitoring />} /> */}
                   <Route path="/iot-sensors" element={<Wrapped><IoTSensor /></Wrapped>} />
+                  <Route path="/ai-edge-devices" element={<Wrapped><AiEdgeDevices /></Wrapped>} />
                   <Route path="/events" element={<Wrapped><EventsHistoryPage /></Wrapped>} />
                   {/*
                     안내방송. 공원 단위 권한은 각 화면에서 useSiteAccess 로 거른다.
-                    송출·프리셋은 목업(백엔드 aiot-api #24~#26 미구현),
-                    송출 이력은 실제 API(GET /announcements, #16 완료)를 쓴다.
+                    전광판·프리셋·송출은 /displays, /display-presets API를 사용한다.
                   */}
                   <Route path="/announcement/led/dispatch" element={<Wrapped><LedDispatch /></Wrapped>} />
                   <Route path="/announcement/led/presets" element={<Wrapped><LedPresets /></Wrapped>} />
@@ -66,7 +66,8 @@ function App() {
                   <Route path="/sites/parks" element={<AdminOnly><SitePage /></AdminOnly>} />
                   <Route path="/sites/virtual-patrol" element={<AdminOnly><VirtualPatrol /></AdminOnly>} />
                   <Route path="/devices/sensor-categories" element={<AdminOnly><SensorCategoriesPage /></AdminOnly>} />
-                  <Route path="/devices/cctv" element={<AdminOnly><CCTV /></AdminOnly>} />
+                  <Route path="/devices/ai-edge" element={<Navigate to="/ai-edge-devices" replace />} />
+                  <Route path="/devices/cctv" element={<Navigate to="/ai-edge-devices?kind=CCTV" replace />} />
                   <Route path="/users" element={<AdminOnly><Users /></AdminOnly>} />
                   <Route path="/users/roles" element={<AdminOnly><Roles /></AdminOnly>} />
                   <Route path="/users/permissions" element={<AdminOnly><Permissions /></AdminOnly>} />

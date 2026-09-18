@@ -6,13 +6,15 @@ export interface SiteResponse {
 
 // CCTV 카메라 타입
 export type CctvCameraType =
-  | 'ip'
-  | 'video'
-  | 'ptz'
-  | 'aibox'
-  | 'ai'
-  | 'unmanaged'
-  | 'unsupported'
+  | 'IP'
+  | 'VIDEO'
+  | 'PTZ'
+  | 'AIBOX'
+  | 'AI'
+  | 'UNMANAGED'
+  | 'UNSUPPORTED'
+
+export type CctvCameraStatus = 'DISCONNECTED' | 'NORMAL' | 'FAULT'
 
 // CCTV Response (백엔드 API 스펙)
 export interface CctvResponse {
@@ -21,11 +23,11 @@ export interface CctvResponse {
   edsCameraId: string
   cameraIp: string
   cameraPort: number
-  lon: number
-  lat: number
+  lon: number | null
+  lat: number | null
   ptzControl: number
   cameraType: CctvCameraType
-  cameraStatus: number // 0, 1, 2
+  cameraStatus: CctvCameraStatus
   cameraAddress: string
   streamResolution: number[]
   cameraRecordType: number

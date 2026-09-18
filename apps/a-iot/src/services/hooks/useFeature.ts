@@ -1,7 +1,8 @@
-import useSWR, { type SWRConfiguration } from 'swr'
+import useSWR, { useSWRConfig, type SWRConfiguration } from 'swr'
 import useSWRMutation, { type SWRMutationConfiguration } from 'swr/mutation'
 import { useApiClient } from '@plug-atlas/api-hooks'
 import type { FeatureResponse, FeatureUpdateRequest, LatestDataResponse, TimeSeriesDataResponse } from '../types/feature'
+import { normalizeFeatureResponse } from '../types/feature'
 
 type DataResponseWrapper<T> = { data: T }
 
@@ -15,7 +16,7 @@ export function useFeatures(options?: SWRConfiguration<FeatureResponse[], Error>
     'features',
     async () => {
       const response = await client.get<DataResponseWrapper<FeatureResponse[]>>('features')
-      return response.data
+      return response.data.map(normalizeFeatureResponse)
     },
     options
   )
@@ -34,7 +35,7 @@ export function useFeature(
     featureId ? `features/${featureId}` : null,
     async () => {
       const response = await client.get<DataResponseWrapper<FeatureResponse>>(`features/${featureId}`)
-      return response.data
+      return normalizeFeatureResponse(response.data)
     },
     options
   )
@@ -83,11 +84,13 @@ export function useFeatureTimeSeries(
  */
 export function useUpdateFeature(options?: SWRMutationConfiguration<void, Error, string, { id: number; data: FeatureUpdateRequest }>) {
   const client = useApiClient()
+  const { mutate } = useSWRConfig()
 
   return useSWRMutation(
     'features',
     async (_key: string, { arg }: { arg: { id: number; data: FeatureUpdateRequest } }) => {
-      await client.put(`features/${arg.id}`, arg.data)
+      await client.put(`features/${arg.id}`, arg.data, { handleForbiddenLocally: true })
+      await mutate('features')
     },
     options
   )
@@ -96,13 +99,15 @@ export function useUpdateFeature(options?: SWRMutationConfiguration<void, Error,
 /**
  * Feature 동기화 (204 No Content)
  */
-export function useSyncFeatures(options?: SWRMutationConfiguration<void, Error, string, void>) {
+export function useSyncFeatures(options?: SWRMutationConfiguration<void, Error, string, { overwriteLocation: boolean }>) {
   const client = useApiClient()
+  const { mutate } = useSWRConfig()
 
   return useSWRMutation(
     'features/sync',
-    async () => {
-      await client.post('features/sync')
+    async (_key: string, { arg }: { arg: { overwriteLocation: boolean } }) => {
+      await client.post(`features/sync?overwriteLocation=${arg.overwriteLocation}`, undefined, { handleForbiddenLocally: true })
+      await mutate('features')
     },
     options
   )
