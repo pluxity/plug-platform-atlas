@@ -109,21 +109,17 @@ export type {
 export type {
   LedPanel,
   LedPanelStatus,
-  LedDisplayOptions,
   LedPreset,
   LedPresetCreateRequest,
   LedPresetUpdateRequest,
   LedDispatchRequest,
-  LedDispatchPanelResult,
-  LedDispatchResult,
 } from './led'
 export {
-  DEFAULT_DISPLAY_OPTIONS,
   LED_CONTENT_MAX_LENGTH,
   LED_TITLE_MAX_LENGTH,
 } from './led'
 
-// 안내방송 types (실제 API — 목업 아님)
+// 안내방송 types
 export type {
   Announcement,
   AnnouncementPage,

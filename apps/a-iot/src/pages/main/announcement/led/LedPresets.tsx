@@ -9,7 +9,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  Badge,
   Button,
   DataTable,
   Dialog,
@@ -30,32 +29,26 @@ import {
 } from '../../../../services/hooks/useLed'
 import { usePagination, useSearchBar } from '../../../../services/hooks'
 import {
-  DEFAULT_DISPLAY_OPTIONS,
   LED_CONTENT_MAX_LENGTH,
   LED_TITLE_MAX_LENGTH,
-  type LedDisplayOptions,
   type LedPreset,
 } from '../../../../services/types/led'
-import { USE_MOCK } from '../../../../services/led'
 import { SearchBar } from '../../../../components/elements/SearchBar'
 import { TablePagination } from '../../../../components/elements/Pagination'
 import { LedPreview } from './components/LedPreview'
-import { LedDisplayOptionsFields } from './components/LedDisplayOptionsFields'
 
 interface PresetFormState {
   title: string
   content: string
-  displayOptions: LedDisplayOptions
 }
 
 const EMPTY_FORM: PresetFormState = {
   title: '',
   content: '',
-  displayOptions: DEFAULT_DISPLAY_OPTIONS,
 }
 
 export default function LedPresets() {
-  const { presets, isLoading, mutate } = useLedPresets()
+  const { presets, isLoading, error, mutate } = useLedPresets()
   const { trigger: createPreset, isMutating: isCreating } = useCreateLedPreset()
   const { trigger: updatePreset, isMutating: isUpdating } = useUpdateLedPreset()
   const { trigger: deletePreset } = useDeleteLedPreset()
@@ -109,7 +102,6 @@ export default function LedPresets() {
     setForm({
       title: preset.title,
       content: preset.content,
-      displayOptions: preset.displayOptions,
     })
     setTouched({ title: false, content: false })
     setFormOpen(true)
@@ -122,7 +114,6 @@ export default function LedPresets() {
     const payload = {
       title: form.title.trim(),
       content: form.content.trim(),
-      displayOptions: form.displayOptions,
     }
 
     try {
@@ -163,18 +154,6 @@ export default function LedPresets() {
       ),
     },
     {
-      key: 'displayOptions',
-      header: '표출 옵션',
-      cell: (value) => {
-        const options = value as LedDisplayOptions
-        return (
-          <span className="text-xs text-muted-foreground">
-            {options.durationSeconds}초 · {options.repeatCount}회
-          </span>
-        )
-      },
-    },
-    {
       key: 'createdAt',
       header: '등록일',
       cell: (value) => (
@@ -194,11 +173,6 @@ export default function LedPresets() {
             자주 쓰는 문구를 저장해 두고 송출 화면에서 선택합니다.
           </p>
         </div>
-        {USE_MOCK && (
-          <Badge variant="secondary" className="shrink-0">
-            목업 데이터 · 새로고침 시 초기화
-          </Badge>
-        )}
       </div>
 
       <div className="flex items-center justify-between gap-2">
@@ -214,7 +188,7 @@ export default function LedPresets() {
       </div>
 
       <div className="min-h-0 flex-1">
-        {isLoading ? (
+        {error ? <p role="alert" className="text-sm text-destructive">프리셋을 불러오지 못했습니다. <Button variant="link" onClick={() => void mutate()}>다시 시도</Button></p> : isLoading ? (
           <p className="py-8 text-center text-sm text-muted-foreground">불러오는 중…</p>
         ) : (
           <DataTable
@@ -283,10 +257,6 @@ export default function LedPresets() {
               <LedPreview content={form.content} />
             </div>
 
-            <LedDisplayOptionsFields
-              value={form.displayOptions}
-              onChange={(displayOptions) => setForm({ ...form, displayOptions })}
-            />
           </div>
 
           <DialogFooter>

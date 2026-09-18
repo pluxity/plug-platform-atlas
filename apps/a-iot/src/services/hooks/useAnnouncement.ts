@@ -1,7 +1,7 @@
 /**
  * 안내방송 송출 이력 훅
  *
- * 백엔드가 이미 구현해 둔 실제 API 를 쓴다(aiot-api #16). 목업이 아니다.
+ * GET /announcements API를 사용한다.
  * 서버가 page/size/siteId 를 지원하므로 페이징·필터를 서버에 맡긴다.
  */
 import useSWR, { type SWRConfiguration } from 'swr'

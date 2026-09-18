@@ -3,7 +3,7 @@ import { Badge, Checkbox, Label } from '@plug-atlas/ui'
 import type { LedPanel, LedPanelStatus } from '../../../../../services/types/led'
 
 const STATUS_META: Record<LedPanelStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' }> = {
-  ONLINE: { label: '정상', variant: 'default' },
+  NORMAL: { label: '정상', variant: 'default' },
   OFFLINE: { label: '오프라인', variant: 'destructive' },
   UNKNOWN: { label: '알 수 없음', variant: 'secondary' },
 }
@@ -90,7 +90,7 @@ export function LedTargetSelector({
 
             <ul className="divide-y">
               {sitePanels.map((panel) => {
-                const status = STATUS_META[panel.status]
+                const status = STATUS_META[panel.status] ?? STATUS_META.UNKNOWN
                 return (
                   <li key={panel.id} className="flex items-center gap-2 px-3 py-2">
                     <Checkbox
@@ -123,7 +123,7 @@ export function LedTargetSelector({
 }
 
 function groupBySite(panels: LedPanel[]) {
-  const map = new Map<number, { siteId: number; siteName: string; sitePanels: LedPanel[] }>()
+  const map = new Map<number | null, { siteId: number | null; siteName: string; sitePanels: LedPanel[] }>()
 
   for (const panel of panels) {
     const existing = map.get(panel.siteId)
