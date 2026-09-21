@@ -25,7 +25,6 @@ export function useStompNotifications(): UseStompNotificationsReturn {
 
     const addNotification = useNotificationStore((state) => state.addNotification);
     const addEvent = useEventStore((state) => state.addEvent);
-    const updateEvent = useEventStore((state) => state.updateEvent);
     const refreshFeatures = useRefreshFeatures();
     const refreshEventSummary = useRefreshEventSummary();
 
@@ -92,7 +91,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                         const updatedEvent: Event = JSON.parse(message.body);
 
                         // EventStore에 이벤트 상태 업데이트 (가장 중요!)
-                        updateEvent(updatedEvent.eventId, updatedEvent);
+                        addEvent(updatedEvent);
                         void refreshEventSummary();
                         void refreshFeatures();
 
@@ -129,7 +128,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
             subscriptionsRef.current = [];
             client.deactivate();
         };
-    }, [addNotification, addEvent, updateEvent, refreshFeatures, refreshEventSummary]);
+    }, [addNotification, addEvent, refreshFeatures, refreshEventSummary]);
 
     return {
         isConnected,

@@ -12,6 +12,81 @@ import { fetchEvent } from '../src/lib/fetch-event.ts'
 import { isEventListCacheKey, replaceCachedEvent } from '../src/lib/event-cache.ts'
 import { useNotificationStore } from '../src/stores/notificationStore.ts'
 import { countEventSummary } from '../src/lib/event-summary.ts'
+import { getEventPageKey, flattenEventPages, createEventPageLoader } from '../src/lib/event-page.ts'
+
+test('500 rapid scroll callbacks start one page request and do not queue more pages', async () => {
+  const loadPage = createEventPageLoader()
+  let calls = 0
+  let finish
+  const fetchPage = () => { calls++; return new Promise(resolve => { finish = resolve }) }
+  const requests = Array.from({ length: 500 }, () => loadPage('park2:SENSOR:cursor20', fetchPage))
+  await Promise.resolve()
+  assert.equal(calls, 1)
+  loadPage('park2:SENSOR:cursor40', fetchPage)
+  assert.equal(calls, 1)
+  finish()
+  await Promise.all(requests)
+  await loadPage('park2:SENSOR:cursor20', fetchPage)
+  assert.equal(calls, 1)
+  await loadPage('park2:SENSOR:cursor40', async () => { calls++ })
+  assert.equal(calls, 2)
+  await assert.rejects(loadPage('park3:SENSOR:cursor20', async () => { throw new Error('network') }))
+  await loadPage('park3:SENSOR:cursor20', async () => { calls++ })
+  assert.equal(calls, 3)
+})
+import { getRecentEventRange } from '../src/lib/event-date-range.ts'
+import { mergeNotificationFeed } from '../src/lib/notification-feed.ts'
+
+test('notification pages merge with live events, hide handled and expired events, and retain more than 50 items', () => {
+  const range = getRecentEventRange(new Date(2026, 8, 21, 12))
+  const event = (eventId, extra = {}) => ({ eventId, status: 'ACTIVE', occurredAt: '2026-09-20T10:00:00', ...extra })
+  const notification = payload => ({ id: `event-${payload.eventId}`, type: 'sensor-alarm', payload, timestamp: new Date(payload.occurredAt) })
+  const fetched = Array.from({ length: 60 }, (_, index) => event(index + 1))
+  const live = [notification(event(1)), notification(event(61, { occurredAt: '2026-09-21T11:00:00' })),
+    notification(event(62, { occurredAt: '2026-09-14T23:59:59' }))]
+  const latest = new Map([[2, event(2, { status: 'RESOLVED' })], [3, event(3, { status: 'IN_PROGRESS' })]])
+  const result = mergeNotificationFeed(fetched, live, latest, range)
+  assert.equal(result.length, 59)
+  assert.equal(result[0].eventId, 61)
+  assert.equal(result.filter(item => item.eventId === 1).length, 1)
+  assert.ok(!result.some(item => [2, 3, 62].includes(item.eventId)))
+  assert.equal(mergeNotificationFeed([event(99, { status: 'RESOLVED' })], [], new Map(), range).length, 0)
+})
+
+test('dashboard lists and summary share seven calendar days including today across month boundaries', () => {
+  const range = getRecentEventRange(new Date(2026, 8, 3, 12))
+  assert.deepEqual(range, { from: '20260828000000', to: '20260903235959' })
+  const next = new URL(getEventPageKey({ sourceType: 'SENSOR', ...range }, 20, 1,
+    { hasNext: true, nextCursor: 8, nextStatus: 'RESOLVED' }), 'http://test')
+  assert.equal(next.searchParams.get('from'), range.from)
+  assert.equal(next.searchParams.get('to'), range.to)
+  assert.notDeepEqual(getRecentEventRange(new Date(2026, 8, 4)), range)
+})
+
+test('event pagination requests 20 rows per source and carries both cursor fields within the selected park', () => {
+  for (const sourceType of ['SENSOR', 'CCTV', 'MIC']) {
+    const scope = { sourceType, siteId: 2 }
+    const first = new URL(getEventPageKey(scope, 20, 0, null), 'http://test')
+    assert.equal(first.searchParams.get('size'), '20')
+    assert.equal(first.searchParams.get('sourceType'), sourceType)
+    assert.equal(first.searchParams.get('siteId'), '2')
+    const next = new URL(getEventPageKey(scope, 20, 1, { hasNext: true, nextCursor: 0, nextStatus: 'IN_PROGRESS' }), 'http://test')
+    assert.equal(next.searchParams.get('lastId'), '0')
+    assert.equal(next.searchParams.get('lastStatus'), 'IN_PROGRESS')
+    assert.equal(getEventPageKey(scope, 20, 1, { hasNext: false }), null)
+    assert.equal(getEventPageKey(scope, 20, 1, { hasNext: true, nextCursor: null }), null)
+    const switched = new URL(getEventPageKey({ sourceType, siteId: 3 }, 20, 0, null), 'http://test')
+    assert.equal(switched.searchParams.get('siteId'), '3')
+    assert.equal(switched.searchParams.has('lastId'), false)
+  }
+})
+
+test('loaded event pages exceed the former 50 row cap and deduplicate live cursor overlap', () => {
+  const page = offset => ({ content: Array.from({ length: 20 }, (_, index) => ({ eventId: offset + index, status: 'ACTIVE' })) })
+  const result = flattenEventPages([page(0), page(20), page(40), { content: [{ eventId: 1, status: 'RESOLVED' }] }])
+  assert.equal(result.length, 60)
+  assert.equal(result.find(event => event.eventId === 1).status, 'RESOLVED')
+})
 
 test('dashboard summary counts all server status groups, beyond one page and per event rather than device', () => {
   const active = Array.from({ length: 137 }, (_, eventId) => ({ eventId, deviceId: 'same-device' }))

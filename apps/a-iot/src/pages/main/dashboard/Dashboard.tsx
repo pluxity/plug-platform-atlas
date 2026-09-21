@@ -9,7 +9,7 @@ import WeatherCard from '@/components/weather/WeatherCard'
 import AirQualityCard from '@/components/air-quality/AirQualityCard'
 import CesiumMap from '@/components/map/CesiumMap'
 import { eventColumns, aiEdgeIncidentColumns, featureStatusColumns } from '@/pages/main/dashboard/columns'
-import { useEvents, useFeatures, useSites } from '@/services/hooks'
+import { useInfiniteEvents, useFeatures, useSites } from '@/services/hooks'
 import { useAiEdgeDevices } from '@/services/hooks/useAiEdgeDevices'
 import DeviceDetails from '@/components/ai-edge/DeviceDetails'
 import DeviceLoadErrors from '@/components/ai-edge/DeviceLoadErrors'
@@ -20,6 +20,8 @@ import { useEventStore, useNotificationStore } from '@/stores'
 import { getAssetPath } from '@/utils/assetPath'
 import { getEventMapTarget } from '@/lib/event-map-target'
 import { useEventSummary } from '@/services/hooks/useEventSummary'
+import DashboardEventList from './DashboardEventList'
+import { useRecentEventRange } from '@/services/hooks/useRecentEventRange'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'parks'>('overview')
@@ -39,13 +41,14 @@ export default function Dashboard() {
   const [selectedDeviceKey, setSelectedDeviceKey] = useState<string | null>(null)
   const selectedDevice = aiEdgeDevices.find(device => device.key === selectedDeviceKey)
   const eventSiteId = selectedSiteId ? Number(selectedSiteId) : undefined
-  const sensorIncidents = useEvents({ sourceType: 'SENSOR', siteId: eventSiteId, size: 50 }, { refreshInterval: 30_000 })
-  const cctvIncidents = useEvents({ sourceType: 'CCTV', siteId: eventSiteId, size: 50 }, { refreshInterval: 30_000 })
-  const micIncidents = useEvents({ sourceType: 'MIC', siteId: eventSiteId, size: 50 }, { refreshInterval: 30_000 })
-  const edgeIncidents = useMemo(() => [...(cctvIncidents.data ?? []), ...(micIncidents.data ?? [])]
+  const eventRange = useRecentEventRange()
+  const sensorIncidents = useInfiniteEvents({ sourceType: 'SENSOR', siteId: eventSiteId, ...eventRange }, 20, { refreshInterval: 30_000, persistSize: false })
+  const cctvIncidents = useInfiniteEvents({ sourceType: 'CCTV', siteId: eventSiteId, ...eventRange }, 20, { refreshInterval: 30_000, persistSize: false })
+  const micIncidents = useInfiniteEvents({ sourceType: 'MIC', siteId: eventSiteId, ...eventRange }, 20, { refreshInterval: 30_000, persistSize: false })
+  const edgeIncidents = useMemo(() => [...cctvIncidents.events, ...micIncidents.events]
     .filter(event => isAiEdgeEvent(event) && (eventSiteId == null || event.siteId === eventSiteId))
     .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
-    .slice(0, 50), [cctvIncidents.data, micIncidents.data, eventSiteId])
+    , [cctvIncidents.events, micIncidents.events, eventSiteId])
   const { data: sensors = [] } = useFeatures()
   const { data: users = [] } = useAdminUsers()
   const isEventStoreInitialized = useNotificationStore((state) => state.isInitialized)
@@ -145,25 +148,16 @@ export default function Dashboard() {
     })
   }, [sites, sensors, getEventsBySite, isEventStoreInitialized, eventMap])
 
-  const filterRecentEvents = (eventList: Event[]) => {
-    const sevenDaysAgo = Date.now() - 7 * 86_400_000
-    return eventList
-      .filter(event => {
-        if (!isSensorEvent(event) || !event.status || !event.level || event.level === 'NORMAL') return false
-        if (event.status === 'ACTIVE' || event.status === 'IN_PROGRESS') return true
-        return new Date(event.occurredAt).getTime() > sevenDaysAgo
-      })
-      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
-      .sort((a, b) => a.status === b.status ? 0 : a.status === 'ACTIVE' ? -1 : 1)
-      .slice(0, 50)
+  const filteredEvents = sensorIncidents.events.filter(event =>
+    isSensorEvent(event) && event.level !== 'NORMAL' && (eventSiteId == null || event.siteId === eventSiteId)
+  )
+  const loadMoreEdge = async () => {
+    await Promise.all([
+      cctvIncidents.hasMore ? cctvIncidents.loadMore() : Promise.resolve(),
+      micIncidents.hasMore ? micIncidents.loadMore() : Promise.resolve(),
+    ])
   }
-
-  const filteredEvents = useMemo(() => {
-    return filterRecentEvents((sensorIncidents.data ?? []).filter(
-      event => eventSiteId == null || event.siteId === eventSiteId
-    ))
-  }, [sensorIncidents.data, eventSiteId])
-
+  const retryEdge = async () => { await Promise.all([cctvIncidents.mutate(), micIncidents.mutate()]) }
   const deviceStats = useMemo(() => {
     if (!selectedSiteId) return { total: 0, connected: 0, disconnected: 0 }
 
@@ -372,7 +366,7 @@ export default function Dashboard() {
 
             <Card className="shrink-0">
               <CardHeader className="px-4 py-2 shrink-0">
-                <CardTitle className="text-base font-bold">이벤트 현황</CardTitle>
+                <CardTitle className="text-base font-bold">이벤트 현황 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span></CardTitle>
               </CardHeader>
               <CardContent className="shrink-0 pb-2">
                 {eventSummary.error ? (
@@ -460,27 +454,14 @@ export default function Dashboard() {
 
             <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
               <CardHeader className='px-4 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold">IoT 센서 이벤트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
+                <CardTitle className="text-sm font-bold">IoT 센서 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span></CardTitle>
               </CardHeader>
               <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                {sensorIncidents.error ? (
-                  <div role="alert" className="p-4 text-sm text-red-600">IoT 센서 이벤트를 불러오지 못했습니다.</div>
-                ) : sensorIncidents.isLoading ? (
-                  <div className="p-4 text-sm text-gray-500">IoT 센서 이벤트 로딩 중...</div>
-                ) : filteredEvents.length === 0 ? (
-                  <div className="flex items-center justify-center text-gray-500 h-full">
-                    이벤트가 없습니다.
-                  </div>
-                ) : (
-                  <DataTable
-                    className="h-full"
-                    density="compact"
-                    stickyHeader={true}
-                    columns={eventColumns}
-                    data={filteredEvents}
-                    onRowClick={openEventAtLocation}
-                  />
-                )}
+                <DashboardEventList key={`sensor-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
+                  events={filteredEvents} columns={eventColumns}
+                  hasMore={sensorIncidents.hasMore} loading={sensorIncidents.isLoading || sensorIncidents.isValidating}
+                  error={sensorIncidents.error} onLoadMore={sensorIncidents.loadMore}
+                  onRetry={sensorIncidents.mutate} onSelect={openEventAtLocation} />
               </CardContent>
             </Card>
 
@@ -489,28 +470,16 @@ export default function Dashboard() {
               <CardHeader className='px-4 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold flex items-center gap-1.5">
                   <Scan className="size-4 text-blue-500" />
-                  AI EDGE 이벤트
+                  AI EDGE 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                {cctvIncidents.error || micIncidents.error ? (
-                  <div role="alert" className="p-4 text-sm text-red-600">AI EDGE 이벤트를 불러오지 못했습니다.</div>
-                ) : cctvIncidents.isLoading || micIncidents.isLoading ? (
-                  <div className="p-4 text-sm text-gray-500">AI EDGE 이벤트 로딩 중...</div>
-                ) : !edgeIncidents.length ? (
-                  <div className="flex items-center justify-center text-gray-500 h-full">
-                    AI EDGE 이벤트가 없습니다.
-                  </div>
-                ) : (
-                  <DataTable
-                    className="h-full"
-                    density="compact"
-                    stickyHeader={true}
-                    columns={aiEdgeIncidentColumns}
-                    data={edgeIncidents}
-                    onRowClick={openEventAtLocation}
-                  />
-                )}
+                <DashboardEventList key={`edge-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
+                  events={edgeIncidents} columns={aiEdgeIncidentColumns}
+                  hasMore={cctvIncidents.hasMore || micIncidents.hasMore}
+                  loading={cctvIncidents.isLoading || micIncidents.isLoading || cctvIncidents.isValidating || micIncidents.isValidating}
+                  error={cctvIncidents.error || micIncidents.error}
+                  onLoadMore={loadMoreEdge} onRetry={retryEdge} onSelect={openEventAtLocation} />
               </CardContent>
             </Card>
           </div>
@@ -600,29 +569,14 @@ export default function Dashboard() {
 
             <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
               <CardHeader className='px-4 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold">IoT 센서 이벤트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
+                <CardTitle className="text-sm font-bold">IoT 센서 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span></CardTitle>
               </CardHeader>
               <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                {!selectedSiteId ? (
-                  <div className="flex items-center justify-center text-gray-500 h-full">공원을 선택해주세요.</div>
-                ) : sensorIncidents.error ? (
-                  <div role="alert" className="p-4 text-sm text-red-600">IoT 센서 이벤트를 불러오지 못했습니다.</div>
-                ) : sensorIncidents.isLoading ? (
-                  <div className="p-4 text-sm text-gray-500">IoT 센서 이벤트 로딩 중...</div>
-                ) : filteredEvents.length === 0 ? (
-                  <div className="flex items-center justify-center text-gray-500 h-full">
-                    {selectedSiteId ? '이벤트가 없습니다.' : '공원을 선택해주세요.'}
-                  </div>
-                ) : (
-                  <DataTable
-                    className="h-full"
-                    density="compact"
-                    stickyHeader={true}
-                    columns={eventColumns}
-                    data={filteredEvents}
-                    onRowClick={openEventAtLocation}
-                  />
-                )}
+                <DashboardEventList key={`sensor-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
+                  events={filteredEvents} columns={eventColumns}
+                  hasMore={sensorIncidents.hasMore} loading={sensorIncidents.isLoading || sensorIncidents.isValidating}
+                  error={sensorIncidents.error} onLoadMore={sensorIncidents.loadMore}
+                  onRetry={sensorIncidents.mutate} onSelect={openEventAtLocation} />
               </CardContent>
             </Card>
 
@@ -630,28 +584,16 @@ export default function Dashboard() {
               <CardHeader className='px-4 py-2 shrink-0'>
                 <CardTitle className="text-sm font-bold flex items-center gap-1.5">
                   <Scan className="size-4 text-blue-500" />
-                  AI EDGE 이벤트
+                  AI EDGE 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                {cctvIncidents.error || micIncidents.error ? (
-                  <div role="alert" className="p-4 text-sm text-red-600">AI EDGE 이벤트를 불러오지 못했습니다.</div>
-                ) : cctvIncidents.isLoading || micIncidents.isLoading ? (
-                  <div className="p-4 text-sm text-gray-500">AI EDGE 이벤트 로딩 중...</div>
-                ) : !edgeIncidents.length ? (
-                  <div className="flex items-center justify-center text-gray-500 h-full">
-                    AI EDGE 이벤트가 없습니다.
-                  </div>
-                ) : (
-                  <DataTable
-                    className="h-full"
-                    density="compact"
-                    stickyHeader={true}
-                    columns={aiEdgeIncidentColumns}
-                    data={edgeIncidents}
-                    onRowClick={openEventAtLocation}
-                  />
-                )}
+                <DashboardEventList key={`edge-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
+                  events={edgeIncidents} columns={aiEdgeIncidentColumns}
+                  hasMore={cctvIncidents.hasMore || micIncidents.hasMore}
+                  loading={cctvIncidents.isLoading || micIncidents.isLoading || cctvIncidents.isValidating || micIncidents.isValidating}
+                  error={cctvIncidents.error || micIncidents.error}
+                  onLoadMore={loadMoreEdge} onRetry={retryEdge} onSelect={openEventAtLocation} />
               </CardContent>
             </Card>
           </div>
