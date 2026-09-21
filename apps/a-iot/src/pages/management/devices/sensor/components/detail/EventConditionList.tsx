@@ -27,8 +27,8 @@ export default function EventConditionList({
         <div className="w-[6.25rem] text-center">레벨</div>
         <div className="w-[6.25rem] text-center">타입</div>
         <div className="flex-1 min-w-[9.375rem] text-center">조건</div>
+        <div className="w-[3.75rem] text-center">조건 사용</div>
         <div className="w-[3.75rem] text-center">알림</div>
-        <div className="w-[3.75rem] text-center">SMS</div>
         <div className="w-[3.125rem] text-center">작업</div>
       </div>
 

@@ -1,6 +1,6 @@
 // External packages
 import { useState, memo } from 'react'
-import { Bell, BellOff, Trash2, X, Mail, MailX } from 'lucide-react'
+import { Bell, BellOff, Trash2, X, Power } from 'lucide-react'
 
 // @plug-atlas packages
 import {
@@ -123,7 +123,7 @@ function EventConditionCard({
           )}
         </div>
 
-        {/* Activate (알림) */}
+        {/* 조건 사용 여부 */}
         <div className="w-[3.75rem] flex justify-center">
           <Button
             variant={condition.activate ? "default" : "outline"}
@@ -134,14 +134,15 @@ function EventConditionCard({
                 ? 'bg-green-600 hover:bg-green-700 text-white'
                 : 'border-gray-300 text-gray-500 hover:bg-gray-50'
             } h-8 transition-colors`}
-            aria-label={condition.activate ? '활성화됨 (클릭하여 비활성화)' : '비활성화됨 (클릭하여 활성화)'}
-            title={condition.activate ? '활성화됨 (클릭하여 비활성화)' : '비활성화됨 (클릭하여 활성화)'}
+            aria-pressed={condition.activate}
+            aria-label={condition.activate ? '조건 사용 켜짐 (클릭하여 끄기)' : '조건 사용 꺼짐 (클릭하여 켜기)'}
+            title={condition.activate ? '조건 사용 켜짐 (클릭하여 끄기)' : '조건 사용 꺼짐 (클릭하여 켜기)'}
           >
-            {condition.activate ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+            <Power className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Notification (SMS) */}
+        {/* 알림 사용 여부 */}
         <div className="w-[3.75rem] flex justify-center">
           <Button
             variant={condition.notificationEnabled ? "default" : "outline"}
@@ -153,9 +154,10 @@ function EventConditionCard({
                 : 'border-gray-300 text-gray-500 hover:bg-gray-50'
             } h-8 transition-colors`}
             aria-label={condition.notificationEnabled ? '알림 활성화됨 (클릭하여 비활성화)' : '알림 비활성화됨 (클릭하여 활성화)'}
+            aria-pressed={condition.notificationEnabled}
             title={condition.notificationEnabled ? '알림 활성화됨 (클릭하여 비활성화)' : '알림 비활성화됨 (클릭하여 활성화)'}
           >
-            {condition.notificationEnabled ? <Mail className="h-4 w-4" /> : <MailX className="h-4 w-4" />}
+            {condition.notificationEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
           </Button>
         </div>
 
