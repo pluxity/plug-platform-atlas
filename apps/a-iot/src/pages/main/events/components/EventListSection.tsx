@@ -64,6 +64,7 @@ export default function EventListSection() {
     };
 
     const baseParams = useMemo(() => ({
+        sourceType: 'SENSOR' as const,
         ...(from && { from }),
         ...(to && { to }),
         ...(listStatusFilter !== 'all' && { status: listStatusFilter as EventStatus }),

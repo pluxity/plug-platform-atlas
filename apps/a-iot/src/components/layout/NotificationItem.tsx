@@ -2,6 +2,7 @@ import { useEventStore } from '../../stores'
 import { getLevelInfo } from '../../pages/main/events/utils/levelUtils'
 import { getAssetPath } from '../../utils/assetPath'
 import type { Notification, Event } from '../../services/types'
+import { getEventSourceLabel } from '@/lib/event-presentation'
 
 const getLevelColor = (level?: string) => {
   switch (level) {
@@ -85,14 +86,14 @@ export default function NotificationItem({
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center flex-1 min-w-0">
           <span className="text-sm font-bold text-zinc-800 truncate">
-            {payload?.profileDescription || payload?.sensorDescription || '센서'}{' '}
-            {getLevelInfo(currentLevel || '').text} 발생
+            {payload?.title || `${payload?.eventName || payload?.profileDescription || payload?.sensorDescription || '이벤트'} ${getLevelInfo(currentLevel || '').text} 발생`}
           </span>
         </div>
         <span className="text-xs text-neutral-400 whitespace-nowrap ml-2">
           {getRelativeTime(notification.timestamp)}
         </span>
       </div>
+      {payload && <span className="mb-2 inline-flex rounded border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600">{getEventSourceLabel(payload)}</span>}
       <div className="flex gap-2.5 items-center">
         <img
           src={getLevelIconPath()}

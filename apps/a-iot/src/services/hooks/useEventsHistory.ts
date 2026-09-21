@@ -12,7 +12,7 @@ export const useEventActionHistories = (
     const client = useApiClient();
 
     return useSWR<ActionHistory[]>(
-        eventId ? `events/action-histories` : null,
+        eventId ? `events/${eventId}/action-histories` : null,
         async () => {
             const response = await client.get<ApiResponse<ActionHistory[]>>(`events/${eventId}/action-histories`);
             return response.data || [];

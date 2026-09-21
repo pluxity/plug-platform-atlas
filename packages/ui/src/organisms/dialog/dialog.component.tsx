@@ -57,7 +57,7 @@ interface DialogContentExtraProps {
 const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentProps<typeof DialogPrimitive.Content> & DialogContentExtraProps
->(({ className, children, showCloseButton = true, closeButtonClassName, ...props }, ref) => (
+>(({ className, children, showCloseButton = true, closeButtonClassName, onOpenAutoFocus, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -68,6 +68,16 @@ const DialogContent = React.forwardRef<
         className
       )}
       {...props}
+      onOpenAutoFocus={(event) => {
+        onOpenAutoFocus?.(event)
+        const content = event.target
+        if (content instanceof HTMLElement) {
+          content.scrollTop = 0
+          content.querySelectorAll<HTMLElement>("*").forEach((element) => {
+            if (element.scrollTop !== 0) element.scrollTop = 0
+          })
+        }
+      }}
     >
       {children}
       {showCloseButton && (

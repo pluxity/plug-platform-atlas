@@ -6,6 +6,39 @@ import { getDeviceMutationError } from '../src/lib/device-mutation-error.ts'
 import { normalizeFeatureResponse } from '../src/services/types/feature.ts'
 import { getCoordinateEditState } from '../src/lib/ai-edge-device.ts'
 import { getHeightEditState } from '../src/lib/sensor-edit.ts'
+import { hasSensorMeasurement, isAiEdgeEvent, isSensorEvent, getEventSourceLabel } from '../src/lib/event-presentation.ts'
+
+test('mixed incident feeds separate IoT sensors from CCTV and MIC events', () => {
+  const events = [
+    { sourceType: 'SENSOR', eventId: 1 },
+    { sourceType: 'CCTV', eventId: 2 },
+    { sourceType: 'MIC', eventId: 3 },
+    { eventId: 4 },
+    { sourceType: 'UNKNOWN', eventId: 5 },
+  ]
+  assert.deepEqual(events.filter(isSensorEvent).map(event => event.eventId), [1, 4])
+  assert.deepEqual(events.filter(isAiEdgeEvent).map(event => event.eventId), [2, 3])
+  assert.equal(getEventSourceLabel(events[0]), 'IoT 센서')
+  assert.equal(getEventSourceLabel(events[1]), 'AI EDGE · CCTV')
+  assert.equal(getEventSourceLabel(events[2]), 'AI EDGE · MIC')
+})
+
+test('AI EDGE common event details never display sensor measurements, including numeric placeholders', () => {
+  for (const sourceType of ['CCTV', 'MIC']) {
+    assert.equal(isAiEdgeEvent({ sourceType }), true)
+    for (const value of [0, 1, 42, null, undefined]) {
+      assert.equal(hasSensorMeasurement({ sourceType, value }), false)
+    }
+  }
+  for (const sourceType of ['SENSOR', null, undefined]) {
+    assert.equal(isAiEdgeEvent({ sourceType }), false)
+    assert.equal(hasSensorMeasurement({ sourceType, value: 0 }), true)
+    assert.equal(hasSensorMeasurement({ sourceType, value: 12.5 }), true)
+    for (const value of [null, undefined, NaN, Infinity, '12']) {
+      assert.equal(hasSensorMeasurement({ sourceType, value }), false)
+    }
+  }
+})
 
 test('coordinate drafts reject blanks and invalid ranges without losing zero or original precision', () => {
   const original = { longitude: 126.98168635368349, latitude: 37.586992734702 }

@@ -4,6 +4,7 @@ import { getStatusBadgeStyle, getStatusInfo } from '@/pages/main/events/utils/st
 import { Event, FeatureResponse } from '@/services/types'
 import type { CctvEventResponse, CctvEventType, CctvEventStatus } from '@/services/types'
 import { getCctvEventTypeLabel, getCctvEventStatusInfo } from '@/pages/main/events/utils/cctvEventUtils'
+import { getEventSourceLabel } from '@/lib/event-presentation'
 
 function getRelativeTime(dateStr: string): string {
   const now = Date.now()
@@ -86,6 +87,12 @@ export const eventColumns: Column<Event>[] = [
       )
     },
   },
+];
+
+export const aiEdgeIncidentColumns: Column<Event>[] = [
+  { key: 'sourceType', header: '종류', cell: (_, row) => getEventSourceLabel(row) },
+  { key: 'title', header: '이벤트', cell: (_, row) => row.title || row.eventName || '-' },
+  ...eventColumns.filter(column => column.key !== 'level'),
 ];
 
 function getBatteryColor(level: number): string {

@@ -1,5 +1,7 @@
 export interface Event {
     eventId: number,
+    sourceType?: 'SENSOR' | 'CCTV' | 'MIC' | null,
+    title?: string | null,
     deviceId: string,
     objectId: string,
     occurredAt: string,
@@ -22,6 +24,7 @@ export interface Event {
 }
 
 export interface EventsQueryParams {
+    sourceType?: 'SENSOR' | 'CCTV' | 'MIC';
     from?: string;
     to?: string;
     siteId?: number;

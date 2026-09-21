@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DialogContent, DialogHeader, DialogTitle, Button } from '@plug-atlas/ui';
+import { DialogContent, DialogHeader, DialogTitle, DialogDescription, Button } from '@plug-atlas/ui';
 import { AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
 import { getStatusInfo } from '../../utils/statusUtils.ts';
 import { getLevelInfo } from '../../utils/levelUtils.ts';
@@ -8,6 +8,7 @@ import { useUpdateEventStatus, useEvent } from '../../../../../services/hooks';
 import ActionHistorySection from "./ActionHistoryItem.tsx";
 import EventLocationMap from './EventLocationMap.tsx';
 import ValueRangeIndicator from './ValueRangeIndicator.tsx';
+import { hasSensorMeasurement, isAiEdgeEvent, getEventSourceLabel } from '@/lib/event-presentation';
 
 interface EventDetailModalProps {
   event: Event;
@@ -16,6 +17,8 @@ interface EventDetailModalProps {
 export default function EventDetailModal({ event }: EventDetailModalProps) {
   getStatusInfo(event.status);
   const [localEvent, setLocalEvent] = useState(event);
+  const aiEdgeEvent = isAiEdgeEvent(localEvent);
+  const hasMeasurement = hasSensorMeasurement(localEvent);
   const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
   const { data: fetchedEvent, mutate: mutateEvent } = useEvent(event.eventId);
 
@@ -57,8 +60,11 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {localEvent.profileDescription || localEvent.sensorDescription || '센서'} {getLevelInfo(localEvent.level).text} 발생
+            {localEvent.title || `${localEvent.eventName || localEvent.profileDescription || localEvent.sensorDescription || '이벤트'} ${getLevelInfo(localEvent.level).text} 발생`}
           </DialogTitle>
+          <DialogDescription className={aiEdgeEvent ? undefined : 'sr-only'}>
+            {aiEdgeEvent ? 'AI EDGE가 이벤트 발생 여부를 판단해 전달한 정보입니다.' : '이벤트 상세 정보 및 조치 기록'}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 p-6">
@@ -174,7 +180,7 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
 
           <div className="space-y-4 bg-gradient-to-br from-gray-50 to-gray-100/50 p-6 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-700 uppercase tracking-wide">이벤트 정보</h3>
+              <h3 className="font-semibold text-gray-700 uppercase tracking-wide">{getEventSourceLabel(localEvent)} 이벤트 정보</h3>
               <span className={`px-3 py-1 text-xs font-semibold ${getLevelInfo(localEvent.level).color}`}>
                 {getLevelInfo(localEvent.level).text}
               </span>
@@ -185,13 +191,13 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
                 <div>
                   <label className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-1.5 block">디바이스 ID</label>
                   <p className="flex items-center gap-2 text-sm text-gray-900 leading-relaxed">
-                    <span className="text-sm font-semibold text-gray-900">{localEvent.sensorDescription || 'N/A'}</span>
+                    <span className="text-sm font-semibold text-gray-900">{aiEdgeEvent ? `AI EDGE · ${localEvent.sourceType}` : localEvent.sensorDescription || 'N/A'}</span>
                     <span className="text-sm text-gray-900 font-mono">{localEvent.deviceId || 'N/A'}</span>
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              {hasMeasurement && <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <label className="font-medium text-gray-700 uppercase tracking-wide mb-6 block">센서 측정값 범위</label>
 
                 <div className="mb-8 text-center">
@@ -208,7 +214,7 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
                   </div>
                 </div>
 
-                {localEvent.minValue !== undefined && localEvent.maxValue !== undefined && localEvent.value !== undefined && (
+                {Number.isFinite(localEvent.minValue) && Number.isFinite(localEvent.maxValue) && (
                   <ValueRangeIndicator
                     value={localEvent.value}
                     minValue={localEvent.minValue}
@@ -234,7 +240,15 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
                     </span>
                   </div>
                 </div>
-              </div>
+              </div>}
+              {!hasMeasurement && (
+                <div className="space-y-3 rounded-lg border border-gray-100 bg-white p-4 text-sm">
+                  <p className="font-semibold text-gray-900">{localEvent.title || localEvent.eventName || localEvent.profileDescription || '이벤트 상세'}</p>
+                  <p className="text-gray-600">발생 시각: {localEvent.occurredAt ? new Date(localEvent.occurredAt).toLocaleString('ko-KR') : '-'}</p>
+                  {localEvent.siteName && <p className="text-gray-600">공원: {localEvent.siteName}</p>}
+                  {localEvent.guideMessage && <p className="whitespace-pre-wrap text-gray-700">{localEvent.guideMessage}</p>}
+                </div>
+              )}
             </div>
           </div>
 

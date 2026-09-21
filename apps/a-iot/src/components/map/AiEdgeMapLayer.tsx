@@ -63,7 +63,7 @@ export default function AiEdgeMapLayer({ viewer, devices, selectedKey, focusRequ
       const entity = layer.entities.getById(device.key) ?? layer.entities.add({ id: device.key })
       entity.position = new ConstantPositionProperty(Cartesian3.fromDegrees(device.position.longitude, device.position.latitude))
       entity.billboard = new BillboardGraphics({
-        image: markerImage(device), width: 32, height: 36,
+        image: markerImage(device), width: 22, height: 24,
         heightReference: HeightReference.CLAMP_TO_GROUND,
         verticalOrigin: VerticalOrigin.BOTTOM,
         disableDepthTestDistance: Number.POSITIVE_INFINITY,
@@ -72,7 +72,7 @@ export default function AiEdgeMapLayer({ viewer, devices, selectedKey, focusRequ
       entity.label = new LabelGraphics({
         text: `${device.kind} · ${device.name}`, font: '13px sans-serif',
         fillColor: Color.WHITE, outlineColor: Color.BLACK, outlineWidth: 3, style: LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cartesian2(0, -48), heightReference: HeightReference.CLAMP_TO_GROUND,
+        pixelOffset: new Cartesian2(0, -34), heightReference: HeightReference.CLAMP_TO_GROUND,
         disableDepthTestDistance: Number.POSITIVE_INFINITY,
         show: selectedKey === device.key,
       })
