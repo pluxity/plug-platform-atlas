@@ -17,7 +17,16 @@ import { getAssetPath } from '../../utils/assetPath'
 import type { MarkerOptions } from './types'
 import { createColoredSvgDataUrl } from '../../utils/svgMarkerUtils'
 
-const blinkListeners = new Map<string, Event.RemoveCallback>()
+const listenersByViewer = new WeakMap<CesiumViewer, Map<string, Event.RemoveCallback>>()
+const markerIdsByViewer = new WeakMap<CesiumViewer, Set<string>>()
+function getBlinkListeners(viewer: CesiumViewer) {
+  let listeners = listenersByViewer.get(viewer)
+  if (!listeners) {
+    listeners = new Map()
+    listenersByViewer.set(viewer, listeners)
+  }
+  return listeners
+}
 
 const DEFAULT_MARKER_CONFIG = {
   width: 32,
@@ -71,6 +80,13 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
   hoveredMarkerId: null,
 
   addMarker: (viewer: CesiumViewer, options: MarkerOptions) => {
+    get().stopMarkerBlink(viewer, options.id)
+    let markerIds = markerIdsByViewer.get(viewer)
+    if (!markerIds) {
+      markerIds = new Set()
+      markerIdsByViewer.set(viewer, markerIds)
+    }
+    markerIds.add(options.id)
     // 이미 존재하는 엔티티 제거 (중복 방지)
     if (options.id) {
       const existing = viewer.entities.getById(options.id)
@@ -136,6 +152,8 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
   },
 
   removeMarker: (viewer: CesiumViewer, id: string) => {
+    get().stopMarkerBlink(viewer, id)
+    markerIdsByViewer.get(viewer)?.delete(id)
     const entity = viewer.entities.getById(id)
     if (entity) {
       viewer.entities.remove(entity)
@@ -170,9 +188,11 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
   },
 
   clearAllMarkers: (viewer: CesiumViewer) => {
+    const blinkListeners = getBlinkListeners(viewer)
     blinkListeners.forEach((removeCallback) => removeCallback())
     blinkListeners.clear()
-    viewer.entities.removeAll()
+    markerIdsByViewer.get(viewer)?.forEach(id => viewer.entities.removeById(id))
+    markerIdsByViewer.delete(viewer)
     viewer.scene.requestRender()
   },
 
@@ -187,6 +207,7 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
   },
 
   startMarkerBlink: (viewer: CesiumViewer, markerId: string, duration: number = BLINK_CONFIG.defaultDuration) => {
+    const blinkListeners = getBlinkListeners(viewer)
     const entity = viewer.entities.getById(markerId)
     if (!entity || !entity.billboard) return
 
@@ -215,6 +236,7 @@ export const useMarkerStore = create<MarkerStore>((set, get) => ({
   },
 
   stopMarkerBlink: (viewer: CesiumViewer, markerId: string) => {
+    const blinkListeners = getBlinkListeners(viewer)
     const removeCallback = blinkListeners.get(markerId)
     if (!removeCallback) return
 

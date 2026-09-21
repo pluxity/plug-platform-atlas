@@ -81,7 +81,7 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
         </Button>
       )}
 
-      <Button
+      {onToggleSeongnamTileset && <Button
         type="button"
         onClick={toggle3DLayers}
         variant="outline"
@@ -94,9 +94,9 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
         }`}
       >
         <Building2 className={`stroke-2 drop-shadow-sm transition-colors ${seongnamVisible ? 'text-blue-600' : 'text-gray-900 hover:text-gray-950'}`} />
-      </Button>
+      </Button>}
 
-      <Button
+      {onToggleDistrictBoundary && <Button
         type="button"
         onClick={toggleDistrictBoundary}
         variant="outline"
@@ -109,7 +109,7 @@ export default function MapControls({ viewer, homePosition, onToggleSeongnamTile
         }`}
       >
         <Layers className={`stroke-2 drop-shadow-sm transition-colors ${districtVisible ? 'text-purple-600' : 'text-gray-900 hover:text-gray-950'}`} />
-      </Button>
+      </Button>}
     </div>
   )
 }

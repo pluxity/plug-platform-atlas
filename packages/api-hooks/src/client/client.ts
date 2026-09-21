@@ -8,27 +8,35 @@ export interface ApiClientConfig {
   onForbidden?: () => void
 }
 
+/** Allows independent panels to display their own 403 without leaving the page. */
+type ApiRequestOptions = Options & { handleForbiddenLocally?: boolean }
+
 export class ApiClient {
   private client: KyInstance
   private config: ApiClientConfig
+  private localErrorClient: KyInstance
   // 동시에 401이 여러 개 떠도 refresh 요청은 1번만 수행 (single-flight)
   private refreshPromise: Promise<boolean> | null = null
 
   constructor(config: ApiClientConfig) {
     this.config = config
+    this.client = this.createClient(false)
+    this.localErrorClient = this.createClient(true)
+  }
 
-    this.client = ky.create({
-      prefixUrl: config.baseUrl,
-      timeout: config.timeout ?? 30000,
+  private createClient(handleForbiddenLocally: boolean): KyInstance {
+    const client = ky.create({
+      prefixUrl: this.config.baseUrl,
+      timeout: this.config.timeout ?? 30000,
       credentials: 'include',
       headers: {
-        ...config.headers,
+        ...this.config.headers,
       },
       hooks: {
         afterResponse: [
           async (request, _options, response) => {
             if (response.status === 403) {
-              this.config.onForbidden?.()
+              if (!handleForbiddenLocally) this.config.onForbidden?.()
               return response
             }
             if (response.status !== 401) return response
@@ -53,14 +61,10 @@ export class ApiClient {
             }
 
             // 갱신 성공 → 원 요청 1회 재시도
-            try {
-              const retryRequest = new Request(request, { headers: new Headers(request.headers) })
-              retryRequest.headers.set('X-Auth-Retry', '1')
-              return await this.client(retryRequest)
-            } catch {
-              this.config.onUnauthorized?.()
-              return response
-            }
+            const retryRequest = new Request(request, { headers: new Headers(request.headers) })
+            retryRequest.headers.set('X-Auth-Retry', '1')
+            // A refreshed request may fail with 403/500; that is not an expired session.
+            return await client(retryRequest)
           },
         ],
         beforeError: [
@@ -84,6 +88,7 @@ export class ApiClient {
         ],
       },
     })
+    return client
   }
 
   /**
@@ -113,17 +118,24 @@ export class ApiClient {
     return url.replace(/^\/+/, '')
   }
 
-  public async get<T>(url: string, options?: Options): Promise<T> {
-    const response = await this.client.get(this.normalizePath(url), options)
+  private requestClient(options: ApiRequestOptions = {}) {
+    const { handleForbiddenLocally, ...requestOptions } = options
+    return { client: handleForbiddenLocally ? this.localErrorClient : this.client, requestOptions }
+  }
+
+  public async get<T>(url: string, options?: ApiRequestOptions): Promise<T> {
+    const { client, requestOptions } = this.requestClient(options)
+    const response = await client.get(this.normalizePath(url), requestOptions)
     return response.json<T>()
   }
 
-  public async post<T = void>(url: string, json?: unknown, options?: Options): Promise<T | void> {
+  public async post<T = void>(url: string, json?: unknown, options?: ApiRequestOptions): Promise<T | void> {
+    const { client, requestOptions: baseOptions } = this.requestClient(options)
     const requestOptions: Options = json instanceof FormData
-        ? { ...options, body: json }
-        : { ...options, json }
+        ? { ...baseOptions, body: json }
+        : { ...baseOptions, json }
 
-    const response = await this.client.post(this.normalizePath(url), requestOptions)
+    const response = await client.post(this.normalizePath(url), requestOptions)
 
     if (response.status === 201) {
       const location = response.headers.get('location')
@@ -144,8 +156,9 @@ export class ApiClient {
     return JSON.parse(text) as T
   }
 
-  public async put<T = void>(url: string, json?: unknown, options?: Options): Promise<T | void> {
-    const response = await this.client.put(this.normalizePath(url), { ...options, json })
+  public async put<T = void>(url: string, json?: unknown, options?: ApiRequestOptions): Promise<T | void> {
+    const { client, requestOptions } = this.requestClient(options)
+    const response = await client.put(this.normalizePath(url), { ...requestOptions, json })
     if (response.status === 204) return
 
     const text = await response.text()
@@ -154,8 +167,9 @@ export class ApiClient {
     return JSON.parse(text) as T
   }
 
-  public async patch<T = void>(url: string, json?: unknown, options?: Options): Promise<T | void> {
-    const response = await this.client.patch(this.normalizePath(url), { ...options, json })
+  public async patch<T = void>(url: string, json?: unknown, options?: ApiRequestOptions): Promise<T | void> {
+    const { client, requestOptions } = this.requestClient(options)
+    const response = await client.patch(this.normalizePath(url), { ...requestOptions, json })
     if (response.status === 204) return
 
     const text = await response.text()

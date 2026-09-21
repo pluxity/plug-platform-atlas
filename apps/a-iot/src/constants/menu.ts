@@ -3,15 +3,17 @@ import {
   BellRing,
   Building2,
   Cctv,
+  History,
   Home,
   KeyRound,
   PlugZap,
+  MonitorSpeaker,
   Radio,
+  ScrollText,
   Settings,
   Shield,
   TreePine,
   Users,
-  Video,
 } from 'lucide-react'
 
 export interface MenuItem {
@@ -24,6 +26,8 @@ export interface MenuItem {
   /** true 이면 권한과 무관하게 메뉴에서 숨김 (라우트도 함께 비활성화할 것) */
   hidden?: boolean
 }
+
+export const ANNOUNCEMENT_ENABLED = import.meta.env.MODE !== 'staging'
 
 export const MAIN_MENU_ITEMS: MenuItem[] = [
   {
@@ -42,11 +46,49 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
     path: '/iot-sensors',
   },
   {
+    title: 'AI EDGE 디바이스',
+    icon: Cctv,
+    path: '/ai-edge-devices',
+  },
+  {
     // 2026-08-31 임시 숨김 — 라우트도 App.tsx 에서 비활성화됨
     title: 'CCTV 모니터링',
     icon: Cctv,
     path: '/cctv-monitoring',
     hidden: true,
+  },
+  {
+    /*
+     * 안내방송 — 운영 행위라 MAIN 레벨에 둔다(대시보드·이벤트·IoT 센서와 같은 레벨).
+     *
+     * 시설 관리 아래가 아닌 이유:
+     * 시설 관리는 전부 adminOnly 인데, 송출은 "공원 접근 권한이 있는 사람"이
+     * 하는 일이라 ADMIN 이 아닌 공원 담당자도 써야 한다. 아래에 두면 못 쓴다.
+     * 전광판 "장치 등록"은 반대로 ADMIN 전용이라 시설 관리에 있다.
+     *
+     * 전광판 송출·프리셋은 /displays, /display-presets API를 사용한다.
+     * TTS 화면(#105~#107)도 여기로 들어온다.
+     */
+    title: '안내방송',
+    icon: MonitorSpeaker,
+    hidden: !ANNOUNCEMENT_ENABLED,
+    children: [
+      {
+        title: 'LED 메시지 송출',
+        icon: MonitorSpeaker,
+        path: '/announcement/led/dispatch',
+      },
+      {
+        title: 'LED 메시지 프리셋',
+        icon: ScrollText,
+        path: '/announcement/led/presets',
+      },
+      {
+        title: '송출 이력',
+        icon: History,
+        path: '/announcement/history',
+      },
+    ],
   },
 ]
 
@@ -67,14 +109,17 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
         path: '/sites/parks',
       },
       {
-        title: 'IoT 센서 관리',
+        title: '센서 카테고리 관리',
         icon: Radio,
         path: '/devices/sensor-categories',
       },
       {
-        title: 'CCTV 관리',
-        icon: Video,
-        path: '/devices/cctv',
+        // 전광판 장치 등록·수정·삭제 (a-iot #101). 화면 미구현 — 자리만 잡아 둔다.
+        // 메시지 송출과 달리 장치 관리는 ADMIN 전용이라 여기가 맞다.
+        title: 'LED 전광판 관리',
+        icon: MonitorSpeaker,
+        path: '/devices/led-panels',
+        hidden: true,
       },
     ],
   },

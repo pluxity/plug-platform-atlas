@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
+    "test:ai-edge": "node --experimental-strip-types --test tests/ai-edge.test.mjs",
     "clean": "rimraf dist node_modules .turbo"
   },
   "dependencies": {

@@ -265,7 +265,7 @@ export default function CctvEventSection() {
     <div className="flex flex-col h-full gap-4">
       {/* ── 차트 영역 (고정 높이) ── */}
       <div className="shrink-0">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold">통계 및 차트</h2>
           <div className="flex gap-2">
             <Select value={interval} onValueChange={(v) => setInterval(v as Interval)}>
@@ -322,13 +322,13 @@ export default function CctvEventSection() {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm">차트 데이터가 없습니다.</div>
+          <div className="flex items-center justify-center h-[220px] rounded-lg border border-gray-200 bg-white text-gray-500 text-sm">차트 데이터가 없습니다.</div>
         )}
       </div>
 
       {/* ── 이벤트 목록 (나머지 영역, 내부 스크롤) ── */}
       <div className="flex-1 min-h-0 flex flex-col">
-        <div className="flex items-center justify-between shrink-0 mb-2">
+        <div className="flex items-center justify-between shrink-0 mb-4">
           <h2 className="text-base font-bold">이벤트 목록</h2>
           <div className="flex gap-2">
             <DatePicker mode="range" value={listDateRange} onChange={setListDateRange} placeholder="날짜 범위 선택" />
@@ -354,7 +354,7 @@ export default function CctvEventSection() {
           className="flex-1 min-h-0 overflow-y-auto"
         >
           {filteredEvents.length === 0 && !isLoading ? (
-            <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
+            <div className="flex items-center justify-center h-32 rounded-lg border border-gray-200 bg-white text-gray-500 text-sm">
               AI EDGE 이벤트가 없습니다.
             </div>
           ) : (

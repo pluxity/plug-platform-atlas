@@ -56,7 +56,7 @@ export default function CctvCameraList({
           <ul className="divide-y">
             {filtered.map((camera) => {
               const isActive = activeCameraIds.has(camera.id)
-              const isOnline = camera.cameraStatus === 1
+              const isOnline = camera.cameraStatus === 'NORMAL'
 
               return (
                 <li key={camera.id}>

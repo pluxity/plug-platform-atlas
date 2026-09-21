@@ -36,10 +36,11 @@ export default defineConfig(({ mode }) => {
           rewrite: (p) => p.replace(/^\/airkorea-api/, ''),
         },
         '/api': {
-          target: 'http://192.168.10.181:8109',
+          target: env.VITE_API_PROXY_TARGET || 'https://dev.pluxity.com/aiot/api',
           changeOrigin: true,
-          secure: false,
           ws: true,
+          cookieDomainRewrite: '',
+          cookiePathRewrite: '/',
           rewrite: (p) => p.replace(/^\/api/, ''),
         },
         '/eds-api': {

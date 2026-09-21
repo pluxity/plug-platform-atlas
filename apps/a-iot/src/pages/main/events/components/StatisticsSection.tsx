@@ -134,7 +134,7 @@ export default function StatisticsSection({ }: StatisticsSectionProps) {
 
     return (
         <div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
                     통계 및 차트
                 </h2>

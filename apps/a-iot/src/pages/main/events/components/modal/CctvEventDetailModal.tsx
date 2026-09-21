@@ -10,8 +10,8 @@ import EventLocationMap from './EventLocationMap'
 interface CctvEventDetailModalProps {
   event: CctvEventResponse | null
   cameraName: string
-  cameraLon?: number
-  cameraLat?: number
+  cameraLon?: number | null
+  cameraLat?: number | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }

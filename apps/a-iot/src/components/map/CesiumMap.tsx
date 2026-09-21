@@ -10,8 +10,17 @@ import { Spinner } from '@plug-atlas/ui'
 import { SVG_MARKERS, type SvgMarkerType, createColoredSvgDataUrl, preloadAllMarkerSvgs } from '../../utils/svgMarkerUtils'
 import { getAssetPath } from '../../utils/assetPath'
 import { createCircularImageDataUrl } from '../../utils/circularImageUtils'
+import AiEdgeMapLayer from './AiEdgeMapLayer'
+import { useParkAreaLayer } from './useParkAreaLayer'
+import DeviceLayerControls, { type DeviceMapScope } from './DeviceLayerControls'
+import { getDevicePosition, type AiEdgeDevice } from '@/lib/ai-edge-device'
+
+const EMPTY_SITES: Site[] = []
+const EMPTY_SENSORS: FeatureResponse[] = []
+const EMPTY_EDGE_DEVICES: AiEdgeDevice[] = []
 
 interface CesiumMapProps {
+  deviceScope?: DeviceMapScope
   sites?: Site[]
   activeTab?: 'overview' | 'parks'
   selectedSiteId?: string | null
@@ -19,24 +28,52 @@ interface CesiumMapProps {
   sensors?: FeatureResponse[]
   className?: string
   viewerInitOptions?: ViewerInitOptions
+  aiEdgeDevices?: AiEdgeDevice[]
+  showAiEdgeInOverview?: boolean
+  selectedDeviceKey?: string | null
+  focusRequest?: number
+  onDeviceSelect?: (device: AiEdgeDevice) => void
+  showSensorsInOverview?: boolean
+  selectedSensorId?: number | null
+  onSensorSelect?: (sensor: FeatureResponse) => void
 }
 
 export default function CesiumMap({
-  sites = [],
+  deviceScope = 'all',
+  sites = EMPTY_SITES,
   activeTab = 'overview',
   selectedSiteId,
   onSiteSelect,
-  sensors = [],
+  sensors = EMPTY_SENSORS,
   className = '',
-  viewerInitOptions
+  viewerInitOptions,
+  aiEdgeDevices = EMPTY_EDGE_DEVICES,
+  showAiEdgeInOverview = false,
+  selectedDeviceKey,
+  focusRequest,
+  onDeviceSelect,
+  showSensorsInOverview = false,
+  selectedSensorId,
+  onSensorSelect,
 }: CesiumMapProps) {
+  const isDeviceManagement = deviceScope !== 'all'
   const cesiumContainerRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<CesiumViewer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [seongnamTilesetRef, setSeongnamTilesetRef] = useState<Cesium3DTileset | null>(null)
   const [tilesetVisible, setTilesetVisible] = useState(false)
-  const [districtVisible, setDistrictVisible] = useState(true)
+  const [districtVisible, setDistrictVisible] = useState(!isDeviceManagement)
+  const [parkAreasVisible, setParkAreasVisible] = useState(true)
+  const [layers, setLayers] = useState({ iot: activeTab === 'parks' || showSensorsInOverview, CCTV: activeTab === 'parks' || showAiEdgeInOverview, MIC: activeTab === 'parks' || showAiEdgeInOverview })
+  useEffect(() => {
+    setLayers({ iot: activeTab === 'parks' || showSensorsInOverview, CCTV: activeTab === 'parks' || showAiEdgeInOverview, MIC: activeTab === 'parks' || showAiEdgeInOverview })
+  }, [activeTab, showSensorsInOverview, showAiEdgeInOverview])
+  const scopedEdgeDevices = useMemo(() => deviceScope === 'iot' ? [] : aiEdgeDevices.filter(device => activeTab !== 'parks' || String(device.site?.id) === selectedSiteId), [aiEdgeDevices, activeTab, selectedSiteId, deviceScope])
+  const visibleEdgeDevices = useMemo(() => scopedEdgeDevices.filter(device => layers[device.kind]), [scopedEdgeDevices, layers])
+  const scopedSensors = useMemo(() => deviceScope === 'ai-edge' ? [] : sensors.filter(sensor =>
+    (activeTab !== 'parks' || sensor.siteResponse?.id?.toString() === selectedSiteId) && getDevicePosition(sensor.longitude, sensor.latitude)
+  ), [sensors, activeTab, selectedSiteId, deviceScope])
 
   const { createViewer, initializeResources } = useViewerStore()
   const { loadAllIonTilesets, loadSeongnamTileset, setupTilesetsAutoHide, applyHeightOffset } = useTilesetStore()
@@ -51,14 +88,8 @@ export default function CesiumMap({
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
 
   const siteSensors = useMemo(() => {
-    if (activeTab !== 'parks' || !selectedSiteId) return []
-
-    return sensors.filter(sensor =>
-      sensor.siteResponse?.id?.toString() === selectedSiteId &&
-      sensor.longitude &&
-      sensor.latitude
-    )
-  }, [sensors, activeTab, selectedSiteId])
+    return layers.iot ? scopedSensors : []
+  }, [scopedSensors, layers.iot])
 
   useEffect(() => {
     preloadAllMarkerSvgs()
@@ -68,6 +99,7 @@ export default function CesiumMap({
     if (!cesiumContainerRef.current) return
 
     let viewerInstance: CesiumViewer | null = null
+    let disposed = false
     const cleanupFunctions: Array<() => void> = []
 
     const initializeViewer = async () => {
@@ -94,7 +126,8 @@ export default function CesiumMap({
         }
         viewerInstance.camera.setView({ destination, orientation })
 
-        await initializeResources(viewerInstance, viewerInitOptions)
+        await initializeResources(viewerInstance, isDeviceManagement ? { ...viewerInitOptions, loadTerrain: false } : viewerInitOptions)
+        if (disposed || viewerInstance.isDestroyed()) return
 
         const imageryProvider = viewerInitOptions?.imageryProvider
         if (imageryProvider === 'ion-default') {
@@ -105,12 +138,14 @@ export default function CesiumMap({
           setCurrentProvider('ion-satellite')
         }
 
-        if (viewerInitOptions?.load3DTiles !== false) {
+        if (!isDeviceManagement && viewerInitOptions?.load3DTiles !== false) {
           const tilesets = await loadAllIonTilesets(viewerInstance)
+          if (disposed || viewerInstance.isDestroyed()) return
           const tilesetsCleanup = setupTilesetsAutoHide(viewerInstance, tilesets, TILESET_AUTO_HIDE_THRESHOLD)
           cleanupFunctions.push(tilesetsCleanup)
 
           const seongnamTileset = await loadSeongnamTileset(viewerInstance)
+          if (disposed || viewerInstance.isDestroyed()) return
           if (seongnamTileset) {
             applyHeightOffset(seongnamTileset, TILESET_HEIGHT_OFFSETS.SEONGNAM)
             seongnamTileset.show = false
@@ -120,6 +155,7 @@ export default function CesiumMap({
 
         setIsLoading(false)
       } catch (err) {
+        if (disposed) return
         console.error('Failed to initialize viewer:', err)
         setError('지도를 로드하는 중 오류가 발생했습니다.')
         setIsLoading(false)
@@ -129,8 +165,9 @@ export default function CesiumMap({
     initializeViewer()
 
     return () => {
+      disposed = true
       cleanupFunctions.forEach(cleanup => cleanup())
-      if (viewerInstance) {
+      if (viewerInstance && !viewerInstance.isDestroyed()) {
         clearAllMarkers(viewerInstance)
         clearAllPolygons(viewerInstance)
         if (!viewerInstance.isDestroyed()) {
@@ -147,9 +184,15 @@ export default function CesiumMap({
     if (!viewer || viewer.isDestroyed() || isLoading) return
 
     const handleEntitySelected = (selectedEntity: Entity | undefined) => {
-      if (!selectedEntity || !selectedEntity.id || !onSiteSelect) return
+      if (!selectedEntity || !selectedEntity.id) return
 
       const entityId = selectedEntity.id.toString()
+      if (entityId.startsWith('device-')) {
+        const sensor = siteSensors.find(item => `device-${item.id}` === entityId)
+        if (sensor) onSensorSelect?.(sensor)
+        return
+      }
+      if (!onSiteSelect) return
 
       if (entityId.startsWith('park-')) {
         const siteId = entityId.replace('park-', '')
@@ -184,7 +227,7 @@ export default function CesiumMap({
         viewer.selectedEntityChanged.removeEventListener(handleEntitySelected)
       }
     }
-  }, [sites, isLoading, activeTab, focusOn, onSiteSelect])
+  }, [sites, siteSensors, isLoading, activeTab, focusOn, onSiteSelect, onSensorSelect])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -208,6 +251,10 @@ export default function CesiumMap({
           viewer.scene.canvas.style.cursor = 'default'
         }
       }
+      if (selectedSensorId != null) {
+        const selected = viewer.entities.getById(`device-${selectedSensorId}`)
+        if (selected?.label) selected.label.show = new ConstantProperty(true)
+      }
     }, 100)
 
     handler.setInputAction((movement: ScreenSpaceEventHandler.MotionEvent) => {
@@ -223,7 +270,7 @@ export default function CesiumMap({
         viewer.scene.canvas.style.cursor = 'default'
       }
     }
-  }, [isLoading, setMarkerHover])
+  }, [isLoading, setMarkerHover, selectedSensorId])
 
   const getSvgMarkerType = (deviceType?: FeatureDeviceTypeResponse): SvgMarkerType => {
     if (!deviceType) return SVG_MARKERS.TEMPERATURE
@@ -264,14 +311,13 @@ export default function CesiumMap({
 
   useEffect(() => {
     const viewer = viewerRef.current
-    if (!viewer || viewer.isDestroyed() || isLoading || !sites.length) return
+    if (!viewer || viewer.isDestroyed() || isLoading) return
 
     let cancelled = false
 
     clearAllMarkers(viewer)
-    clearAllPolygons(viewer)
 
-    if (activeTab === 'overview') {
+    if (activeTab === 'overview' && !isDeviceManagement) {
       const renderSiteMarkers = async () => {
         for (const site of sites) {
           if (cancelled) return
@@ -318,7 +364,8 @@ export default function CesiumMap({
         if (!cancelled) viewer.scene.requestRender()
       }
       renderSiteMarkers()
-    } else if (activeTab === 'parks' && selectedSiteId) {
+    }
+    if (siteSensors.length) {
       siteSensors.forEach((sensor) => {
         const svgMarkerType = getSvgMarkerType(sensor.deviceTypeResponse)
         const deviceStatus = sensor.eventStatus // Feature의 eventStatus 직접 사용
@@ -334,7 +381,7 @@ export default function CesiumMap({
           id: markerId,
           lon: sensor.longitude!,
           lat: sensor.latitude!,
-          height: sensor.height || 10,
+          height: sensor.height ?? 10,
           image: imageUrl,
           width: 22,
           heightValue: 26,
@@ -350,7 +397,9 @@ export default function CesiumMap({
     viewer.scene.requestRender()
 
     return () => { cancelled = true }
-  }, [sites, isLoading, activeTab, selectedSiteId, sensors, parseWktToCoordinates, addMarker, clearAllMarkers, clearAllPolygons])
+  }, [sites, isLoading, activeTab, selectedSiteId, siteSensors, parseWktToCoordinates, addMarker, clearAllMarkers, isDeviceManagement])
+
+  useParkAreaLayer(viewerRef, sites, isDeviceManagement && parkAreasVisible, isLoading)
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -414,6 +463,7 @@ export default function CesiumMap({
 
       if (!districtDataRef.current) {
         const data = await fetchSeongnamDistricts()
+        if (viewer.isDestroyed()) return
         if (data) {
           districtDataRef.current = data
         }
@@ -458,7 +508,7 @@ export default function CesiumMap({
         seongnamTilesetRef.show = false
         setTilesetVisible(false)
       }
-      handleToggleDistrictBoundary(true)
+      handleToggleDistrictBoundary(!isDeviceManagement)
       flyToPosition(viewer, DEFAULT_CAMERA_POSITION)
     } else if (activeTab === 'parks') {
       if (seongnamTilesetRef) {
@@ -473,12 +523,33 @@ export default function CesiumMap({
         }
       }
     }
-  }, [selectedSiteId, activeTab, isLoading, sites, focusOn, flyToPosition, seongnamTilesetRef, handleToggleDistrictBoundary])
+  }, [selectedSiteId, activeTab, isLoading, sites, focusOn, flyToPosition, seongnamTilesetRef, handleToggleDistrictBoundary, isDeviceManagement])
 
+  const selectedSensor = siteSensors.find(sensor => sensor.id === selectedSensorId)
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed() || isLoading) return
+    for (const sensor of siteSensors) {
+      const entity = viewer.entities.getById(`device-${sensor.id}`)
+      if (entity?.label) entity.label.show = new ConstantProperty(sensor.id === selectedSensorId)
+    }
+    viewer.scene.requestRender()
+  }, [siteSensors, selectedSensorId, isLoading])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed() || isLoading) return
+    const position = getDevicePosition(selectedSensor?.longitude, selectedSensor?.latitude)
+    if (!position) return
+    viewer.camera.flyTo({ destination: Cartesian3.fromDegrees(position.longitude, position.latitude, 350), duration: 0.8 })
+  }, [isLoading, selectedSensorId, selectedSensor?.longitude, selectedSensor?.latitude, focusRequest])
 
   return (
     <div className={`relative w-full rounded-lg overflow-hidden ${className || 'h-[600px]'}`}>
       <div ref={cesiumContainerRef} className="w-full h-full" />
+      <AiEdgeMapLayer viewer={isLoading ? null : viewerRef.current} devices={visibleEdgeDevices}
+        selectedKey={selectedDeviceKey} focusRequest={focusRequest} onSelect={onDeviceSelect} />
+      <DeviceLayerControls scope={deviceScope} layers={layers} onChange={setLayers} parkAreas={isDeviceManagement ? { visible: parkAreasVisible, onChange: setParkAreasVisible } : undefined} counts={{ iot: scopedSensors.length, CCTV: scopedEdgeDevices.filter(device => device.kind === 'CCTV' && device.position).length, MIC: scopedEdgeDevices.filter(device => device.kind === 'MIC' && device.position).length }} />
 
       <MapLayerSelector
         viewer={viewerRef.current}
@@ -488,8 +559,8 @@ export default function CesiumMap({
       <MapControls
         viewer={viewerRef.current}
         homePosition={DEFAULT_CAMERA_POSITION}
-        onToggleSeongnamTileset={handleToggleSeongnamTileset}
-        onToggleDistrictBoundary={handleToggleDistrictBoundary}
+        onToggleSeongnamTileset={!isDeviceManagement && viewerInitOptions?.load3DTiles !== false ? handleToggleSeongnamTileset : undefined}
+        onToggleDistrictBoundary={isDeviceManagement ? undefined : handleToggleDistrictBoundary}
         seongnamVisible={tilesetVisible}
         districtVisible={districtVisible}
         className="absolute top-1/2 right-4 -translate-y-1/2 z-10"

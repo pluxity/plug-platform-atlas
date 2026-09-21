@@ -104,3 +104,24 @@ export type {
   AirKoreaResponse,
   AirQualityData,
 } from './airQuality'
+
+// LED 전광판 types
+export type {
+  LedPanel,
+  LedPanelStatus,
+  LedPreset,
+  LedPresetCreateRequest,
+  LedPresetUpdateRequest,
+  LedDispatchRequest,
+} from './led'
+export {
+  LED_CONTENT_MAX_LENGTH,
+  LED_TITLE_MAX_LENGTH,
+} from './led'
+
+// 안내방송 types
+export type {
+  Announcement,
+  AnnouncementPage,
+  AnnouncementQueryParams,
+} from './announcement'

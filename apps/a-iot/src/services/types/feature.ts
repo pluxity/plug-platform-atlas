@@ -121,10 +121,17 @@ export const FeatureResponseSchema = z.object({
   height: z.number().optional(),
   siteResponse: SiteResponseSchema.optional(),
   deviceTypeResponse: FeatureDeviceTypeResponseSchema.optional(),
+  // 실제 조회 응답은 isActive, Swagger와 수정 요청은 active를 사용한다.
+  isActive: z.boolean().optional(),
   active: z.boolean().optional(),
 })
 
 export type FeatureResponse = z.infer<typeof FeatureResponseSchema>
+
+/** 조회 응답의 활성화 값을 목록·상세·편집에서 사용하는 active로 통일한다. */
+export function normalizeFeatureResponse(feature: FeatureResponse): FeatureResponse {
+  return { ...feature, active: feature.isActive ?? feature.active }
+}
 
 /**
  * Feature Update Request
