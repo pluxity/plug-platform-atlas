@@ -3,6 +3,7 @@ import {Client, IMessage, StompSubscription} from '@stomp/stompjs';
 import type {ConnectionErrorPayload, Notification, Event} from '../types';
 import {useNotificationStore, useEventStore} from '../../stores';
 import { useRefreshFeatures } from './useFeature';
+import { useRefreshEventSummary } from './useEventSummary';
 
 const getWebSocketUrl = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -26,6 +27,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
     const addEvent = useEventStore((state) => state.addEvent);
     const updateEvent = useEventStore((state) => state.updateEvent);
     const refreshFeatures = useRefreshFeatures();
+    const refreshEventSummary = useRefreshEventSummary();
 
     useEffect(() => {
         const client = new Client({
@@ -35,6 +37,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
             heartbeatOutgoing: 5000,
             onConnect: () => {
                 setIsConnected(true);
+                void refreshEventSummary();
                 void refreshFeatures();
 
                 const sensorAlarmSub = client.subscribe('/user/queue/sensor-alarm', (message: IMessage) => {
@@ -43,6 +46,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
 
                         // EventStore에 이벤트 추가/업데이트
                         addEvent(payload);
+                        void refreshEventSummary();
                         void refreshFeatures();
 
                         // Notification 생성
@@ -89,6 +93,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
 
                         // EventStore에 이벤트 상태 업데이트 (가장 중요!)
                         updateEvent(updatedEvent.eventId, updatedEvent);
+                        void refreshEventSummary();
                         void refreshFeatures();
 
                         // ACTIVE만 알림에 남기고, 처리 중/완료는 기존 알림을 제거한다.
@@ -124,7 +129,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
             subscriptionsRef.current = [];
             client.deactivate();
         };
-    }, [addNotification, addEvent, updateEvent, refreshFeatures]);
+    }, [addNotification, addEvent, updateEvent, refreshFeatures, refreshEventSummary]);
 
     return {
         isConnected,
