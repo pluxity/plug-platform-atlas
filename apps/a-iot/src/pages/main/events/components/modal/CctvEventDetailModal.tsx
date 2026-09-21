@@ -1,4 +1,4 @@
-import { Camera, Play, Pause, CheckCircle2 } from 'lucide-react'
+import { Camera } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
   Badge,
@@ -55,70 +55,21 @@ export default function CctvEventDetailModal({
   const mapLat = eventHasCoords ? event.latitude : (cameraLat ?? 0)
   const hasCoordinates = mapLon !== 0 && mapLat !== 0
 
-  const getStepStatus = (step: string) => {
-    const steps = ['STARTED', 'IN_PROGRESS', 'ENDED']
-    const currentIndex = steps.indexOf(event.eventStatus)
-    const stepIndex = steps.indexOf(step)
-    if (stepIndex < currentIndex) return 'completed'
-    if (stepIndex === currentIndex) return 'active'
-    return 'upcoming'
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{typeLabel} 이벤트 발생</DialogTitle>
-          <DialogDescription className="sr-only">AI EDGE 이벤트 상세 정보</DialogDescription>
+          <DialogTitle>{typeLabel} 이벤트 상세</DialogTitle>
+          <DialogDescription>AI EDGE가 판단해 전달한 이벤트 정보입니다.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 p-6">
-          {/* 상태 스텝퍼 */}
-          <div className="bg-gray-50/50 p-5 rounded-lg border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-5">이벤트 상태</h3>
-
-            <div className="relative flex items-center justify-between px-8">
-              <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200" style={{ left: '12%', right: '12%' }} />
-              <div
-                className="absolute top-4 left-0 h-0.5 bg-blue-400 transition-all duration-300"
-                style={{
-                  left: '12%',
-                  width: event.eventStatus === 'STARTED' ? '0%' : event.eventStatus === 'IN_PROGRESS' ? '38%' : '76%',
-                }}
-              />
-
-              {[
-                { key: 'STARTED', label: '발생', icon: Play, activeColor: 'red' },
-                { key: 'IN_PROGRESS', label: '진행중', icon: Pause, activeColor: 'yellow' },
-                { key: 'ENDED', label: '종료', icon: CheckCircle2, activeColor: 'green' },
-              ].map(({ key, label, icon: Icon, activeColor }) => {
-                const status = getStepStatus(key)
-                return (
-                  <div key={key} className="flex flex-col items-center flex-1 relative z-10">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-2 transition-colors ${
-                      status === 'active'
-                        ? `bg-${activeColor}-100 border-2 border-${activeColor}-500`
-                        : status === 'completed'
-                          ? 'bg-blue-100 border-2 border-blue-500'
-                          : 'bg-white border-2 border-gray-300'
-                    }`}>
-                      {status === 'completed' ? (
-                        <CheckCircle2 className="h-4.5 w-4.5 text-blue-600" />
-                      ) : (
-                        <Icon className={`h-4.5 w-4.5 ${
-                          status === 'active' ? `text-${activeColor}-600` : 'text-gray-400'
-                        }`} />
-                      )}
-                    </div>
-                    <p className={`text-xs font-medium ${
-                      status === 'active' ? `text-${activeColor}-600`
-                        : status === 'completed' ? 'text-gray-600'
-                          : 'text-gray-400'
-                    }`}>{label}</p>
-                  </div>
-                )
-              })}
+          <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-700">AI EDGE 감지 상태</h3>
+              <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
             </div>
+            <p className="text-xs text-gray-500">장비에서 전달한 이벤트 상태이며, 운영자의 조치 상태와는 별개입니다.</p>
           </div>
 
           {/* 썸네일 + 위치 지도 */}
@@ -201,7 +152,11 @@ export default function CctvEventDetailModal({
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-100">
+                <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">수신 시각</div>
+                    <div className="text-xs font-medium text-gray-700">{formatDateTime(event.createdAt)}</div>
+                  </div>
                   <div>
                     <div className="text-xs text-gray-500 mb-1">이벤트 시작</div>
                     <div className="text-xs font-medium text-gray-700">{formatDateTime(event.eventStart)}</div>

@@ -70,7 +70,8 @@ export default function CesiumMap({
     setLayers({ iot: activeTab === 'parks' || showSensorsInOverview, CCTV: activeTab === 'parks' || showAiEdgeInOverview, MIC: activeTab === 'parks' || showAiEdgeInOverview })
   }, [activeTab, showSensorsInOverview, showAiEdgeInOverview])
   const scopedEdgeDevices = useMemo(() => deviceScope === 'iot' ? [] : aiEdgeDevices.filter(device => activeTab !== 'parks' || String(device.site?.id) === selectedSiteId), [aiEdgeDevices, activeTab, selectedSiteId, deviceScope])
-  const visibleEdgeDevices = useMemo(() => scopedEdgeDevices.filter(device => layers[device.kind]), [scopedEdgeDevices, layers])
+  const visibleEdgeDevices = useMemo(() => activeTab === 'parks' || showAiEdgeInOverview
+    ? scopedEdgeDevices.filter(device => layers[device.kind]) : [], [scopedEdgeDevices, layers, activeTab, showAiEdgeInOverview])
   const scopedSensors = useMemo(() => deviceScope === 'ai-edge' ? [] : sensors.filter(sensor =>
     (activeTab !== 'parks' || sensor.siteResponse?.id?.toString() === selectedSiteId) && getDevicePosition(sensor.longitude, sensor.latitude)
   ), [sensors, activeTab, selectedSiteId, deviceScope])
@@ -88,8 +89,8 @@ export default function CesiumMap({
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
 
   const siteSensors = useMemo(() => {
-    return layers.iot ? scopedSensors : []
-  }, [scopedSensors, layers.iot])
+    return layers.iot && (activeTab === 'parks' || showSensorsInOverview) ? scopedSensors : []
+  }, [scopedSensors, layers.iot, activeTab, showSensorsInOverview])
 
   useEffect(() => {
     preloadAllMarkerSvgs()
@@ -549,7 +550,9 @@ export default function CesiumMap({
       <div ref={cesiumContainerRef} className="w-full h-full" />
       <AiEdgeMapLayer viewer={isLoading ? null : viewerRef.current} devices={visibleEdgeDevices}
         selectedKey={selectedDeviceKey} focusRequest={focusRequest} onSelect={onDeviceSelect} />
-      <DeviceLayerControls scope={deviceScope} layers={layers} onChange={setLayers} parkAreas={isDeviceManagement ? { visible: parkAreasVisible, onChange: setParkAreasVisible } : undefined} counts={{ iot: scopedSensors.length, CCTV: scopedEdgeDevices.filter(device => device.kind === 'CCTV' && device.position).length, MIC: scopedEdgeDevices.filter(device => device.kind === 'MIC' && device.position).length }} />
+      {(activeTab === 'parks' || showSensorsInOverview || showAiEdgeInOverview) && (
+        <DeviceLayerControls scope={deviceScope} layers={layers} onChange={setLayers} parkAreas={isDeviceManagement ? { visible: parkAreasVisible, onChange: setParkAreasVisible } : undefined} counts={{ iot: scopedSensors.length, CCTV: scopedEdgeDevices.filter(device => device.kind === 'CCTV' && device.position).length, MIC: scopedEdgeDevices.filter(device => device.kind === 'MIC' && device.position).length }} />
+      )}
 
       <MapLayerSelector
         viewer={viewerRef.current}

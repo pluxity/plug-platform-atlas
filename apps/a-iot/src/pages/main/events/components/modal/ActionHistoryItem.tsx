@@ -131,8 +131,9 @@ const ActionHistoryItem: React.FC<ActionHistoryItemProps> = ({ history, eventId,
   );
 };
 
-const AddActionHistoryForm: React.FC<{ eventId: number; onSuccess: () => void }> = ({ eventId, onSuccess }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const AddActionHistoryForm: React.FC<{ eventId: number; onSuccess: () => void; alwaysOpen?: boolean }> = ({ eventId, onSuccess, alwaysOpen = false }) => {
+  const [expanded, setIsOpen] = useState(false);
+  const isOpen = alwaysOpen || expanded;
   const [content, setContent] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -140,7 +141,7 @@ const AddActionHistoryForm: React.FC<{ eventId: number; onSuccess: () => void }>
 
   useEffect(() => {
     if (isOpen && textareaRef.current) {
-      textareaRef.current.focus();
+      textareaRef.current.focus({ preventScroll: true });
     }
   }, [isOpen]);
 
@@ -224,7 +225,7 @@ const AddActionHistoryForm: React.FC<{ eventId: number; onSuccess: () => void }>
 };
 
 export default function ActionHistorySection({ eventId, onActionUpdate }: ActionHistorySectionProps) {
-  const { data: histories, isLoading, mutate } = useEventActionHistories(eventId, {
+  const { data: histories, error, isLoading, mutate } = useEventActionHistories(eventId, {
     refreshInterval: 30000,
     revalidateOnFocus: true,
   });
@@ -248,14 +249,19 @@ export default function ActionHistorySection({ eventId, onActionUpdate }: Action
         </h4>
       </div>
 
-      <div className="bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+      {(isLoading || error || !!histories?.length) && <div className="bg-gray-50/50 p-4 rounded-lg border border-gray-100">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="text-sm text-gray-500">로딩 중...</div>
           </div>
+        ) : error ? (
+          <div role="alert" className="text-sm text-red-600">
+            조치 이력을 불러오지 못했습니다.
+            <Button variant="link" size="sm" onClick={() => void mutate()}>다시 시도</Button>
+          </div>
         ) : histories && histories.length > 0 ? (
           <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-            {histories
+            {[...histories]
               .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
               .map((history) => (
                 <ActionHistoryItem
@@ -266,14 +272,12 @@ export default function ActionHistorySection({ eventId, onActionUpdate }: Action
                 />
               ))}
           </div>
-        ) : (
-          <div className="text-center py-6">
-            <p className="text-sm text-gray-500">조치 이력이 없습니다.</p>
-          </div>
-        )}
-      </div>
+        ) : null}
+      </div>}
 
-      <AddActionHistoryForm eventId={eventId} onSuccess={handleRefresh} />
+      {!isLoading && !error && histories && (
+        <AddActionHistoryForm key={eventId} eventId={eventId} onSuccess={handleRefresh} alwaysOpen={histories.length === 0} />
+      )}
     </div>
   );
 }

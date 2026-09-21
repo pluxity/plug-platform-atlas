@@ -8,15 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, DataTable, Dialog, DialogCont
 import WeatherCard from '@/components/weather/WeatherCard'
 import AirQualityCard from '@/components/air-quality/AirQualityCard'
 import CesiumMap from '@/components/map/CesiumMap'
-import { eventColumns, cctvEventColumns, featureStatusColumns } from '@/pages/main/dashboard/columns'
-import { useCctvEvents, useFeatures, useSites } from '@/services/hooks'
+import { eventColumns, aiEdgeIncidentColumns, featureStatusColumns } from '@/pages/main/dashboard/columns'
+import { useEvents, useFeatures, useSites } from '@/services/hooks'
 import { useAiEdgeDevices } from '@/services/hooks/useAiEdgeDevices'
 import DeviceDetails from '@/components/ai-edge/DeviceDetails'
 import DeviceLoadErrors from '@/components/ai-edge/DeviceLoadErrors'
 import EventDetailModal from '@/pages/main/events/components/modal/EventDetailModal'
-import CctvEventDetailModal from '@/pages/main/events/components/modal/CctvEventDetailModal'
 import { Event, FeatureResponse } from '@/services/types'
-import type { CctvEventResponse } from '@/services/types'
+import { isSensorEvent, isAiEdgeEvent } from '@/lib/event-presentation'
 import { useEventStore, useNotificationStore } from '@/stores'
 import { getAssetPath } from '@/utils/assetPath'
 
@@ -24,18 +23,23 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'parks'>('overview')
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
-  const [selectedCctvEvent, setSelectedCctvEvent] = useState<CctvEventResponse | null>(null)
   const [isParkPanelOpen, setIsParkPanelOpen] = useState(true)
   const { data: sites = [] } = useSites()
   const { devices: aiEdgeDevices, cctvs: cctvQuery, mics: micQuery } = useAiEdgeDevices()
-  const cctvs = cctvQuery.data ?? []
   const [selectedDeviceKey, setSelectedDeviceKey] = useState<string | null>(null)
   const selectedDevice = aiEdgeDevices.find(device => device.key === selectedDeviceKey)
-  const { data: cctvEventsData } = useCctvEvents({ size: 50 }, { refreshInterval: 30_000 })
+  const eventSiteId = selectedSiteId ? Number(selectedSiteId) : undefined
+  const cctvIncidents = useEvents({ sourceType: 'CCTV', siteId: eventSiteId, size: 50 }, { refreshInterval: 30_000 })
+  const micIncidents = useEvents({ sourceType: 'MIC', siteId: eventSiteId, size: 50 }, { refreshInterval: 30_000 })
+  const edgeIncidents = useMemo(() => [...(cctvIncidents.data ?? []), ...(micIncidents.data ?? [])]
+    .filter(event => isAiEdgeEvent(event) && (eventSiteId == null || event.siteId === eventSiteId))
+    .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+    .slice(0, 50), [cctvIncidents.data, micIncidents.data, eventSiteId])
   const { data: sensors = [] } = useFeatures()
   const { data: users = [] } = useAdminUsers()
   const isEventStoreInitialized = useNotificationStore((state) => state.isInitialized)
 
+  const eventMap = useEventStore((state) => state.events)
   const getEventsBySite = useEventStore((state) => state.getEventsBySite)
   const getAllEvents = useEventStore((state) => state.getAllEvents)
 
@@ -44,13 +48,7 @@ export default function Dashboard() {
       return getEventsBySite(parseInt(selectedSiteId))
     }
     return getAllEvents()
-  }, [selectedSiteId, getEventsBySite, getAllEvents, isEventStoreInitialized])
-
-  const cameraNameMap = useMemo(() => {
-    const map = new Map<string, string>()
-    cctvs.forEach((c) => map.set(c.edsCameraId, c.name))
-    return map
-  }, [cctvs])
+  }, [selectedSiteId, getEventsBySite, getAllEvents, isEventStoreInitialized, eventMap])
 
   const handleTabChange = (value: string) => {
     if (value === 'overview' || value === 'parks') {
@@ -119,7 +117,7 @@ export default function Dashboard() {
     ).length
 
     return { active, inProgress, resolved, total: active + inProgress + resolved }
-  }, [getAllEvents, isEventStoreInitialized])
+  }, [getAllEvents, isEventStoreInitialized, eventMap])
 
   const chartData = useMemo(() => [
     { name: '미처리', value: eventStatusStats.active, fill: '#EF4444' },
@@ -135,13 +133,13 @@ export default function Dashboard() {
       const sensorCount = sensors.filter(s => s.siteResponse?.id === site.id).length
       return { site, activeCount, inProgressCount, sensorCount }
     })
-  }, [sites, sensors, getEventsBySite, isEventStoreInitialized])
+  }, [sites, sensors, getEventsBySite, isEventStoreInitialized, eventMap])
 
   const filterRecentEvents = (eventList: Event[]) => {
     const sevenDaysAgo = Date.now() - 7 * 86_400_000
     return eventList
       .filter(event => {
-        if (!event.status || !event.level || event.level === 'NORMAL') return false
+        if (!isSensorEvent(event) || !event.status || !event.level || event.level === 'NORMAL') return false
         if (event.status === 'ACTIVE' || event.status === 'IN_PROGRESS') return true
         return new Date(event.occurredAt).getTime() > sevenDaysAgo
       })
@@ -157,7 +155,7 @@ export default function Dashboard() {
 
   const allFilteredEvents = useMemo(() => {
     return filterRecentEvents(getAllEvents())
-  }, [getAllEvents, isEventStoreInitialized])
+  }, [getAllEvents, isEventStoreInitialized, eventMap])
 
   const deviceStats = useMemo(() => {
     if (!selectedSiteId) return { total: 0, connected: 0, disconnected: 0 }
@@ -282,8 +280,6 @@ export default function Dashboard() {
           <Card className="col-span-7 overflow-hidden relative">
             <CesiumMap
               deviceScope="all"
-              showSensorsInOverview
-              showAiEdgeInOverview
               sites={sites}
               activeTab={activeTab}
               selectedSiteId={selectedSiteId}
@@ -450,7 +446,7 @@ export default function Dashboard() {
 
             <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
               <CardHeader className='px-4 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
+                <CardTitle className="text-sm font-bold">IoT 센서 이벤트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
               </CardHeader>
               <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
                 {allFilteredEvents.length === 0 ? (
@@ -479,7 +475,11 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                {!cctvEventsData?.content?.length ? (
+                {cctvIncidents.error || micIncidents.error ? (
+                  <div role="alert" className="p-4 text-sm text-red-600">AI EDGE 이벤트를 불러오지 못했습니다.</div>
+                ) : cctvIncidents.isLoading || micIncidents.isLoading ? (
+                  <div className="p-4 text-sm text-gray-500">AI EDGE 이벤트 로딩 중...</div>
+                ) : !edgeIncidents.length ? (
                   <div className="flex items-center justify-center text-gray-500 h-full">
                     AI EDGE 이벤트가 없습니다.
                   </div>
@@ -488,9 +488,9 @@ export default function Dashboard() {
                     className="h-full"
                     density="compact"
                     stickyHeader={true}
-                    columns={cctvEventColumns}
-                    data={cctvEventsData.content}
-                    onRowClick={(row) => setSelectedCctvEvent(row)}
+                    columns={aiEdgeIncidentColumns}
+                    data={edgeIncidents}
+                    onRowClick={(row) => setSelectedEvent(row)}
                   />
                 )}
               </CardContent>
@@ -507,8 +507,6 @@ export default function Dashboard() {
           <Card className="col-span-5 overflow-hidden relative">
             <CesiumMap
               deviceScope="all"
-              showSensorsInOverview
-              showAiEdgeInOverview
               sites={sites}
               activeTab={activeTab}
               selectedSiteId={selectedSiteId}
@@ -582,7 +580,7 @@ export default function Dashboard() {
 
             <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
               <CardHeader className='px-4 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold">이벤트 리스트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
+                <CardTitle className="text-sm font-bold">IoT 센서 이벤트 <span className="text-xs font-normal text-gray-400">최근 7일</span></CardTitle>
               </CardHeader>
               <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
                 {filteredEvents.length === 0 ? (
@@ -610,7 +608,11 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                {!cctvEventsData?.content?.length ? (
+                {cctvIncidents.error || micIncidents.error ? (
+                  <div role="alert" className="p-4 text-sm text-red-600">AI EDGE 이벤트를 불러오지 못했습니다.</div>
+                ) : cctvIncidents.isLoading || micIncidents.isLoading ? (
+                  <div className="p-4 text-sm text-gray-500">AI EDGE 이벤트 로딩 중...</div>
+                ) : !edgeIncidents.length ? (
                   <div className="flex items-center justify-center text-gray-500 h-full">
                     AI EDGE 이벤트가 없습니다.
                   </div>
@@ -619,9 +621,9 @@ export default function Dashboard() {
                     className="h-full"
                     density="compact"
                     stickyHeader={true}
-                    columns={cctvEventColumns}
-                    data={cctvEventsData.content}
-                    onRowClick={(row) => setSelectedCctvEvent(row)}
+                    columns={aiEdgeIncidentColumns}
+                    data={edgeIncidents}
+                    onRowClick={(row) => setSelectedEvent(row)}
                   />
                 )}
               </CardContent>
@@ -644,14 +646,6 @@ export default function Dashboard() {
           {selectedDevice && <DeviceDetails device={selectedDevice} onClose={() => setSelectedDeviceKey(null)} />}
         </DialogContent>
       </Dialog>
-      <CctvEventDetailModal
-        event={selectedCctvEvent}
-        cameraName={selectedCctvEvent ? (cameraNameMap.get(selectedCctvEvent.cameraId) || selectedCctvEvent.cameraId) : ''}
-        cameraLon={selectedCctvEvent ? cctvs.find((c) => c.edsCameraId === selectedCctvEvent.cameraId)?.lon : undefined}
-        cameraLat={selectedCctvEvent ? cctvs.find((c) => c.edsCameraId === selectedCctvEvent.cameraId)?.lat : undefined}
-        open={selectedCctvEvent !== null}
-        onOpenChange={(open) => { if (!open) setSelectedCctvEvent(null) }}
-      />
     </div>
   )
 }

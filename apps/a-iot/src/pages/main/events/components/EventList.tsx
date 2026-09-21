@@ -8,6 +8,7 @@ import { useUpdateEventStatus, useEvent } from '../../../../services/hooks';
 import { getStatusInfo, getStatusBadgeStyle } from "../utils/statusUtils.ts";
 import { getLevelInfo } from "../utils/levelUtils.ts";
 import { useSearchParams } from 'react-router-dom';
+import { isSensorEvent } from '@/lib/event-presentation';
 
 interface EventListProps {
     events: Event[];
@@ -49,9 +50,9 @@ export default function EventList({ events, isLoading, hasMore, onLoadMore, onRe
     };
 
     const filteredEvents = useMemo(() => {
-        let eventList = events.filter(event => event.level !== 'NORMAL');
+        let eventList = events.filter(event => isSensorEvent(event) && event.level !== 'NORMAL');
 
-        if (fetchedEvent && targetEventId) {
+        if (fetchedEvent && targetEventId && isSensorEvent(fetchedEvent)) {
             const exists = eventList.some(e => e.eventId === targetEventId);
             if (!exists) {
                 eventList = [fetchedEvent, ...eventList];

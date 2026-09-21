@@ -24,6 +24,7 @@ export default function EventsHistoryPage() {
   }), []);
 
   const { data: events, error: eventsError } = useEvents({
+    sourceType: 'SENSOR',
     from: sixMonthsRange.from,
     to: sixMonthsRange.to,
     ...(globalStatusFilter !== 'all' && { status: globalStatusFilter as EventStatus }),
