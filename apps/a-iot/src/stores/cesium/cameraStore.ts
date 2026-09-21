@@ -55,7 +55,7 @@ interface CameraState {
 interface CameraActions {
   flyToPosition: (viewer: CesiumViewer, position: CameraPosition) => void
   setView: (viewer: CesiumViewer, position: CameraPosition) => void
-  focusOn: (viewer: CesiumViewer, target: FocusTarget, distance?: number, pitch?: number) => void
+  focusOn: (viewer: CesiumViewer, target: FocusTarget, distance?: number, pitch?: number, complete?: () => void) => void
 }
 
 type CameraStore = CameraState & CameraActions
@@ -83,13 +83,13 @@ export const useCameraStore = create<CameraStore>(() => ({
     })
   },
 
-  focusOn: (viewer: CesiumViewer, target: FocusTarget, distance: number = 1500, pitch: number = -45) => {
+  focusOn: (viewer: CesiumViewer, target: FocusTarget, distance: number = 1500, pitch: number = -45, complete?: () => void) => {
     let coord: { lon: number; lat: number } | null = null
     let boundsRadius = 0
 
     if (typeof target === 'string') {
       const parsed = parseWKT(target)
-      if (!parsed) return
+      if (!parsed) { complete?.(); return }
       coord = { lon: parsed.lon, lat: parsed.lat }
       if (parsed.bounds) {
         const w = parsed.bounds.width * 6378137 * Math.cos(CesiumMath.toRadians(parsed.lat))
@@ -111,6 +111,8 @@ export const useCameraStore = create<CameraStore>(() => ({
     viewer.camera.flyToBoundingSphere(boundingSphere, {
       offset: offset,
       duration: 1.0,
+      complete,
+      cancel: complete,
     })
   },
 }))

@@ -7,6 +7,90 @@ import { normalizeFeatureResponse } from '../src/services/types/feature.ts'
 import { getCoordinateEditState } from '../src/lib/ai-edge-device.ts'
 import { getHeightEditState } from '../src/lib/sensor-edit.ts'
 import { hasSensorMeasurement, isAiEdgeEvent, isSensorEvent, getEventSourceLabel } from '../src/lib/event-presentation.ts'
+import { getEventMapTarget } from '../src/lib/event-map-target.ts'
+import { fetchEvent } from '../src/lib/fetch-event.ts'
+import { isEventListCacheKey, replaceCachedEvent } from '../src/lib/event-cache.ts'
+import { useNotificationStore } from '../src/stores/notificationStore.ts'
+
+test('status socket messages remove handled alarms and never create non-ACTIVE alerts', () => {
+  const store = useNotificationStore.getState()
+  const alarm = (eventId, status) => ({ id: `event-${eventId}`, type: 'sensor-alarm', timestamp: new Date(), payload: { eventId, status } })
+  store.clearNotifications()
+  try {
+    store.addNotification(alarm(1, 'ACTIVE'))
+    store.addNotification(alarm(1, 'ACTIVE'))
+    assert.equal(useNotificationStore.getState().notifications.length, 1)
+    store.addNotification(alarm(2, 'ACTIVE'))
+    store.addNotification(alarm(1, 'IN_PROGRESS'))
+    assert.equal(useNotificationStore.getState().unreadCount, 1)
+    assert.deepEqual(useNotificationStore.getState().notifications.map(n => n.eventId), [2])
+    store.addNotification(alarm(2, 'RESOLVED'))
+    store.addNotification(alarm(3, 'RESOLVED'))
+    assert.equal(useNotificationStore.getState().notifications.length, 0)
+    assert.equal(useNotificationStore.getState().unreadCount, 0)
+    store.setNotifications([alarm(1, 'ACTIVE'), alarm(2, 'IN_PROGRESS'), alarm(3, 'RESOLVED')])
+    assert.equal(useNotificationStore.getState().notifications.length, 1)
+  } finally {
+    store.clearNotifications()
+  }
+})
+
+test('completed events update dashboard and paginated list caches without mutating old data', () => {
+  const original = { eventId: 7, status: 'ACTIVE' }
+  const other = { eventId: 8, status: 'IN_PROGRESS' }
+  const completed = { eventId: 7, status: 'RESOLVED', updatedBy: 'operator' }
+  const page = { content: [original, other], hasNext: true, nextCursor: 8 }
+  assert.deepEqual(replaceCachedEvent([original, other], completed), [completed, other])
+  assert.deepEqual(replaceCachedEvent([page], completed), [{ ...page, content: [completed, other] }])
+  assert.equal(original.status, 'ACTIVE')
+  assert.equal(page.content[0], original)
+  assert.equal(replaceCachedEvent(undefined, completed), undefined)
+  for (const key of ['events', 'events?sourceType=SENSOR&siteId=2', 'events?sourceType=CCTV', 'events?sourceType=MIC', '$inf$events?size=10']) {
+    assert.equal(isEventListCacheKey(key), true)
+  }
+  for (const key of ['events/time-series', 'events/7/action-histories', 'cctvs', ['event-detail', 7]]) {
+    assert.equal(isEventListCacheKey(key), false)
+  }
+})
+
+test('event detail reload follows the resolved cursor page after action history changes server status', async () => {
+  let saved = false
+  const paths = []
+  const client = { get: async path => {
+    paths.push(path)
+    const query = new URL(path, 'http://test').searchParams
+    assert.equal(query.get('sourceType'), 'SENSOR')
+    assert.equal(query.get('siteId'), '2')
+    assert.equal(query.has('status'), false)
+    if (!saved) return { data: { content: [{ eventId: 7, status: 'ACTIVE' }], hasNext: false } }
+    if (!query.has('lastId')) return { data: { content: [{ eventId: 8, status: 'ACTIVE' }], hasNext: true, nextCursor: 8, nextStatus: 'ACTIVE' } }
+    assert.equal(query.get('lastStatus'), 'ACTIVE')
+    return { data: { content: [{ eventId: 7, status: 'RESOLVED' }], hasNext: false } }
+  } }
+  assert.equal((await fetchEvent(client, 7, { sourceType: 'SENSOR', siteId: 2 })).status, 'ACTIVE')
+  saved = true
+  assert.equal((await fetchEvent(client, 7, { sourceType: 'SENSOR', siteId: 2 })).status, 'RESOLVED')
+  assert.ok(paths.every(path => path.startsWith('events?')))
+})
+
+test('event detail reports missing events and rejects repeated cursors', async () => {
+  await assert.rejects(fetchEvent({ get: async () => ({ data: { content: [], hasNext: false } }) }, 7), /찾을 수 없습니다/)
+  await assert.rejects(fetchEvent({ get: async () => ({ data: { content: [], hasNext: true, nextCursor: 8, nextStatus: 'ACTIVE' } }) }, 7), /반복/)
+})
+
+test('event navigation matches both park and source, then falls back to event coordinates', () => {
+  const sensor = { deviceId: 'shared', siteResponse: { id: 2 }, longitude: 127, latitude: 37 }
+  const devices = [
+    { kind: 'CCTV', externalId: 'shared', site: { id: 2 }, position: { longitude: 128, latitude: 38 } },
+    { kind: 'MIC', externalId: 'shared', site: { id: 2 }, position: { longitude: 129, latitude: 39 } },
+  ]
+  const event = { deviceId: 'shared', siteId: 2, longitude: 126, latitude: 36 }
+  assert.deepEqual(getEventMapTarget({ ...event, sourceType: 'SENSOR' }, [sensor], devices), { longitude: 127, latitude: 37 })
+  assert.deepEqual(getEventMapTarget({ ...event, sourceType: 'CCTV' }, [sensor], devices), devices[0].position)
+  assert.deepEqual(getEventMapTarget({ ...event, sourceType: 'MIC' }, [sensor], devices), devices[1].position)
+  assert.deepEqual(getEventMapTarget({ ...event, sourceType: 'SENSOR', siteId: 3 }, [sensor], devices), { longitude: 126, latitude: 36 })
+  assert.equal(getEventMapTarget({ ...event, sourceType: 'MIC', siteId: 3, longitude: null, latitude: null }, [sensor], devices), null)
+})
 
 test('mixed incident feeds separate IoT sensors from CCTV and MIC events', () => {
   const events = [

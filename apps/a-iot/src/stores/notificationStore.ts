@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Notification } from '../services/types';
+import type { Event, Notification } from '../services/types';
 
 const MAX_NOTIFICATIONS = 50;
 
@@ -27,8 +27,21 @@ export const useNotificationStore = create<NotificationStore>()((set) => ({
     isInitialized: false,
 
     addNotification: (notification) => {
+        const event = notification.type === 'sensor-alarm' ? notification.payload as Event : undefined;
+        if (event && event.status !== 'ACTIVE') {
+            set(state => {
+                const notifications = state.notifications.filter(item => item.type !== 'sensor-alarm' ||
+                    (item.eventId ?? (item.payload as Event)?.eventId) !== event.eventId);
+                return {
+                    notifications,
+                    unreadCount: notifications.filter(item => item.type === 'sensor-alarm' && (item.payload as Event)?.status === 'ACTIVE').length,
+                };
+            });
+            return;
+        }
         const normalizedNotification = {
             ...notification,
+            eventId: event?.eventId ?? notification.eventId,
             timestamp: notification.timestamp
         };
         set((state) => {
@@ -66,7 +79,9 @@ export const useNotificationStore = create<NotificationStore>()((set) => ({
 
     setNotifications: (notifications) => {
         set(() => {
-            const normalized = notifications.map(n => ({
+            const normalized = notifications
+              .filter(n => n.type !== 'sensor-alarm' || (n.payload as Event)?.status === 'ACTIVE')
+              .map(n => ({
                 ...n,
                 timestamp: n.timestamp
             }));

@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription, Button } from '@plug-atlas/ui';
 import { AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
-import { getStatusInfo } from '../../utils/statusUtils.ts';
 import { getLevelInfo } from '../../utils/levelUtils.ts';
 import type { Event } from '../../../../../services/types';
 import { useUpdateEventStatus, useEvent } from '../../../../../services/hooks';
@@ -9,28 +7,47 @@ import ActionHistorySection from "./ActionHistoryItem.tsx";
 import EventLocationMap from './EventLocationMap.tsx';
 import ValueRangeIndicator from './ValueRangeIndicator.tsx';
 import { hasSensorMeasurement, isAiEdgeEvent, getEventSourceLabel } from '@/lib/event-presentation';
+import { useSWRConfig } from 'swr';
+import { useEventStore } from '@/stores';
+import { isEventListCacheKey, replaceCachedEvent } from '@/lib/event-cache';
+import { useRefreshFeatures } from '@/services/hooks/useFeature';
 
 interface EventDetailModalProps {
   event: Event;
 }
 
 export default function EventDetailModal({ event }: EventDetailModalProps) {
-  getStatusInfo(event.status);
-  const [localEvent, setLocalEvent] = useState(event);
+  const { data: fetchedEvent, error: eventError, mutate: mutateEvent } = useEvent(event.eventId, undefined, {
+    sourceType: event.sourceType ?? undefined,
+    siteId: event.siteId,
+  });
+  const localEvent = fetchedEvent ?? event;
   const aiEdgeEvent = isAiEdgeEvent(localEvent);
   const hasMeasurement = hasSensorMeasurement(localEvent);
   const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
-  const { data: fetchedEvent, mutate: mutateEvent } = useEvent(event.eventId);
+  const { mutate: mutateCache } = useSWRConfig();
+  const updateStoredEvent = useEventStore(state => state.updateEvent);
+  const refreshFeatures = useRefreshFeatures();
 
-  useEffect(() => {
-    setLocalEvent(event);
-  }, [event]);
-
-  useEffect(() => {
-    if (fetchedEvent) {
-      setLocalEvent(fetchedEvent);
+  const refreshEventViews = async () => {
+    const featuresRefresh = refreshFeatures();
+    try {
+      const updated = await mutateEvent();
+      if (updated) {
+        updateStoredEvent(updated.eventId, updated);
+        await mutateCache(isEventListCacheKey,
+          (data: unknown) => replaceCachedEvent(data, updated), { revalidate: true });
+      } else {
+        await mutateCache(isEventListCacheKey);
+      }
+    } catch (error) {
+      // The detail query exposes a retry UI; still refresh independently queried lists.
+      console.error('이벤트 상태 갱신 실패:', error);
+      await mutateCache(isEventListCacheKey);
+    } finally {
+      await featuresRefresh;
     }
-  }, [fetchedEvent]);
+  };
 
   const handleStatusAction = async () => {
     if (localEvent.status === 'ACTIVE') {
@@ -39,7 +56,7 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
           eventId: localEvent.eventId,
           status: { result: 'IN_PROGRESS' }
         });
-        setLocalEvent({ ...localEvent, status: 'IN_PROGRESS' });
+        await refreshEventViews();
       } catch (error) {
         console.error('상태 업데이트 실패:', error);
       }
@@ -68,6 +85,12 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
         </DialogHeader>
 
         <div className="space-y-6 p-6">
+          {eventError && (
+            <div role="alert" className="text-sm text-red-600">
+              이벤트의 최신 상태를 불러오지 못했습니다.
+              <Button variant="link" size="sm" onClick={() => void mutateEvent()}>다시 시도</Button>
+            </div>
+          )}
           <div className="bg-gray-50/50 p-5 rounded-lg border border-gray-100">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">처리 상태</h3>
@@ -256,9 +279,7 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">조치 기록</h3>
             <ActionHistorySection
               eventId={localEvent.eventId}
-              onActionUpdate={() => {
-                mutateEvent();
-              }}
+              onActionUpdate={refreshEventViews}
             />
           </div>
         </div>

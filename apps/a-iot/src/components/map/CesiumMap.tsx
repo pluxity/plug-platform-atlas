@@ -2,7 +2,7 @@ import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { Viewer as CesiumViewer, Cartesian3, Math as CesiumMath, Entity, Cesium3DTileset, HeightReference, ScreenSpaceEventHandler, ScreenSpaceEventType, Cartesian2, ConstantProperty } from 'cesium'
 import { throttle } from 'lodash-es'
 import { useViewerStore, useTilesetStore, useMarkerStore, usePolygonStore, useCameraStore, useImageryStore, DEFAULT_CAMERA_POSITION, TILESET_HEIGHT_OFFSETS, TILESET_AUTO_HIDE_THRESHOLD, type ViewerInitOptions } from '../../stores/cesium'
-import { Site, FeatureResponse, type FeatureDeviceTypeResponse } from '@/services/types'
+import { Site, FeatureResponse } from '@/services/types'
 import { fetchSeongnamDistricts, DISTRICT_COLORS, type VWorldFeatureCollection } from '../../services/vworld'
 import MapControls from './MapControls'
 import MapLayerSelector from './MapLayerSelector'
@@ -36,6 +36,8 @@ interface CesiumMapProps {
   showSensorsInOverview?: boolean
   selectedSensorId?: number | null
   onSensorSelect?: (sensor: FeatureResponse) => void
+  eventFocus?: { requestId: number; position: { longitude: number; latitude: number } | null } | null
+  onEventFocusComplete?: (requestId: number) => void
 }
 
 export default function CesiumMap({
@@ -55,6 +57,8 @@ export default function CesiumMap({
   showSensorsInOverview = false,
   selectedSensorId,
   onSensorSelect,
+  eventFocus,
+  onEventFocusComplete,
 }: CesiumMapProps) {
   const isDeviceManagement = deviceScope !== 'all'
   const cesiumContainerRef = useRef<HTMLDivElement>(null)
@@ -93,10 +97,6 @@ export default function CesiumMap({
   }, [scopedSensors, layers.iot, activeTab, showSensorsInOverview])
 
   useEffect(() => {
-    preloadAllMarkerSvgs()
-  }, [])
-
-  useEffect(() => {
     if (!cesiumContainerRef.current) return
 
     let viewerInstance: CesiumViewer | null = null
@@ -127,7 +127,10 @@ export default function CesiumMap({
         }
         viewerInstance.camera.setView({ destination, orientation })
 
-        await initializeResources(viewerInstance, isDeviceManagement ? { ...viewerInitOptions, loadTerrain: false } : viewerInitOptions)
+        await Promise.all([
+          initializeResources(viewerInstance, isDeviceManagement ? { ...viewerInitOptions, loadTerrain: false } : viewerInitOptions),
+          preloadAllMarkerSvgs(),
+        ])
         if (disposed || viewerInstance.isDestroyed()) return
 
         const imageryProvider = viewerInitOptions?.imageryProvider
@@ -273,25 +276,6 @@ export default function CesiumMap({
     }
   }, [isLoading, setMarkerHover, selectedSensorId])
 
-  const getSvgMarkerType = (deviceType?: FeatureDeviceTypeResponse): SvgMarkerType => {
-    if (!deviceType) return SVG_MARKERS.TEMPERATURE
-    
-    if (deviceType.description) {
-      const desc = deviceType.description.toLowerCase()
-      if (desc.includes('화재') || desc.includes('fire')) {
-        return SVG_MARKERS.FIRE
-      }
-      if (desc.includes('변위') || desc.includes('displacement')) {
-        return SVG_MARKERS.DISPLACEMENT
-      }
-      if (desc.includes('온도') || desc.includes('온습도') || desc.includes('temperature') || desc.includes('humidity')) {
-        return SVG_MARKERS.TEMPERATURE
-      }
-    }
-    
-    return SVG_MARKERS.TEMPERATURE
-  }
-
   const getEventLevelColor = (level?: string): string => {
     switch (level) {
       case 'NORMAL':
@@ -368,7 +352,7 @@ export default function CesiumMap({
     }
     if (siteSensors.length) {
       siteSensors.forEach((sensor) => {
-        const svgMarkerType = getSvgMarkerType(sensor.deviceTypeResponse)
+        const svgMarkerType = SVG_MARKERS.IOT
         const deviceStatus = sensor.eventStatus // Feature의 eventStatus 직접 사용
         const color = getEventLevelColor(deviceStatus)
         
@@ -517,14 +501,35 @@ export default function CesiumMap({
         setTilesetVisible(true)
       }
       handleToggleDistrictBoundary(false)
-      if (selectedSiteId) {
+      if (selectedSiteId && !eventFocus) {
         const selectedSite = sites.find(site => site.id.toString() === selectedSiteId)
         if (selectedSite?.location?.trim()) {
           focusOn(viewer, selectedSite.location, 800, -30)
         }
       }
     }
-  }, [selectedSiteId, activeTab, isLoading, sites, focusOn, flyToPosition, seongnamTilesetRef, handleToggleDistrictBoundary, isDeviceManagement])
+  }, [selectedSiteId, activeTab, isLoading, sites, focusOn, flyToPosition, seongnamTilesetRef, handleToggleDistrictBoundary, isDeviceManagement, eventFocus])
+
+  const eventSiteLocation = sites.find(site => String(site.id) === selectedSiteId)?.location
+  useEffect(() => {
+    if (!eventFocus || isLoading) return
+    const viewer = viewerRef.current
+    let disposed = false
+    const complete = () => { if (!disposed) onEventFocusComplete?.(eventFocus.requestId) }
+    if (error || !viewer || viewer.isDestroyed()) { complete(); return }
+    if (eventFocus.position) {
+      const { longitude, latitude } = eventFocus.position
+      focusOn(viewer, { lon: longitude, lat: latitude }, 350, -45, complete)
+    } else if (eventSiteLocation) {
+      focusOn(viewer, eventSiteLocation, 800, -30, complete)
+    } else {
+      complete()
+    }
+    return () => {
+      disposed = true
+      if (!viewer.isDestroyed()) viewer.camera.cancelFlight()
+    }
+  }, [eventFocus, eventSiteLocation, isLoading, error, focusOn, onEventFocusComplete])
 
   const selectedSensor = siteSensors.find(sensor => sensor.id === selectedSensorId)
   useEffect(() => {
