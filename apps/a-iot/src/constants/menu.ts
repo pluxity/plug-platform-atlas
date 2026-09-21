@@ -27,6 +27,8 @@ export interface MenuItem {
   hidden?: boolean
 }
 
+export const ANNOUNCEMENT_ENABLED = import.meta.env.MODE !== 'staging'
+
 export const MAIN_MENU_ITEMS: MenuItem[] = [
   {
     title: '대시보드',
@@ -69,6 +71,7 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
      */
     title: '안내방송',
     icon: MonitorSpeaker,
+    hidden: !ANNOUNCEMENT_ENABLED,
     children: [
       {
         title: 'LED 메시지 송출',

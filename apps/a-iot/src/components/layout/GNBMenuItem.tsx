@@ -14,6 +14,7 @@ interface GNBMenuItemProps {
 
 export default function GNBMenuItem({ item }: GNBMenuItemProps) {
   const { pathname } = useLocation()
+  const visibleChildren = item.children?.filter((child) => !child.hidden)
 
   const isActive = (path?: string) => {
     if (!path) return false
@@ -21,8 +22,10 @@ export default function GNBMenuItem({ item }: GNBMenuItemProps) {
     return pathname.startsWith(path)
   }
 
-  const isGroupActive = item.children?.some((child) => isActive(child.path)) ?? false
+  const isGroupActive = visibleChildren?.some((child) => isActive(child.path)) ?? false
   const active = item.path ? isActive(item.path) : isGroupActive
+
+  if (item.children?.length && !visibleChildren?.length) return null
 
   // Simple link item (no children)
   if (!item.children || item.children.length === 0) {
@@ -64,7 +67,7 @@ export default function GNBMenuItem({ item }: GNBMenuItemProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-44">
-        {item.children.map((child) => (
+        {visibleChildren?.map((child) => (
           <DropdownMenuItem key={child.title} asChild>
             <Link
               to={child.path || '#'}

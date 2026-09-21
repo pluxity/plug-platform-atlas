@@ -18,6 +18,7 @@ import IoTSensor from './pages/main/iot/IoTSensor.tsx'
 import LedDispatch from './pages/main/announcement/led/LedDispatch.tsx'
 import LedPresets from './pages/main/announcement/led/LedPresets.tsx'
 import AnnouncementHistory from './pages/main/announcement/AnnouncementHistory.tsx'
+import { ANNOUNCEMENT_ENABLED } from './constants/menu'
 // 2026-08-31 임시 숨김 — CCTV 모니터링(라이브) 비활성화
 // import CctvMonitoring from './pages/main/cctv-monitoring/CctvMonitoring.tsx'
 
@@ -60,9 +61,15 @@ function App() {
                     안내방송. 공원 단위 권한은 각 화면에서 useSiteAccess 로 거른다.
                     전광판·프리셋·송출은 /displays, /display-presets API를 사용한다.
                   */}
-                  <Route path="/announcement/led/dispatch" element={<Wrapped><LedDispatch /></Wrapped>} />
-                  <Route path="/announcement/led/presets" element={<Wrapped><LedPresets /></Wrapped>} />
-                  <Route path="/announcement/history" element={<Wrapped><AnnouncementHistory /></Wrapped>} />
+                  {ANNOUNCEMENT_ENABLED ? (
+                    <>
+                      <Route path="/announcement/led/dispatch" element={<Wrapped><LedDispatch /></Wrapped>} />
+                      <Route path="/announcement/led/presets" element={<Wrapped><LedPresets /></Wrapped>} />
+                      <Route path="/announcement/history" element={<Wrapped><AnnouncementHistory /></Wrapped>} />
+                    </>
+                  ) : (
+                    <Route path="/announcement/*" element={<Navigate to="/" replace />} />
+                  )}
                   <Route path="/sites/parks" element={<AdminOnly><SitePage /></AdminOnly>} />
                   <Route path="/sites/virtual-patrol" element={<AdminOnly><VirtualPatrol /></AdminOnly>} />
                   <Route path="/devices/sensor-categories" element={<AdminOnly><SensorCategoriesPage /></AdminOnly>} />
