@@ -3,6 +3,8 @@ import useSWRInfinite, { SWRInfiniteConfiguration } from 'swr/infinite';
 import useSWRMutation, { SWRMutationConfiguration } from 'swr/mutation';
 import { useApiClient } from '@plug-atlas/api-hooks';
 import { fetchEvent } from '../../lib/fetch-event';
+import { getEventPageKey, flattenEventPages, createEventPageLoader } from '../../lib/event-page';
+import { useCallback, useRef } from 'react';
 import {
     Event,
     EventsQueryParams,
@@ -48,32 +50,8 @@ export const useInfiniteEvents = (
 ) => {
     const client = useApiClient();
 
-    const getKey = (pageIndex: number, previousPageData: PaginatedEventsResponse | null) => {
-        if (previousPageData && !previousPageData.hasNext) return null;
-
-        const params: EventsQueryParams = {
-            ...baseParams,
-            size: pageSize,
-        };
-
-        if (pageIndex > 0 && previousPageData?.nextCursor) {
-            params.lastId = previousPageData.nextCursor;
-            if (previousPageData?.nextStatus) {
-                params.lastStatus = previousPageData.nextStatus;
-            }
-        }
-
-        const queryString = new URLSearchParams(
-            Object.entries(params).reduce((acc, [key, value]) => {
-                if (value !== undefined) {
-                    acc[key] = String(value);
-                }
-                return acc;
-            }, {} as Record<string, string>)
-        ).toString();
-
-        return `events?${queryString}`;
-    };
+    const getKey = (pageIndex: number, previousPage: PaginatedEventsResponse | null) =>
+        getEventPageKey(baseParams, pageSize, pageIndex, previousPage);
 
     const result = useSWRInfinite<PaginatedEventsResponse>(
         getKey,
@@ -84,14 +62,25 @@ export const useInfiniteEvents = (
         options
     );
 
-    const events = result.data?.flatMap(page => page.content) || [];
-    const hasMore = result.data?.[result.data.length - 1]?.hasNext || false;
+    const events = flattenEventPages(result.data);
+    const lastPage = result.data?.[result.data.length - 1];
+    const hasMore = !!lastPage?.hasNext && lastPage.nextCursor != null;
+    const pagingState = useRef({ result, hasMore, lastPage });
+    pagingState.current = { result, hasMore, lastPage };
+    const pageLoader = useRef(createEventPageLoader());
+    const scopeKey = getKey(0, null);
+    const loadMore = useCallback((): Promise<unknown> => {
+        const { result: current, hasMore: more, lastPage: page } = pagingState.current;
+        if (!more || current.isValidating || current.error || !current.data || current.size > current.data.length) return Promise.resolve();
+        const cursor = `${scopeKey}:${page?.nextStatus}:${page?.nextCursor}`;
+        return pageLoader.current(cursor, () => current.setSize(current.data!.length + 1));
+    }, [scopeKey]);
 
     return {
         ...result,
         events,
         hasMore,
-        loadMore: () => result.setSize(result.size + 1),
+        loadMore,
     };
 };
 

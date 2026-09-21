@@ -27,7 +27,7 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
   const hasMeasurement = hasSensorMeasurement(localEvent);
   const { trigger: updateStatus, isMutating } = useUpdateEventStatus();
   const { mutate: mutateCache } = useSWRConfig();
-  const updateStoredEvent = useEventStore(state => state.updateEvent);
+  const updateStoredEvent = useEventStore(state => state.addEvent);
   const refreshFeatures = useRefreshFeatures();
   const refreshEventSummary = useRefreshEventSummary();
 
@@ -37,7 +37,7 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
     try {
       const updated = await mutateEvent();
       if (updated) {
-        updateStoredEvent(updated.eventId, updated);
+        updateStoredEvent(updated);
         await mutateCache(isEventListCacheKey,
           (data: unknown) => replaceCachedEvent(data, updated), { revalidate: true });
       } else {
