@@ -11,6 +11,17 @@ import { getEventMapTarget } from '../src/lib/event-map-target.ts'
 import { fetchEvent } from '../src/lib/fetch-event.ts'
 import { isEventListCacheKey, replaceCachedEvent } from '../src/lib/event-cache.ts'
 import { useNotificationStore } from '../src/stores/notificationStore.ts'
+import { countEventSummary } from '../src/lib/event-summary.ts'
+
+test('dashboard summary counts all server status groups, beyond one page and per event rather than device', () => {
+  const active = Array.from({ length: 137 }, (_, eventId) => ({ eventId, deviceId: 'same-device' }))
+  const resolved = Array.from({ length: 42 }, (_, eventId) => ({ eventId: 200 + eventId, occurredAt: '2020-01-01' }))
+  assert.deepEqual(countEventSummary({ ACTIVE: active, IN_PROGRESS: [{ eventId: 180 }], RESOLVED: resolved }), {
+    active: 137, inProgress: 1, resolved: 42, total: 180,
+  })
+  assert.deepEqual(countEventSummary({}), { active: 0, inProgress: 0, resolved: 0, total: 0 })
+  assert.throws(() => countEventSummary({ ACTIVE: 20 }), /응답 형식/)
+})
 
 test('status socket messages remove handled alarms and never create non-ACTIVE alerts', () => {
   const store = useNotificationStore.getState()

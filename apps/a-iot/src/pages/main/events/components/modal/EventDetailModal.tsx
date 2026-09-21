@@ -11,6 +11,7 @@ import { useSWRConfig } from 'swr';
 import { useEventStore } from '@/stores';
 import { isEventListCacheKey, replaceCachedEvent } from '@/lib/event-cache';
 import { useRefreshFeatures } from '@/services/hooks/useFeature';
+import { useRefreshEventSummary } from '@/services/hooks/useEventSummary';
 
 interface EventDetailModalProps {
   event: Event;
@@ -28,9 +29,11 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
   const { mutate: mutateCache } = useSWRConfig();
   const updateStoredEvent = useEventStore(state => state.updateEvent);
   const refreshFeatures = useRefreshFeatures();
+  const refreshEventSummary = useRefreshEventSummary();
 
   const refreshEventViews = async () => {
     const featuresRefresh = refreshFeatures();
+    const summaryRefresh = refreshEventSummary();
     try {
       const updated = await mutateEvent();
       if (updated) {
@@ -45,7 +48,7 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
       console.error('이벤트 상태 갱신 실패:', error);
       await mutateCache(isEventListCacheKey);
     } finally {
-      await featuresRefresh;
+      await Promise.all([featuresRefresh, summaryRefresh]);
     }
   };
 

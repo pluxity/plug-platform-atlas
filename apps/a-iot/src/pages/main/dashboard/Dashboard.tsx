@@ -19,6 +19,7 @@ import { isSensorEvent, isAiEdgeEvent } from '@/lib/event-presentation'
 import { useEventStore, useNotificationStore } from '@/stores'
 import { getAssetPath } from '@/utils/assetPath'
 import { getEventMapTarget } from '@/lib/event-map-target'
+import { useEventSummary } from '@/services/hooks/useEventSummary'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'parks'>('overview')
@@ -51,7 +52,8 @@ export default function Dashboard() {
 
   const eventMap = useEventStore((state) => state.events)
   const getEventsBySite = useEventStore((state) => state.getEventsBySite)
-  const getAllEvents = useEventStore((state) => state.getAllEvents)
+  const eventSummary = useEventSummary()
+  const eventStatusStats = eventSummary.data ?? { active: 0, inProgress: 0, resolved: 0, total: 0 }
 
   const openEventAtLocation = (event: Event) => {
     if (event.siteId == null || !sites.some(site => site.id === event.siteId)) {
@@ -126,19 +128,6 @@ export default function Dashboard() {
       },
     ]
   }, [sites, sensors, aiEdgeDevices, users])
-
-  const eventStatusStats = useMemo(() => {
-    const allEvents = getAllEvents()
-    const sevenDaysAgo = Date.now() - 7 * 86_400_000
-
-    const active = allEvents.filter(e => e.status === 'ACTIVE').length
-    const inProgress = allEvents.filter(e => e.status === 'IN_PROGRESS').length
-    const resolved = allEvents.filter(e =>
-      e.status === 'RESOLVED' && new Date(e.occurredAt).getTime() > sevenDaysAgo
-    ).length
-
-    return { active, inProgress, resolved, total: active + inProgress + resolved }
-  }, [getAllEvents, isEventStoreInitialized, eventMap])
 
   const chartData = useMemo(() => [
     { name: '미처리', value: eventStatusStats.active, fill: '#EF4444' },
@@ -386,7 +375,12 @@ export default function Dashboard() {
                 <CardTitle className="text-base font-bold">이벤트 현황</CardTitle>
               </CardHeader>
               <CardContent className="shrink-0 pb-2">
-                {!isEventStoreInitialized ? (
+                {eventSummary.error ? (
+                  <div role="alert" className="py-4 text-sm text-red-600">
+                    이벤트 현황을 불러오지 못했습니다.
+                    <button type="button" className="ml-2 underline" onClick={() => void eventSummary.mutate()}>다시 시도</button>
+                  </div>
+                ) : eventSummary.isLoading || !eventSummary.data ? (
                 <div className="flex items-center justify-center gap-2 text-gray-500 py-4">
                   <Spinner size="sm" />
                   <span>이벤트 로딩 중...</span>
