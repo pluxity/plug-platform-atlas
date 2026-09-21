@@ -3,7 +3,7 @@ import { AlertCircle, BatteryWarning, Camera, CheckCircle, ChevronDown, Clock, R
 import { Cell, Label, Pie, PieChart, Tooltip } from 'recharts'
 
 import { useAdminUsers } from '@plug-atlas/api-hooks'
-import { Card, CardContent, CardHeader, CardTitle, DataTable, Dialog, DialogContent, DialogTitle, DialogDescription, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
+import { Card, CardContent, CardHeader, CardTitle, DataTable, Dialog, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Tabs, TabsList, TabsTrigger } from '@plug-atlas/ui'
 
 import WeatherCard from '@/components/weather/WeatherCard'
 import AirQualityCard from '@/components/air-quality/AirQualityCard'
@@ -11,7 +11,6 @@ import CesiumMap from '@/components/map/CesiumMap'
 import { eventColumns, aiEdgeIncidentColumns, featureStatusColumns } from '@/pages/main/dashboard/columns'
 import { useInfiniteEvents, useFeatures, useSites } from '@/services/hooks'
 import { useAiEdgeDevices } from '@/services/hooks/useAiEdgeDevices'
-import DeviceDetails from '@/components/ai-edge/DeviceDetails'
 import DeviceLoadErrors from '@/components/ai-edge/DeviceLoadErrors'
 import EventDetailModal from '@/pages/main/events/components/modal/EventDetailModal'
 import { Event, FeatureResponse } from '@/services/types'
@@ -21,12 +20,17 @@ import { getAssetPath } from '@/utils/assetPath'
 import { getEventMapTarget } from '@/lib/event-map-target'
 import { useEventSummary } from '@/services/hooks/useEventSummary'
 import DashboardEventList from './DashboardEventList'
+import SensorStatusModal from './SensorStatusModal'
 import { useRecentEventRange } from '@/services/hooks/useRecentEventRange'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'parks'>('overview')
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [selectedSensorId, setSelectedSensorId] = useState<number | null>(null)
+  const handleSensorSelect = useCallback((sensor: FeatureResponse) => {
+    setSelectedSensorId(sensor.id)
+  }, [])
   const [eventFocus, setEventFocus] = useState<{ requestId: number; position: ReturnType<typeof getEventMapTarget> } | null>(null)
   const pendingEvent = useRef<{ requestId: number; event: Event } | null>(null)
   const eventFocusSequence = useRef(0)
@@ -38,8 +42,6 @@ export default function Dashboard() {
   const [isParkPanelOpen, setIsParkPanelOpen] = useState(true)
   const { data: sites = [] } = useSites()
   const { devices: aiEdgeDevices, cctvs: cctvQuery, mics: micQuery } = useAiEdgeDevices()
-  const [selectedDeviceKey, setSelectedDeviceKey] = useState<string | null>(null)
-  const selectedDevice = aiEdgeDevices.find(device => device.key === selectedDeviceKey)
   const eventSiteId = selectedSiteId ? Number(selectedSiteId) : undefined
   const eventRange = useRecentEventRange()
   const sensorIncidents = useInfiniteEvents({ sourceType: 'SENSOR', siteId: eventSiteId, ...eventRange }, 20, { refreshInterval: 30_000, persistSize: false })
@@ -50,6 +52,7 @@ export default function Dashboard() {
     .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
     , [cctvIncidents.events, micIncidents.events, eventSiteId])
   const { data: sensors = [] } = useFeatures()
+  const selectedSensor = sensors.find(sensor => sensor.id === selectedSensorId)
   const { data: users = [] } = useAdminUsers()
   const isEventStoreInitialized = useNotificationStore((state) => state.isInitialized)
 
@@ -59,13 +62,13 @@ export default function Dashboard() {
   const eventStatusStats = eventSummary.data ?? { active: 0, inProgress: 0, resolved: 0, total: 0 }
 
   const openEventAtLocation = (event: Event) => {
+    setSelectedSensorId(null)
     if (event.siteId == null || !sites.some(site => site.id === event.siteId)) {
       setSelectedEvent(event)
       return
     }
     const requestId = ++eventFocusSequence.current
     pendingEvent.current = { requestId, event }
-    setSelectedDeviceKey(null)
     setSelectedEvent(null)
     setSelectedSiteId(String(event.siteId))
     setActiveTab('parks')
@@ -287,10 +290,9 @@ export default function Dashboard() {
               onSiteSelect={handleSiteSelect}
               sensors={sensors}
               aiEdgeDevices={aiEdgeDevices}
-              selectedDeviceKey={selectedDeviceKey}
               eventFocus={eventFocus}
               onEventFocusComplete={completeEventFocus}
-              onDeviceSelect={device => setSelectedDeviceKey(device.key)}
+              onSensorSelect={handleSensorSelect}
               className="h-full w-full"
             />
 
@@ -500,10 +502,9 @@ export default function Dashboard() {
               onSiteSelect={handleSiteSelect}
               sensors={sensors}
               aiEdgeDevices={aiEdgeDevices}
-              selectedDeviceKey={selectedDeviceKey}
               eventFocus={eventFocus}
               onEventFocusComplete={completeEventFocus}
-              onDeviceSelect={device => setSelectedDeviceKey(device.key)}
+              onSensorSelect={handleSensorSelect}
               className="h-full w-full"
             />
 
@@ -606,13 +607,11 @@ export default function Dashboard() {
       >
         {selectedEvent && <EventDetailModal event={selectedEvent} />}
       </Dialog>
-
-      <Dialog open={!!selectedDevice} onOpenChange={open => { if (!open) setSelectedDeviceKey(null) }}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogTitle>AI EDGE 디바이스 상세</DialogTitle>
-          <DialogDescription>선택한 장비의 설치 위치와 연동 정보를 확인합니다.</DialogDescription>
-          {selectedDevice && <DeviceDetails device={selectedDevice} onClose={() => setSelectedDeviceKey(null)} />}
-        </DialogContent>
+      <Dialog open={!!selectedSensor} onOpenChange={open => { if (!open) setSelectedSensorId(null) }}>
+        {selectedSensor && <SensorStatusModal sensor={selectedSensor} onEventSelect={event => {
+          setSelectedSensorId(null)
+          setSelectedEvent(event)
+        }} />}
       </Dialog>
     </div>
   )

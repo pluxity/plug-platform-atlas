@@ -109,6 +109,7 @@ export default function CesiumMap({
 
         viewerInstance = createViewer(cesiumContainerRef.current!)
         viewerRef.current = viewerInstance
+        viewerInstance.screenSpaceEventHandler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
 
         viewerInstance.scene.globe.depthTestAgainstTerrain = true
         viewerInstance.scene.fog.enabled = true
@@ -193,7 +194,11 @@ export default function CesiumMap({
       const entityId = selectedEntity.id.toString()
       if (entityId.startsWith('device-')) {
         const sensor = siteSensors.find(item => `device-${item.id}` === entityId)
-        if (sensor) onSensorSelect?.(sensor)
+        if (sensor && onSensorSelect) {
+          onSensorSelect(sensor)
+          // Allow the same marker to reopen its details after the dialog closes.
+          viewer.selectedEntity = undefined
+        }
         return
       }
       if (!onSiteSelect) return
