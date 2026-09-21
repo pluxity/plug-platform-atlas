@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { BillboardGraphics, LabelGraphics, Cartesian2, Cartesian3, Color, ConstantPositionProperty, CustomDataSource, HeightReference, LabelStyle, VerticalOrigin, type Entity, type Viewer } from 'cesium'
+import { BillboardGraphics, LabelGraphics, Cartesian2, Cartesian3, Color, ConstantPositionProperty, ConstantProperty, CustomDataSource, HeightReference, LabelStyle, ScreenSpaceEventHandler, ScreenSpaceEventType, VerticalOrigin, type Entity, type Viewer } from 'cesium'
 import { getDeviceStatus, type AiEdgeDevice } from '@/lib/ai-edge-device'
 
 function markerImage(device: AiEdgeDevice) {
@@ -40,6 +40,7 @@ export default function AiEdgeMapLayer({ viewer, devices, selectedKey, focusRequ
       if (!entity || !dataSource.entities.contains(entity)) return
       const device = current.current.devices.find(item => item.key === entity.id)
       if (device) current.current.onSelect?.(device)
+      if (!current.current.onSelect) viewer.selectedEntity = undefined
     }
     viewer.selectedEntityChanged.addEventListener(select)
     return () => {
@@ -51,6 +52,34 @@ export default function AiEdgeMapLayer({ viewer, devices, selectedKey, focusRequ
       }
     }
   }, [viewer])
+
+  useEffect(() => {
+    if (!viewer || viewer.isDestroyed() || !layer) return
+    let hovered: Entity | undefined
+    const clearHover = () => {
+      if (hovered?.label) hovered.label.show = new ConstantProperty(false)
+      hovered = undefined
+      if (!viewer.isDestroyed()) viewer.scene.requestRender()
+    }
+    const canvas = viewer.scene.canvas
+    const handler = new ScreenSpaceEventHandler(canvas)
+    handler.setInputAction((movement: { endPosition: Cartesian2 }) => {
+      const picked = viewer.scene.pick(movement.endPosition)
+      const entity = picked?.id as Entity | undefined
+      const next = entity && typeof entity.id === 'string' && layer.entities.getById(entity.id) === entity ? entity : undefined
+      if (next === hovered) return
+      clearHover()
+      hovered = next
+      if (hovered?.label) hovered.label.show = new ConstantProperty(true)
+      viewer.scene.requestRender()
+    }, ScreenSpaceEventType.MOUSE_MOVE)
+    canvas.addEventListener('mouseleave', clearHover)
+    return () => {
+      canvas.removeEventListener('mouseleave', clearHover)
+      handler.destroy()
+      clearHover()
+    }
+  }, [viewer, layer, devices])
 
   useEffect(() => {
     if (!viewer || viewer.isDestroyed() || !layer || !viewer.dataSources.contains(layer)) return
@@ -70,11 +99,11 @@ export default function AiEdgeMapLayer({ viewer, devices, selectedKey, focusRequ
         scale: selectedKey === device.key ? 1.25 : 1,
       })
       entity.label = new LabelGraphics({
-        text: `${device.kind} · ${device.name}`, font: '13px sans-serif',
+        text: device.name, font: '13px sans-serif',
         fillColor: Color.WHITE, outlineColor: Color.BLACK, outlineWidth: 3, style: LabelStyle.FILL_AND_OUTLINE,
         pixelOffset: new Cartesian2(0, -34), heightReference: HeightReference.CLAMP_TO_GROUND,
         disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        show: selectedKey === device.key,
+        show: false,
       })
     }
     viewer.scene.requestRender()
