@@ -2,6 +2,7 @@ import useSWR, { SWRConfiguration } from 'swr';
 import useSWRInfinite, { SWRInfiniteConfiguration } from 'swr/infinite';
 import useSWRMutation, { SWRMutationConfiguration } from 'swr/mutation';
 import { useApiClient } from '@plug-atlas/api-hooks';
+import { fetchEvent } from '../../lib/fetch-event';
 import {
     Event,
     EventsQueryParams,
@@ -138,16 +139,14 @@ export const useUpdateEventStatus = (options?: SWRMutationConfiguration<void, Er
 
 export const useEvent = (
     id: number,
-    options?: SWRConfiguration<Event, Error>
+    options?: SWRConfiguration<Event, Error>,
+    scope?: Pick<EventsQueryParams, 'sourceType' | 'siteId'>
 ) => {
     const client = useApiClient();
 
     return useSWR<Event>(
-        id ? [`events`, id] : null,
-        async () => {
-            const response = await client.get<ApiResponse<Event>>(`events/${id}`);
-            return response.data;
-        },
+        id ? ['event-detail', id, scope?.sourceType ?? null, scope?.siteId ?? null] : null,
+        () => fetchEvent(client, id, scope),
         options
     );
 };

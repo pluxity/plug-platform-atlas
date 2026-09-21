@@ -158,11 +158,6 @@ const AddActionHistoryForm: React.FC<{ eventId: number; onSuccess: () => void; a
     }
   };
 
-  const handleCancel = () => {
-    setIsOpen(false);
-    setContent('');
-  };
-
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="space-y-3">
@@ -173,7 +168,7 @@ const AddActionHistoryForm: React.FC<{ eventId: number; onSuccess: () => void; a
               className="flex items-center gap-1.5 w-full"
             >
               <Plus className="h-3.5 w-3.5" />
-              조치 추가
+              조치이력 남기기
             </Button>
           </CollapsibleTrigger>
         )}
@@ -202,18 +197,10 @@ const AddActionHistoryForm: React.FC<{ eventId: number; onSuccess: () => void; a
               <div className="flex justify-end gap-2">
                 <Button
                   size="sm"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={isMutating}
-                >
-                  취소
-                </Button>
-                <Button
-                  size="sm"
                   onClick={handleSubmit}
                   disabled={isMutating || !content.trim()}
                 >
-                  {isMutating ? '추가 중...' : '추가'}
+                  {isMutating ? '저장 중...' : '조치이력 남기기'}
                 </Button>
               </div>
             </div>

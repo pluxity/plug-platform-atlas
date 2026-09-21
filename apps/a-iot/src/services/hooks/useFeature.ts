@@ -1,10 +1,21 @@
 import useSWR, { useSWRConfig, type SWRConfiguration } from 'swr'
+import { useCallback } from 'react'
 import useSWRMutation, { type SWRMutationConfiguration } from 'swr/mutation'
 import { useApiClient } from '@plug-atlas/api-hooks'
 import type { FeatureResponse, FeatureUpdateRequest, LatestDataResponse, TimeSeriesDataResponse } from '../types/feature'
 import { normalizeFeatureResponse } from '../types/feature'
 
 type DataResponseWrapper<T> = { data: T }
+
+/** Re-read aggregate device state; resolving one event does not imply NORMAL. */
+export function useRefreshFeatures() {
+  const { mutate } = useSWRConfig()
+  return useCallback(() => mutate(
+    key => typeof key === 'string' && (key === 'features' || key.startsWith('features?') || /^features\/\d+$/.test(key))
+  ).catch(error => {
+    console.error('장치 상태 갱신 실패:', error)
+  }), [mutate])
+}
 
 /**
  * Feature 목록 조회
@@ -18,7 +29,7 @@ export function useFeatures(options?: SWRConfiguration<FeatureResponse[], Error>
       const response = await client.get<DataResponseWrapper<FeatureResponse[]>>('features')
       return response.data.map(normalizeFeatureResponse)
     },
-    options
+    { refreshInterval: 30_000, ...options }
   )
 }
 

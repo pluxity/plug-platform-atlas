@@ -40,7 +40,9 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           ws: true,
           cookieDomainRewrite: '',
-          cookiePathRewrite: '/',
+          // Match the local API path so sign-in replaces stale /api auth cookies.
+          // Rewriting to / leaves older, more-specific /api cookies taking precedence.
+          cookiePathRewrite: '/api',
           rewrite: (p) => p.replace(/^\/api/, ''),
         },
         '/eds-api': {

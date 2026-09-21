@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { AlertCircle, BatteryWarning, Camera, CheckCircle, ChevronDown, Clock, Radio, Scan, TreePine, Users } from 'lucide-react'
 import { Cell, Label, Pie, PieChart, Tooltip } from 'recharts'
 
@@ -18,11 +18,20 @@ import { Event, FeatureResponse } from '@/services/types'
 import { isSensorEvent, isAiEdgeEvent } from '@/lib/event-presentation'
 import { useEventStore, useNotificationStore } from '@/stores'
 import { getAssetPath } from '@/utils/assetPath'
+import { getEventMapTarget } from '@/lib/event-map-target'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'parks'>('overview')
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [eventFocus, setEventFocus] = useState<{ requestId: number; position: ReturnType<typeof getEventMapTarget> } | null>(null)
+  const pendingEvent = useRef<{ requestId: number; event: Event } | null>(null)
+  const eventFocusSequence = useRef(0)
+  const completeEventFocus = useCallback((requestId: number) => {
+    if (pendingEvent.current?.requestId !== requestId) return
+    setSelectedEvent(pendingEvent.current.event)
+    pendingEvent.current = null
+  }, [])
   const [isParkPanelOpen, setIsParkPanelOpen] = useState(true)
   const { data: sites = [] } = useSites()
   const { devices: aiEdgeDevices, cctvs: cctvQuery, mics: micQuery } = useAiEdgeDevices()
@@ -44,7 +53,23 @@ export default function Dashboard() {
   const getEventsBySite = useEventStore((state) => state.getEventsBySite)
   const getAllEvents = useEventStore((state) => state.getAllEvents)
 
+  const openEventAtLocation = (event: Event) => {
+    if (event.siteId == null || !sites.some(site => site.id === event.siteId)) {
+      setSelectedEvent(event)
+      return
+    }
+    const requestId = ++eventFocusSequence.current
+    pendingEvent.current = { requestId, event }
+    setSelectedDeviceKey(null)
+    setSelectedEvent(null)
+    setSelectedSiteId(String(event.siteId))
+    setActiveTab('parks')
+    setEventFocus({ requestId, position: getEventMapTarget(event, sensors, aiEdgeDevices) })
+  }
+
   const handleTabChange = (value: string) => {
+    pendingEvent.current = null
+    setEventFocus(null)
     if (value === 'overview' || value === 'parks') {
       setActiveTab(value)
       if (value === 'overview') {
@@ -59,6 +84,8 @@ export default function Dashboard() {
   }
 
   const handleSiteSelect = (siteId: string) => {
+    pendingEvent.current = null
+    setEventFocus(null)
     setActiveTab('parks')
     setSelectedSiteId(siteId)
   }
@@ -239,7 +266,7 @@ export default function Dashboard() {
         </Tabs>
 
         {activeTab === 'parks' && (
-          <Select value={selectedSiteId || ''} onValueChange={setSelectedSiteId}>
+          <Select value={selectedSiteId || ''} onValueChange={handleSiteSelect}>
             <SelectTrigger className="w-48 bg-white shadow-md shrink-0">
               <SelectValue placeholder="공원 선택" />
             </SelectTrigger>
@@ -278,6 +305,8 @@ export default function Dashboard() {
               sensors={sensors}
               aiEdgeDevices={aiEdgeDevices}
               selectedDeviceKey={selectedDeviceKey}
+              eventFocus={eventFocus}
+              onEventFocusComplete={completeEventFocus}
               onDeviceSelect={device => setSelectedDeviceKey(device.key)}
               className="h-full w-full"
             />
@@ -455,7 +484,7 @@ export default function Dashboard() {
                     stickyHeader={true}
                     columns={eventColumns}
                     data={filteredEvents}
-                    onRowClick={(row) => setSelectedEvent(row)}
+                    onRowClick={openEventAtLocation}
                   />
                 )}
               </CardContent>
@@ -485,7 +514,7 @@ export default function Dashboard() {
                     stickyHeader={true}
                     columns={aiEdgeIncidentColumns}
                     data={edgeIncidents}
-                    onRowClick={(row) => setSelectedEvent(row)}
+                    onRowClick={openEventAtLocation}
                   />
                 )}
               </CardContent>
@@ -509,6 +538,8 @@ export default function Dashboard() {
               sensors={sensors}
               aiEdgeDevices={aiEdgeDevices}
               selectedDeviceKey={selectedDeviceKey}
+              eventFocus={eventFocus}
+              onEventFocusComplete={completeEventFocus}
               onDeviceSelect={device => setSelectedDeviceKey(device.key)}
               className="h-full w-full"
             />
@@ -595,7 +626,7 @@ export default function Dashboard() {
                     stickyHeader={true}
                     columns={eventColumns}
                     data={filteredEvents}
-                    onRowClick={(row) => setSelectedEvent(row)}
+                    onRowClick={openEventAtLocation}
                   />
                 )}
               </CardContent>
@@ -624,7 +655,7 @@ export default function Dashboard() {
                     stickyHeader={true}
                     columns={aiEdgeIncidentColumns}
                     data={edgeIncidents}
-                    onRowClick={(row) => setSelectedEvent(row)}
+                    onRowClick={openEventAtLocation}
                   />
                 )}
               </CardContent>

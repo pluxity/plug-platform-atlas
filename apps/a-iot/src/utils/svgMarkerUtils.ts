@@ -4,6 +4,7 @@ const svgSourceCache = new Map<string, string>()
 const coloredSvgCache = new Map<string, string>()
 
 export const SVG_MARKERS = {
+  IOT: 'iot',
   DISPLACEMENT: 'displacement',
   FIRE: 'fire',
   TEMPERATURE: 'temperature',

@@ -2,6 +2,7 @@ import {useEffect, useRef, useState} from 'react';
 import {Client, IMessage, StompSubscription} from '@stomp/stompjs';
 import type {ConnectionErrorPayload, Notification, Event} from '../types';
 import {useNotificationStore, useEventStore} from '../../stores';
+import { useRefreshFeatures } from './useFeature';
 
 const getWebSocketUrl = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -24,6 +25,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
     const addNotification = useNotificationStore((state) => state.addNotification);
     const addEvent = useEventStore((state) => state.addEvent);
     const updateEvent = useEventStore((state) => state.updateEvent);
+    const refreshFeatures = useRefreshFeatures();
 
     useEffect(() => {
         const client = new Client({
@@ -33,6 +35,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
             heartbeatOutgoing: 5000,
             onConnect: () => {
                 setIsConnected(true);
+                void refreshFeatures();
 
                 const sensorAlarmSub = client.subscribe('/user/queue/sensor-alarm', (message: IMessage) => {
                     try {
@@ -40,10 +43,12 @@ export function useStompNotifications(): UseStompNotificationsReturn {
 
                         // EventStore에 이벤트 추가/업데이트
                         addEvent(payload);
+                        void refreshFeatures();
 
                         // Notification 생성
                         const notification: Notification = {
-                            id: `sensor-${Date.now()}-${Math.random()}`,
+                            id: `event-${payload.eventId}`,
+                            eventId: payload.eventId,
                             type: 'sensor-alarm',
                             title: payload.eventName || '센서 알람',
                             siteName: payload.siteName || payload.sensorDescription,
@@ -61,6 +66,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
                 const connectionErrorSub = client.subscribe('/user/queue/connection-error', (message: IMessage) => {
                     try {
                         const payload: ConnectionErrorPayload = JSON.parse(message.body);
+                        void refreshFeatures();
                         const notification: Notification = {
                             id: `error-${Date.now()}-${Math.random()}`,
                             type: 'connection-error',
@@ -83,8 +89,9 @@ export function useStompNotifications(): UseStompNotificationsReturn {
 
                         // EventStore에 이벤트 상태 업데이트 (가장 중요!)
                         updateEvent(updatedEvent.eventId, updatedEvent);
+                        void refreshFeatures();
 
-                        // Notification 업데이트
+                        // ACTIVE만 알림에 남기고, 처리 중/완료는 기존 알림을 제거한다.
                         const notification: Notification = {
                             id: `event-${updatedEvent.eventId}`,
                             eventId: updatedEvent.eventId,
@@ -117,7 +124,7 @@ export function useStompNotifications(): UseStompNotificationsReturn {
             subscriptionsRef.current = [];
             client.deactivate();
         };
-    }, [addNotification, addEvent, updateEvent]);
+    }, [addNotification, addEvent, updateEvent, refreshFeatures]);
 
     return {
         isConnected,

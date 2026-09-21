@@ -49,6 +49,7 @@ export default function EventLocationMap({ longitude, latitude, eventName }: Eve
         }
 
         viewerRef.current = viewer;
+        viewer.scene.screenSpaceCameraController.enableInputs = false;
 
         await setupImagery(viewer);
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -108,7 +109,7 @@ export default function EventLocationMap({ longitude, latitude, eventName }: Eve
         <div className="relative w-full h-full">
           <div
             ref={cesiumContainerRef}
-            className="w-full h-full overflow-hidden"
+            className="w-full h-full overflow-hidden pointer-events-none"
             style={{ position: 'relative' }}
           />
 
