@@ -88,6 +88,7 @@ export default function CesiumMap({
   const { setCurrentProvider } = useImageryStore()
 
   const districtDataRef = useRef<VWorldFeatureCollection | null>(null)
+  const districtLayerRequestRef = useRef(0)
 
 
   const markerSvgTypeMapRef = useRef<Map<string, SvgMarkerType>>(new Map())
@@ -446,6 +447,7 @@ export default function CesiumMap({
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed()) return
 
+    const requestId = ++districtLayerRequestRef.current
     setDistrictVisible(visible)
 
     if (visible) {
@@ -459,6 +461,8 @@ export default function CesiumMap({
         }
       }
 
+      // A park selection can hide boundaries while the overview request is pending.
+      if (requestId !== districtLayerRequestRef.current) return
       if (districtDataRef.current) {
         displayGeoJSONFeatureCollection(
           viewer,
