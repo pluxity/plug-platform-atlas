@@ -154,6 +154,11 @@ export default function Dashboard() {
   const filteredEvents = sensorIncidents.events.filter(event =>
     isSensorEvent(event) && event.level !== 'NORMAL' && (eventSiteId == null || event.siteId === eventSiteId)
   )
+  // Only collapse a confirmed empty result; loading, errors and more pages retain room.
+  const isSensorListEmpty = filteredEvents.length === 0 && !sensorIncidents.hasMore &&
+    !sensorIncidents.isLoading && !sensorIncidents.error
+  const isEdgeListEmpty = edgeIncidents.length === 0 && !cctvIncidents.hasMore && !micIncidents.hasMore &&
+    !cctvIncidents.isLoading && !micIncidents.isLoading && !cctvIncidents.error && !micIncidents.error
   const loadMoreEdge = async () => {
     await Promise.all([
       cctvIncidents.hasMore ? cctvIncidents.loadMore() : Promise.resolve(),
@@ -278,24 +283,24 @@ export default function Dashboard() {
       </div>
 
       <DeviceLoadErrors cctvs={cctvQuery} mics={micQuery} />
-      {activeTab === 'overview' && (
-        <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
-          {/* 좌측 — 지도. 공원 목록은 지도 위 오버레이라 공원이 늘어도 레이아웃 공간을 쓰지 않는다 */}
-          <Card className="col-span-7 overflow-hidden relative">
-            <CesiumMap
-              deviceScope="all"
-              sites={sites}
-              activeTab={activeTab}
-              selectedSiteId={selectedSiteId}
-              onSiteSelect={handleSiteSelect}
-              sensors={sensors}
-              aiEdgeDevices={aiEdgeDevices}
-              eventFocus={eventFocus}
-              onEventFocusComplete={completeEventFocus}
-              onSensorSelect={handleSensorSelect}
-              className="h-full w-full"
-            />
+      {/* 탭 전환 시 Viewer와 타일셋을 유지하고 카메라·레이어만 갱신한다. */}
+      <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
+        <Card className="col-span-7 min-w-0 overflow-hidden relative">
+          <CesiumMap
+            deviceScope="all"
+            sites={sites}
+            activeTab={activeTab}
+            selectedSiteId={selectedSiteId}
+            onSiteSelect={handleSiteSelect}
+            sensors={sensors}
+            aiEdgeDevices={aiEdgeDevices}
+            eventFocus={eventFocus}
+            onEventFocusComplete={completeEventFocus}
+            onSensorSelect={handleSensorSelect}
+            className="h-full w-full"
+          />
 
+          {activeTab === 'overview' ? (
             <div className="absolute top-4 left-4 z-10 w-64 rounded-lg bg-white/85 backdrop-blur-md shadow-lg overflow-hidden">
               <button
                 type="button"
@@ -345,169 +350,7 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-          </Card>
-
-          {/* 우측 — 실시간 이벤트 레일 */}
-          <div className="col-span-5 flex flex-col gap-3 min-h-0">
-            {/* 거의 변하지 않는 지표는 칩 한 줄로 */}
-            <Card className="shrink-0">
-              <CardContent className="flex items-center justify-between gap-2 px-4 py-2.5">
-                {stats.map((stat) => (
-                  <div key={stat.title} className="flex items-center gap-2 min-w-0">
-                    <div className={`p-1.5 rounded-lg shrink-0 ${stat.iconBg}`}>
-                      <img src={stat.iconImage} alt={stat.title} className="size-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-base font-bold leading-none">{stat.value}</p>
-                      <p className="text-[10px] text-gray-500 truncate">{stat.title}</p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="shrink-0">
-              <CardHeader className="px-4 py-2 shrink-0">
-                <CardTitle className="text-base font-bold">이벤트 현황 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span></CardTitle>
-              </CardHeader>
-              <CardContent className="shrink-0 pb-2">
-                {eventSummary.error ? (
-                  <div role="alert" className="py-4 text-sm text-red-600">
-                    이벤트 현황을 불러오지 못했습니다.
-                    <button type="button" className="ml-2 underline" onClick={() => void eventSummary.mutate()}>다시 시도</button>
-                  </div>
-                ) : eventSummary.isLoading || !eventSummary.data ? (
-                <div className="flex items-center justify-center gap-2 text-gray-500 py-4">
-                  <Spinner size="sm" />
-                  <span>이벤트 로딩 중...</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                    <PieChart width={120} height={120}>
-                      <Tooltip />
-                      <Pie
-                        data={eventStatusStats.total === 0
-                          ? [{ name: '정상', value: 1, fill: '#10B981' }]
-                          : chartData}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={30}
-                        outerRadius={48}
-                        strokeWidth={2}
-                        stroke="#fff"
-                      >
-                        {(eventStatusStats.total === 0
-                          ? [{ name: '정상', value: 1, fill: '#10B981' }]
-                          : chartData
-                        ).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                        <Label
-                          position="center"
-                          content={({ viewBox }) => {
-                            if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                              return (
-                                <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                                  {eventStatusStats.total === 0 ? (
-                                    <>
-                                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 2} className="fill-green-600 text-[10px] font-bold">이상</tspan>
-                                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 12} className="fill-green-600 text-[10px] font-bold">없음</tspan>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-lg font-bold">{eventStatusStats.total}</tspan>
-                                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 14} className="fill-muted-foreground text-[10px]">총 이벤트</tspan>
-                                    </>
-                                  )}
-                                </text>
-                              )
-                            }
-                          }}
-                        />
-                      </Pie>
-                    </PieChart>
-                  <div className="flex flex-col gap-1.5 flex-1">
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 border-l-4 border-red-500">
-                      <div className="flex items-center gap-1.5">
-                        <AlertCircle className="size-3.5 text-red-600" />
-                        <span className="text-xs font-medium text-red-900">미처리</span>
-                      </div>
-                      <span className="text-base font-bold text-red-700">{eventStatusStats.active}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-amber-50 border-l-4 border-amber-500">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="size-3.5 text-amber-600" />
-                        <span className="text-xs font-medium text-amber-900">진행중</span>
-                      </div>
-                      <span className="text-base font-bold text-amber-700">{eventStatusStats.inProgress}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 border-l-4 border-green-500">
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle className="size-3.5 text-green-600" />
-                        <span className="text-xs font-medium text-green-900">해결됨</span>
-                      </div>
-                      <span className="text-base font-bold text-green-700">{eventStatusStats.resolved}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-            </Card>
-
-            <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
-              <CardHeader className='px-4 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold">IoT 센서 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span></CardTitle>
-              </CardHeader>
-              <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                <DashboardEventList key={`sensor-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
-                  events={filteredEvents} columns={eventColumns}
-                  hasMore={sensorIncidents.hasMore} loading={sensorIncidents.isLoading || sensorIncidents.isValidating}
-                  error={sensorIncidents.error} onLoadMore={sensorIncidents.loadMore}
-                  onRetry={sensorIncidents.mutate} onSelect={openEventAtLocation} />
-              </CardContent>
-            </Card>
-
-
-            <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
-              <CardHeader className='px-4 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold flex items-center gap-1.5">
-                  <Scan className="size-4 text-blue-500" />
-                  AI EDGE 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                <DashboardEventList key={`edge-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
-                  events={edgeIncidents} columns={aiEdgeIncidentColumns}
-                  hasMore={cctvIncidents.hasMore || micIncidents.hasMore}
-                  loading={cctvIncidents.isLoading || micIncidents.isLoading || cctvIncidents.isValidating || micIncidents.isValidating}
-                  error={cctvIncidents.error || micIncidents.error}
-                  onLoadMore={loadMoreEdge} onRetry={retryEdge} onSelect={openEventAtLocation} />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'parks' && (
-        /* 공원별 탭은 이미 대상 공원이 정해진 상태라 지도는 위치 확인용 보조,
-           주 데이터는 그 공원의 장치·이벤트다. 개요 탭과 지도/데이터 비중을 반대로 둔다. */
-        <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
-          {/* 좌측 — 지도 + 장비 요약 오버레이 (개요 탭 공원 오버레이와 같은 자리) */}
-          <Card className="col-span-5 overflow-hidden relative">
-            <CesiumMap
-              deviceScope="all"
-              sites={sites}
-              activeTab={activeTab}
-              selectedSiteId={selectedSiteId}
-              onSiteSelect={handleSiteSelect}
-              sensors={sensors}
-              aiEdgeDevices={aiEdgeDevices}
-              eventFocus={eventFocus}
-              onEventFocusComplete={completeEventFocus}
-              onSensorSelect={handleSensorSelect}
-              className="h-full w-full"
-            />
-
+          ) : (
             <div className="absolute top-4 left-4 z-10 rounded-lg bg-white/85 backdrop-blur-md shadow-lg px-3 py-2">
               <p className="text-xs font-bold text-gray-900 mb-1">
                 {sites.find(site => site.id.toString() === selectedSiteId)?.name ?? '공원 미선택'}
@@ -520,86 +363,193 @@ export default function Dashboard() {
                 <span className="text-gray-500">끊김 <span className="font-bold text-red-500">{deviceStats.disconnected}</span></span>
               </div>
             </div>
-          </Card>
+          )}
+        </Card>
 
-          {/* 우측 — 장치·이벤트 데이터 레일 */}
-          <div className="col-span-7 flex flex-col gap-3 min-h-0">
-            {selectedSiteId ? (
-              <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
-                <CardHeader className="px-4 py-2 shrink-0">
-                  <CardTitle className="text-base font-bold flex items-center gap-2">
-                    {sites.find(site => site.id.toString() === selectedSiteId)?.name} | 장치 현황
-                    {(batteryStats.critical > 0 || batteryStats.low > 0) && (
-                      <span className="flex items-center gap-1.5 text-xs font-normal">
-                        <BatteryWarning className="size-4 text-orange-500" />
-                        {batteryStats.critical > 0 && (
-                          <span className="text-red-500 font-medium">교체필요 {batteryStats.critical}</span>
-                        )}
-                        {batteryStats.critical > 0 && batteryStats.low > 0 && <span className="text-gray-300">·</span>}
-                        {batteryStats.low > 0 && (
-                          <span className="text-orange-500 font-medium">교체권장 {batteryStats.low}</span>
-                        )}
-                      </span>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-2 pb-2 pt-0 flex-1 min-h-0 flex flex-col">
-                  <div className="flex-1 min-h-0">
-                    {featureStatusData.length === 0 ? (
-                      <div className="flex items-center justify-center text-gray-500 h-full">
-                        장치가 없습니다.
+        <div className="col-span-5 flex flex-col gap-3 min-h-0 min-w-0 overflow-y-auto">
+          {activeTab === 'overview' ? (
+            <>
+              {/* 거의 변하지 않는 지표는 칩 한 줄로 */}
+              <Card className="shrink-0">
+                <CardContent className="flex items-center justify-between gap-2 px-4 py-2.5">
+                  {stats.map((stat) => (
+                    <div key={stat.title} className="flex items-center gap-2 min-w-0">
+                      <div className={`p-1.5 rounded-lg shrink-0 ${stat.iconBg}`}>
+                        <img src={stat.iconImage} alt={stat.title} className="size-4" />
                       </div>
-                    ) : (
-                      <DataTable
-                        columns={featureStatusColumns}
-                        data={featureStatusData}
-                        stickyHeader={true}
-                        className="h-full"
-                      />
-                    )}
-                  </div>
+                      <div className="min-w-0">
+                        <p className="text-base font-bold leading-none">{stat.value}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{stat.title}</p>
+                      </div>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
-            ) : (
-              <Card className="flex-1 min-h-0">
-                <CardContent className="flex items-center justify-center h-full text-gray-400">
-                  공원을 선택해주세요.
+
+              <Card className="shrink-0">
+                <CardHeader className="px-4 py-2 shrink-0">
+                  <CardTitle className="text-base font-bold">이벤트 현황 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span></CardTitle>
+                </CardHeader>
+                <CardContent className="shrink-0 pb-2">
+                  {eventSummary.error ? (
+                    <div role="alert" className="py-4 text-sm text-red-600">
+                      이벤트 현황을 불러오지 못했습니다.
+                      <button type="button" className="ml-2 underline" onClick={() => void eventSummary.mutate()}>다시 시도</button>
+                    </div>
+                  ) : eventSummary.isLoading || !eventSummary.data ? (
+                    <div className="flex items-center justify-center gap-2 text-gray-500 py-4">
+                      <Spinner size="sm" />
+                      <span>이벤트 로딩 중...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <PieChart width={120} height={120}>
+                        <Tooltip />
+                        <Pie
+                          data={eventStatusStats.total === 0
+                            ? [{ name: '정상', value: 1, fill: '#10B981' }]
+                            : chartData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={30}
+                          outerRadius={48}
+                          strokeWidth={2}
+                          stroke="#fff"
+                        >
+                          {(eventStatusStats.total === 0
+                            ? [{ name: '정상', value: 1, fill: '#10B981' }]
+                            : chartData
+                          ).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                          <Label
+                            position="center"
+                            content={({ viewBox }) => {
+                              if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                return (
+                                  <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                                    {eventStatusStats.total === 0 ? (
+                                      <>
+                                        <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 2} className="fill-green-600 text-[10px] font-bold">이상</tspan>
+                                        <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 12} className="fill-green-600 text-[10px] font-bold">없음</tspan>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-lg font-bold">{eventStatusStats.total}</tspan>
+                                        <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 14} className="fill-muted-foreground text-[10px]">총 이벤트</tspan>
+                                      </>
+                                    )}
+                                  </text>
+                                )
+                              }
+                            }}
+                          />
+                        </Pie>
+                      </PieChart>
+                      <div className="flex flex-col gap-1.5 flex-1">
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 border-l-4 border-red-500">
+                          <div className="flex items-center gap-1.5">
+                            <AlertCircle className="size-3.5 text-red-600" />
+                            <span className="text-xs font-medium text-red-900">미처리</span>
+                          </div>
+                          <span className="text-base font-bold text-red-700">{eventStatusStats.active}</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-amber-50 border-l-4 border-amber-500">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="size-3.5 text-amber-600" />
+                            <span className="text-xs font-medium text-amber-900">진행중</span>
+                          </div>
+                          <span className="text-base font-bold text-amber-700">{eventStatusStats.inProgress}</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 border-l-4 border-green-500">
+                          <div className="flex items-center gap-1.5">
+                            <CheckCircle className="size-3.5 text-green-600" />
+                            <span className="text-xs font-medium text-green-900">해결됨</span>
+                          </div>
+                          <span className="text-base font-bold text-green-700">{eventStatusStats.resolved}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            )}
-
-            <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
-              <CardHeader className='px-4 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold">IoT 센서 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span></CardTitle>
-              </CardHeader>
-              <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                <DashboardEventList key={`sensor-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
-                  events={filteredEvents} columns={eventColumns}
-                  hasMore={sensorIncidents.hasMore} loading={sensorIncidents.isLoading || sensorIncidents.isValidating}
-                  error={sensorIncidents.error} onLoadMore={sensorIncidents.loadMore}
-                  onRetry={sensorIncidents.mutate} onSelect={openEventAtLocation} />
-              </CardContent>
-            </Card>
-
-            <Card padding="none" className="flex flex-col overflow-hidden flex-1 min-h-0">
-              <CardHeader className='px-4 py-2 shrink-0'>
-                <CardTitle className="text-sm font-bold flex items-center gap-1.5">
-                  <Scan className="size-4 text-blue-500" />
-                  AI EDGE 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span>
+            </>
+          ) : selectedSiteId ? (
+            <Card padding="none" className="flex max-h-[35%] shrink-0 flex-col overflow-hidden min-h-0">
+              <CardHeader className="px-4 py-2 shrink-0">
+                <CardTitle className="text-base font-bold flex flex-wrap items-center gap-2">
+                  {sites.find(site => site.id.toString() === selectedSiteId)?.name} | 장치 현황
+                  {(batteryStats.critical > 0 || batteryStats.low > 0) && (
+                    <span className="flex items-center gap-1.5 text-xs font-normal">
+                      <BatteryWarning className="size-4 text-orange-500" />
+                      {batteryStats.critical > 0 && (
+                        <span className="text-red-500 font-medium">교체필요 {batteryStats.critical}</span>
+                      )}
+                      {batteryStats.critical > 0 && batteryStats.low > 0 && <span className="text-gray-300">·</span>}
+                      {batteryStats.low > 0 && (
+                        <span className="text-orange-500 font-medium">교체권장 {batteryStats.low}</span>
+                      )}
+                    </span>
+                  )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
-                <DashboardEventList key={`edge-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
-                  events={edgeIncidents} columns={aiEdgeIncidentColumns}
-                  hasMore={cctvIncidents.hasMore || micIncidents.hasMore}
-                  loading={cctvIncidents.isLoading || micIncidents.isLoading || cctvIncidents.isValidating || micIncidents.isValidating}
-                  error={cctvIncidents.error || micIncidents.error}
-                  onLoadMore={loadMoreEdge} onRetry={retryEdge} onSelect={openEventAtLocation} />
+              <CardContent className="px-2 pb-2 pt-0 min-h-0 overflow-y-auto">
+                <div className="min-h-0">
+                  {featureStatusData.length === 0 ? (
+                    <div className="flex items-center justify-center py-4 text-sm text-gray-500">
+                      장치가 없습니다.
+                    </div>
+                  ) : (
+                    <DataTable
+                      columns={featureStatusColumns}
+                      data={featureStatusData}
+                      stickyHeader={true}
+                      density="compact"
+                      className="[&>div]:overflow-visible [&>div]:h-auto"
+                    />
+                  )}
+                </div>
               </CardContent>
             </Card>
-          </div>
+          ) : (
+            <Card className="shrink-0">
+              <CardContent className="flex items-center justify-center py-4 text-sm text-gray-400">
+                공원을 선택해주세요.
+              </CardContent>
+            </Card>
+          )}
+
+          <Card padding="none" className={`flex flex-col overflow-hidden ${isSensorListEmpty ? 'h-24 shrink-0' : 'flex-1 min-h-24'}`}>
+            <CardHeader className='px-4 py-2 shrink-0'>
+              <CardTitle className="text-sm font-bold">IoT 센서 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span></CardTitle>
+            </CardHeader>
+            <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
+              <DashboardEventList key={`sensor-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
+                events={filteredEvents} columns={eventColumns}
+                hasMore={sensorIncidents.hasMore} loading={sensorIncidents.isLoading || sensorIncidents.isValidating}
+                error={sensorIncidents.error} onLoadMore={sensorIncidents.loadMore}
+                onRetry={sensorIncidents.mutate} onSelect={openEventAtLocation} />
+            </CardContent>
+          </Card>
+
+          <Card padding="none" className={`flex flex-col overflow-hidden ${isEdgeListEmpty ? 'h-24 shrink-0' : 'flex-1 min-h-24'}`}>
+            <CardHeader className='px-4 py-2 shrink-0'>
+              <CardTitle className="text-sm font-bold flex items-center gap-1.5">
+                <Scan className="size-4 text-blue-500" />
+                AI EDGE 이벤트 <span className="text-xs font-normal text-gray-400">오늘 포함 최근 7일</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className='px-2 pb-2 pt-0 flex-1 min-h-0'>
+              <DashboardEventList key={`edge-${activeTab}-${eventSiteId ?? 'all'}-${eventRange.from}`}
+                events={edgeIncidents} columns={aiEdgeIncidentColumns}
+                hasMore={cctvIncidents.hasMore || micIncidents.hasMore}
+                loading={cctvIncidents.isLoading || micIncidents.isLoading || cctvIncidents.isValidating || micIncidents.isValidating}
+                error={cctvIncidents.error || micIncidents.error}
+                onLoadMore={loadMoreEdge} onRetry={retryEdge} onSelect={openEventAtLocation} />
+            </CardContent>
+          </Card>
         </div>
-      )}
+      </div>
 
       <Dialog
         open={selectedEvent !== null}
